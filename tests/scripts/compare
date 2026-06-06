@@ -1,0 +1,13 @@
+#!/usr/bin/bash
+
+GO () { 
+    __EX="$(pwd)"; _EX="${__EX%/tests/scripts}"; EX="${_EX}""/bin/ncc"; SEND="${_EX}""/tests/test_out"
+    for FILE in $(ls "${_EX}/tests/pet_testdata"); do "$EX" "${_EX}""/tests/pet_testdata/""$FILE" &> "${SEND}/${FILE}"; done
+};
+
+COMPARE () {
+    __NEW="$(pwd)"; _NEW="${__NEW%/scripts}"; NEW="${_NEW}""/test_out"; _SRC="${_NEW}""/test_good";
+    for FILE in $(ls "${_SRC}"); do diff -bitw "${NEW}""/${FILE}" "${_SRC}""/${FILE}"; done
+}; 
+
+MAIN () { GO "${@}"; COMPARE "${@}"; }; MAIN "${@}";

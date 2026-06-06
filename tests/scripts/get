@@ -1,0 +1,8 @@
+#!/usr/bin/bash
+
+IN=($(seq 401 407) $(seq 420 424) 450)
+P="/home/datura/niu/CS/courses/CS-515/assignments/assign4/tests/pt_testdata"
+F="https://graphics.cs.niu.edu/csci490d/data"
+main() {
+    for N in ${IN[@]}; do curl -o "${P}/test${N}" "${F}/test${N}" done
+}; main "$@"

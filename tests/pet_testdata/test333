@@ -1,0 +1,4 @@
+# Error checking -- duplicate symbol
+
+int4 a;
+int4 a;
