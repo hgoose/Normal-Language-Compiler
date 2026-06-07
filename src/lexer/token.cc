@@ -100,6 +100,26 @@ void print_token(const Token& t) {
     }
 }
 
+bool Token::is(int token) {
+    return id == token;
+}
+
+bool Token::is_ident() {
+    return id == TOKEN_IDENT;
+}
+
+bool Token::is_ident_if() {
+    return is_ident() && identifier == "if";
+}
+
+bool Token::is_ident_else() {
+    return is_ident() && identifier == "else";
+}
+
+bool Token::is_ident_while() {
+    return is_ident() && identifier == "while";
+}
+
 bool Token::is_semicolon() {
     return id == TOKEN_SEMICOLON;
 }

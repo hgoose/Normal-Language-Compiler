@@ -10,7 +10,7 @@ struct AST_NODE;
 typedef std::function<void(int)> MOVE_PROCEDURE;
 
 void skip_block();
-void skip_if();
+void skip_if(int);
 void skip_while(int);
 void goto_next_semicolon();
 void goto_next_rbrace();

@@ -8,6 +8,8 @@
 #include <algorithm>
 #include <functional>
 
+static constexpr int LBRACE_COUNT_ZERO{};
+
 // Skips to the next semicolon
 void goto_next_semicolon() {
     while (!next_token.is_semicolon() && !next_token.is_eof()) {
@@ -48,50 +50,7 @@ void goto_semi_or_else() {
     );
 }
 
-// Skips entirety of if statement
-void skip_if() {
-//     int lbrace_count{};
-//     Error e{};
-//
-//     // Either we reach eof, semicolon, or an lbrace
-//     while (next_token.id != TOKEN_SEMICOLON && next_token.id != TOKEN_EOF) {
-//         // Found an lbrace
-//         if (next_token.id == TOKEN_LBRACE) {
-//             ++lbrace_count;
-//             break;
-//         }
-//
-//         get_next_token_and_print_error();
-//     }
-//     
-//     e = get_token(next_token);
-//
-//     if (next_token.id == TOKEN_EOF) {
-//         return;
-//     }
-//
-//     // Move one past lbrace and call skip_block
-//     else {
-//         print_error(e);
-//         skip_block();
-//     }
-//
-//     if (next_token.identifier != "else") {
-//         get_next_token_and_print_error();
-//     } else {
-//         get_next_token_and_print_error();
-//
-//         if (next_token.id == TOKEN_LBRACE) {
-//             skip_block();
-//         } else {
-//             goto_next_semicolon();
-//         }
-//
-//         get_next_token_and_print_error();
-//     }
-}
-
-// Skips the block (ends at the last rbrace)
+// Skips the block (ends one past closing rbrace)
 void skip_block(int lbrace_count) {
     while (lbrace_count > 0) {
         get_next_token_and_print_error();
@@ -109,26 +68,51 @@ void skip_block(int lbrace_count) {
     get_next_token_and_print_error();
 }
 
-void skip_while(int lbrace_count) {
+// If called with skip_while, skips entirety of while.
+// If called with skip_if, either skips entirety (if no else), 
+// or to the else identifier.
+void skip_if_or_while(int lbrace_count) {
+    // If we call skip_while or skip_if while inside of a block,
+    // lbrace_count will be one. So, this call will jump one past the end 
+    // of the block (terminating }). Then, we pass control back to caller. 
     if (lbrace_count != 0) {
         skip_block(lbrace_count);
+        return;
     }
 
-    while (next_token.id != TOKEN_SEMICOLON 
-            && next_token.id != TOKEN_LBRACE
-            && next_token.id != TOKEN_EOF
+    // Find semicolon, lbrace, or eof
+    while (!next_token.is_semicolon()
+            && !next_token.is_lbrace()
+            && !next_token.is_eof()
     ) {
         get_next_token_and_print_error();
     }
 
-    if (next_token.id == TOKEN_EOF) return;
+    if (next_token.is_eof()) return;
 
-    if (next_token.id == TOKEN_SEMICOLON) {
+    if (next_token.is_semicolon()) {
         get_next_token_and_print_error();
         return;
-    } else ++lbrace_count;
+    } 
+    // Otherwise we are on a left brace
+    else ++lbrace_count;
 
+    // This will leave us one past the terminating right brace
     skip_block(lbrace_count);
+}
+
+// Skips entirety of if statement
+void skip_if(int lbrace_count) {
+    skip_if_or_while(lbrace_count);
+
+    if (next_token.is_ident_else()) {
+        skip_if_or_while(LBRACE_COUNT_ZERO);
+    }
+}
+
+// Skips entirety of while statement
+void skip_while(int lbrace_count) {
+    skip_if_or_while(lbrace_count);
 }
 
 // If the next token is invalid or a lexer error occurred,
@@ -148,9 +132,7 @@ bool unexpected_token(int expected_token, int error_to_submit, MOVE_PROCEDURE mv
         set_print_token_error(Error{}, error_to_submit);
         mv_proc(lbrace_count);
         return true;
-
     }
-
     return false;
 }
 
@@ -162,7 +144,6 @@ bool wrong_next_token(int wrong_token, int error_to_submit, MOVE_PROCEDURE mv_pr
         mv_proc(lbrace_count);
         return true;
     }
-
     return false;
 }
 

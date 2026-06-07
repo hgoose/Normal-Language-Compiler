@@ -76,6 +76,11 @@ struct Token
     std::string str{};
     std::string identifier{};
 
+    bool is(int);
+    bool is_ident();
+    bool is_ident_if();
+    bool is_ident_else();
+    bool is_ident_while();
     bool is_semicolon();
     bool is_lbrace();
     bool is_rbrace();
