@@ -95,6 +95,8 @@ void gen_queue(AST_NODE* p, std::queue<AST_NODE*>& terminals) {
 
 // Elegantly converts a parse tree to an abstract syntax tree (for expressions only)
 AST_NODE* pttoast(AST_NODE* root) {
+    if (!root) return nullptr;
+
     AST_NODE* ast_root = nullptr;
 
     // Holds children in AST creation

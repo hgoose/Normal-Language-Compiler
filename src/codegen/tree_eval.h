@@ -11,12 +11,12 @@ struct AST_NODE;
 
 void evaluate_expr(AST_NODE*);
 void evaluate_print_expr(AST_NODE*);
-void evaluate_print(AST_NODE*);
-void init_var(AST_NODE*);
-void update_var(AST_NODE*);
-void process_read(AST_NODE*);
-void process_if(AST_NODE*);
-void process_while(AST_NODE*);
+bool evaluate_print(AST_NODE*);
+bool init_var(AST_NODE*);
+bool update_var(AST_NODE*);
+bool process_read(AST_NODE*);
+bool process_if(AST_NODE*);
+bool process_while(AST_NODE*);
 
 size_t sizeof_print();
 

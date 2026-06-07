@@ -6,19 +6,20 @@ CXXFLAGS = -std=c++23 -g \
 			-Isrc/ncc_symbols -Isrc/ncc_strings -Isrc/ast_node \
 			-Isrc/ncc_integers
 
-TARGET   = bin/ncc
+TARGET   = bin/nlc
 OBJDIR   = obj
 
 SRC = \
-	tests/main.cc \
+	src/main.cc \
 	src/utils/util.cc \
+	src/utils/parserutils.cc \
+	src/utils/ast_utils.cc \
 	tests/drivers/parsertest.cc \
 	src/err/error.cc \
 	src/lexer/lex.cc \
 	src/lexer/token.cc \
 	src/buffio/buffio.cc \
 	src/parser/parser.cc \
-	src/utils/ast_utils.cc \
 	src/ast_node/ast_node.cc \
 	src/codegen/codegen.cc \
 	src/codegen/tree_eval.cc \

@@ -28,6 +28,7 @@
 #define  NCC_UNACCEPTABLE_TYPE_MISMATCH -22
 #define  NCC_EXPECTED_STATEMENT    -23
 #define  NCC_NON_LOGICAL_CONDITION -24
+#define  NCC_EXPECTED_SEMICOLON    -25
 
 struct Token;
 
@@ -37,8 +38,13 @@ struct Error
   int line, col;
 };
 
+bool invalid_lookahead();
+bool handle_lex_error(const Error& err);
+
 const char* error_string(int);
 void print_error(const Error&);
+
+void get_next_token_and_print_error();
 
 void set_print_token_error(Error&, int);
 void set_print_token_error(Error&&, int);

@@ -183,6 +183,18 @@ int parse_hex6_codepoint(const std::string& hex6, uint32_t& value) {
     return NCC_OK;
 }
 
+// Calls parse_hex6_codepoint and encode_utf8, we get returned the utf8 representation
+std::string hex6_to_utf8(const std::string& hex6) {
+    uint32_t cp{};
+    std::string out{};
+
+    // Parse and encode
+    parse_hex6_codepoint(hex6,cp);
+    encode_utf8(cp, out);
+
+    return out;
+}
+
 // Encode a Unicode scalar value to UTF-8 bytes.
 int encode_utf8(uint32_t cp, std::string& out) {
     // Validate Unicode scalar value
@@ -217,127 +229,4 @@ int encode_utf8(uint32_t cp, std::string& out) {
     }
 
     return NCC_OK; 
-}
-
-void goto_next_semicolon() {
-   while (next_token.id != TOKEN_SEMICOLON && next_token.id != TOKEN_EOF) {
-       Error e = get_token(next_token);
-       print_error(e);
-   } 
-}
-
-void goto_next_rbrace() {
-   while (next_token.id != TOKEN_RBRACE && next_token.id != TOKEN_EOF) {
-       Error e = get_token(next_token);
-       print_error(e);
-   } 
-}
-
-void goto_semi_or_else() {
-    while (next_token.id != TOKEN_SEMICOLON &&
-            next_token.id != TOKEN_EOF &&
-            next_token.identifier != "else"
-    ) {
-        Error e = get_token(next_token);
-        print_error(e);
-    }
-}
-
-void skip_block() {
-    int lbrace_count = 1;
-    Error e{};
-    while (lbrace_count > 0) {
-        e = get_token(next_token);
-        print_error(e);
-
-        if (next_token.id == TOKEN_RBRACE) {
-            --lbrace_count;
-        }
-
-        if (next_token.id == TOKEN_LBRACE) {
-            ++lbrace_count;
-        }
-
-        if (next_token.id == TOKEN_EOF) break;
-    }
-}
-
-void skip_if() {
-    int lbrace_count{};
-    Error e{};
-
-    while (next_token.id != TOKEN_SEMICOLON && next_token.id != TOKEN_EOF) {
-        if (next_token.id == TOKEN_LBRACE) {
-            ++lbrace_count;
-            break;
-        }
-
-        e = get_token(next_token);
-        print_error(e);
-    }
-
-    if (lbrace_count == 0) {
-        goto_semi_or_else();
-    } else {
-        e = get_token(next_token);
-        print_error(e);
-        skip_block();
-    }
-
-    if (next_token.identifier != "else") {
-        e = get_token(next_token);
-        print_error(e);
-    } else {
-        e = get_token(next_token);
-        print_error(e);
-
-        if (next_token.id == TOKEN_LBRACE) {
-            skip_block();
-        } else {
-            goto_next_semicolon();
-        }
-
-        e = get_token(next_token);
-        print_error(e);
-    }
-
-}
-
-void skip_while() {
-    int lbrace_count{};
-    Error e{};
-
-    while (next_token.id != TOKEN_SEMICOLON && next_token.id != TOKEN_EOF) {
-        if (next_token.id == TOKEN_LBRACE) {
-            ++lbrace_count;
-            break;
-        }
-
-        e = get_token(next_token);
-        print_error(e);
-    }
-
-    if (lbrace_count == 0) {
-        return; 
-    }
-
-    e = get_token(next_token);
-    print_error(e);
-
-    skip_block();
-
-    e = get_token(next_token);
-    print_error(e);
-}
-
-// Calls parse_hex6_codepoint and encode_utf8, we get returned the utf8 representation
-std::string hex6_to_utf8(const std::string& hex6) {
-    uint32_t cp{};
-    string out{};
-
-    // Parse and encode
-    parse_hex6_codepoint(hex6,cp);
-    encode_utf8(cp, out);
-
-    return out;
 }

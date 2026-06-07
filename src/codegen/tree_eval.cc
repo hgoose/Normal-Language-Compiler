@@ -9,6 +9,7 @@
 #include "ncc_integers.h"
 #include "error.h"
 #include "ast_utils.h"
+#include "parserutils.h"
 
 #include <cstdlib>
 #include <algorithm>
@@ -163,6 +164,10 @@ static void r_evaluate_expr(AST_NODE* p, int& pushed) {
     // RUN CODE FOR SUPER FAST EXPONENTIATION
     else if (p->token.id == TOKEN_EXP) {
         x86_fast_exp();
+
+        // fast_exp makes two pops
+        pushed-=2;
+
         x86_pushr32(REGISTER::EAX); ++pushed;
     } 
     else if (p->token.id == TOKEN_NOT) {
@@ -252,8 +257,8 @@ void evaluate_print_expr(AST_NODE* root) {
     }
 }
 
-void evaluate_print(AST_NODE* root) {
-    if (!root) return;
+bool evaluate_print(AST_NODE* root) {
+    if (!root) return false;
 
     std::for_each(root->children.begin(), root->children.end(), [](AST_NODE* it) -> void {
         if (!it) return;
@@ -264,28 +269,31 @@ void evaluate_print(AST_NODE* root) {
             evaluate_print_expr(it);
         }
     });
+
+    return true;
 }
 
-void init_var(AST_NODE* root) {
-    if (!root) return;
+bool init_var(AST_NODE* root) {
+    if (!root) return false;
 
     AST_NODE* var = root->children.front();
     INT_TABLE_ENTRY entry = INT_TABLE::add_int(0);
 
-    // Could not get space for variable
+    // Could not get space for variable.
+    // add_int will print overflow error.
     if (!entry.vi) {
-        return;
+        return false;
     }
 
     var->syminfo->location.int_table_offset = entry.offset;
     var->syminfo->location.address = entry.get_addr();
     var->syminfo->location.location_type = LOCATION_TYPE::MEMORY;
 
-    // x86_init_int_var(&entry);
+    return true;
 }
 
-void update_var(AST_NODE* root) {
-    if (!root) return;
+bool update_var(AST_NODE* root) {
+    if (!root) return false;
 
     auto child = root->children.begin();
 
@@ -300,7 +308,7 @@ void update_var(AST_NODE* root) {
     // No symbol found
     if (!symbol) {
         set_print_token_error(Error{}, var->token, NCC_UNKNOWN_VARIABLE);
-        return;
+        return false;
     }
 
     var->syminfo = symbol;
@@ -312,17 +320,17 @@ void update_var(AST_NODE* root) {
     
     // Fast exp uses R10, evaluate_expr could clobber it 
     x86_mov_rr64(REGISTER::R15, REGISTER::R10);
-    //
-    // // Now, evaluate the expression given by root and move that value to the address in r10
-    //
-    // // Result in eax
+
+    // Result in eax
     evaluate_expr(ast_expr);
 
     x86_mov_mr32_nodisp(REGISTER::R15, REGISTER::EAX);
+
+    return true;
 }
 
-void process_read(AST_NODE* root) {
-    if (!root) return;
+bool process_read(AST_NODE* root) {
+    if (!root) return false;
 
     AST_NODE* var = root->children.front();
 
@@ -330,7 +338,7 @@ void process_read(AST_NODE* root) {
 
     if (!symbol) {
         set_print_token_error(Error{}, var->token, NCC_UNKNOWN_VARIABLE);
-        return;
+        return false;
     }
 
     var->syminfo = symbol;
@@ -347,11 +355,13 @@ void process_read(AST_NODE* root) {
 
     // Now, mov [r10], r12
     x86_mov_mr32_nodisp(REGISTER::R10, REGISTER::R12);
+
+    return true;
 }
 
 void dispatch_statement(AST_NODE* root) {
     if (!root) return;
-
+    
     if (root->node_type == NODE_TYPE::PRINT) {
         evaluate_print(root);
     } else if (root->node_type == NODE_TYPE::READ) {
@@ -374,15 +384,15 @@ void dispatch_statement(AST_NODE* root) {
 //              jump size. (Save first byte then increment poffset by four)
 //
 //  Then, below all statements inside the if, we co
-void process_if(AST_NODE* root) {
-    if (!root) return;
+bool process_if(AST_NODE* root) {
+    if (!root) return false;
 
     AST_NODE* condition{};
 
     auto if_child = root->children.begin();
     if (if_child != root->children.end()) {
         condition = *(if_child++);
-    } else return;
+    } else return false;
 
     evaluate_expr(condition);
     x86_test_al_imm8(0x1);
@@ -422,17 +432,19 @@ void process_if(AST_NODE* root) {
 
         load_imm32_at(jmp_rel32_start, jmp_size);
     }
+
+    return true;
 }
 
-void process_while(AST_NODE* root) {
-    if (!root) return;
+bool process_while(AST_NODE* root) {
+    if (!root) return false;
 
     AST_NODE* condition{};
 
     auto while_child = root->children.begin();
     if (while_child != root->children.end()) {
         condition = *(while_child++);
-    } else return;
+    } else return false;
 
     size_t jmp_start = x86_jmp_rel32_missing();
 
@@ -455,4 +467,6 @@ void process_while(AST_NODE* root) {
 
     // +6 is the size of the jnz itself
     x86_jnz_rel32(-(body_size + condition_plus_test_size + 6));
+
+    return true;
 }

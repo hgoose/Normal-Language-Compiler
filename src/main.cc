@@ -15,14 +15,14 @@ using std::cout;
 int main(int argc, const char* argv[]) {
 
     // Check that a filename was provided
-    if (argc < 2) {
-        std::cerr << "Usage: " << argv[0] << " <filename>\n";
-        return 1;
-    }
+    // if (argc < 2) {
+    //     std::cerr << "Usage: " << argv[0] << " <filename>\n";
+    //     return 1;
+    // }
 
     // The filename is the first argument after program name
-    const char* filename = argv[1];
-    // const char* filename = "/home/datura/niu/CS/courses/CS-515/assignments/assign4/tests/pet_testdata/test";
+    // const char* filename = argv[1];
+    const char* filename = "/home/datura/nlc/tests/pet_testdata/test";
 
     Error err = lex_init(filename);
     print_error(err);

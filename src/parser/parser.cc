@@ -1,7 +1,3 @@
-// ELEGANT PARSING
-// Nate Warner z2004109
-// Assignment 4
- 
 /* EXPRESSION SPEC
  *
     CFG:
@@ -102,39 +98,51 @@
 
 #include <algorithm>
 #include <iostream>
+#include <unordered_set>
+#include <functional>
 
 #include "parser.h"
 #include "error.h"
 #include "lex.h"
 #include "ast_node.h"
 #include "ast_utils.h"
+#include "parserutils.h"
 #include "tree_eval.h"
 #include "codegen.h"
 #include "ncc_integers.h"
 #include "symtable.h"
 #include "util.h"
 
+typedef std::unordered_map<std::string, std::function<AST_NODE*(void)>> PARSE_MAP;
+typedef std::unordered_map<NODE_TYPE, std::function<bool(AST_NODE*)>> EVAL_MAP;
+
 Token next_token;
 
-static void inhouse_cleanup(AST_NODE*& parse_tree);
+static PARSE_MAP parse_map = {
+    {"print", parse_print},
+    {"read", parse_read},
+    {"int4", parse_decl_int4},
+    {"if", parse_if},
+    {"while", parse_while}
+};
 
-// Check if the current token is invalid
-static bool invalid_lookahead() {
-    return next_token.id != TOKEN_INTEGER && next_token.id != TOKEN_UNEG    && 
-        next_token.id != TOKEN_UPLUS   && next_token.id != TOKEN_PLUS    && 
-        next_token.id != TOKEN_MINUS   && next_token.id != TOKEN_MULT    && 
-        next_token.id != TOKEN_DIV     && next_token.id != TOKEN_MOD     && 
-        next_token.id != TOKEN_EXP     && next_token.id != TOKEN_LPAREN  && 
-        next_token.id != TOKEN_RPAREN && next_token.id != TOKEN_NULL && 
-        next_token.id != TOKEN_EOF && next_token.id != TOKEN_IDENT &&
-        next_token.id != TOKEN_COMMA && next_token.id != TOKEN_SEMICOLON &&
-        next_token.id != TOKEN_ASSIGN && next_token.id != TOKEN_STRING &&
-        next_token.id != TOKEN_OR && next_token.id != TOKEN_AND && 
-        next_token.id != TOKEN_NOT && next_token.id != TOKEN_LESS &&
-        next_token.id != TOKEN_LESS_EQ && next_token.id != TOKEN_GREATER &&
-        next_token.id != TOKEN_GREATER_EQ && next_token.id != TOKEN_EQUAL &&
-        next_token.id != TOKEN_NOT_EQUAL && next_token.id != TOKEN_LBRACE  &&
-        next_token.id != TOKEN_RBRACE;
+static EVAL_MAP eval_map = {
+    {NODE_TYPE::PRINT, evaluate_print},
+    {NODE_TYPE::DECL, init_var},
+    {NODE_TYPE::ASSIGN, update_var},
+    {NODE_TYPE::READ, process_read},
+    {NODE_TYPE::IF, process_if},
+    {NODE_TYPE::WHILE, process_while}
+};
+
+// Statement list
+static AST_NODE* get_statement() {
+    std::string ident = next_token.identifier;
+    if (parse_map.find(ident) != parse_map.end()) {
+        return parse_map[ident]();
+    }
+
+    return parse_assign();
 }
 
 // Initialize the parser. 
@@ -152,79 +160,55 @@ int parse() {
     AST_NODE* program_tree = new AST_NODE();
     program_tree->node_type = NODE_TYPE::BLOCK;
 
-    Error e;
-
     get_token(next_token);
 
     for (;;) {
         if (next_token.id == TOKEN_IDENT) {
-            AST_NODE* statement_root{};
-            // Print statement
-            if (next_token.identifier == "print") {
-                statement_root = parse_print();
-            } 
-            // Read statement
-            else if (next_token.identifier == "read") {
-                statement_root = parse_read();
-            } 
-            // Variable declaration
-            else if (next_token.identifier == "int4") {
-                statement_root = parse_decl_int4();
-            } else if (next_token.identifier == "if") {
-                statement_root = parse_if();
-                if (statement_root) {
-                }
-            } else if (next_token.identifier == "while") {
-                statement_root = parse_while();
-                if (statement_root) {
-                }
-            }
-            // Variable assignment? 
-            else {
-                statement_root = parse_assign();
-            }
+            AST_NODE* statement_root{get_statement()};
 
             if (statement_root) {
                 program_tree->add_children(statement_root);
             }
 
-            // If and while end at the start of the next statement
-            if (statement_root && statement_root->node_type != NODE_TYPE::IF && statement_root->node_type != NODE_TYPE::WHILE) {
-                if (invalid_lookahead() || handle_lex_error(get_token(next_token))) {
-                    goto_next_semicolon(); 
-                }
-            }
-
-            if (!statement_root) {
-                if (next_token.id == TOKEN_SEMICOLON) {
-                    invalid_lookahead();
-                    handle_lex_error(get_token(next_token));
-                }
-            }
+            // // If and while end at the start of the next statement
+            // if (statement_root && statement_root->node_type != NODE_TYPE::IF 
+            //     && statement_root->node_type != NODE_TYPE::WHILE
+            // ) {
+            //     Error err = get_token(next_token);
+            //     skip_if_invalid_or_lexerr(err);
+            // }
+            //
+            // // Parsing statement lead to an error
+            // if (!statement_root) {
+            //     // Probably on a semicolon
+            //     if (next_token.id == TOKEN_SEMICOLON) {
+            //         // Eat next token or skip to next semicolon if there's an error
+            //         Error err = get_token(next_token);
+            //         skip_if_invalid_or_lexerr(err);
+            //     }
+            // }
         } 
 
-        if (next_token.id == TOKEN_EOF) break;
+        if (at_eof(next_token)) break;
     }
 
     x86_pushr64(REGISTER::R12);
     x86_pushr64(REGISTER::R15);
 
-    std::for_each(program_tree->children.begin(), program_tree->children.end(), [](AST_NODE* statement) -> void {
+    std::for_each(program_tree->children.begin(), program_tree->children.end(), [](AST_NODE*& statement) -> void {
         if (!statement) return;
 
-        if (statement->node_type == NODE_TYPE::PRINT) {
-            evaluate_print(statement);
-        } else if (statement->node_type == NODE_TYPE::DECL) {
-            init_var(statement);
-        } else if (statement->node_type == NODE_TYPE::ASSIGN) {
-            update_var(statement);
-        } else if (statement->node_type == NODE_TYPE::READ) {
-            process_read(statement);
-        } else if (statement->node_type == NODE_TYPE::IF) {
-            process_if(statement);
-        } else if (statement->node_type == NODE_TYPE::WHILE) {
-            process_while(statement);
+        NODE_TYPE statement_type = statement->node_type;
+
+        // Essentially a continue
+        if (eval_map.find(statement_type) == eval_map.end()) return;
+
+        bool success = eval_map[statement_type](statement);
+
+        if (!success) {
+            free_tree(statement);
         }
+
     });
 
     ast_out(program_tree);
@@ -251,34 +235,26 @@ AST_NODE* parse_print() {
     print_root->node_type = NODE_TYPE::PRINT;
     print_root->token = next_token;
 
-    // Lexer error
     lex_error = get_token(next_token);
-    if (invalid_lookahead() || handle_lex_error(lex_error)) {
-        goto_next_semicolon();
+    if (skip_if_invalid_or_lexerr(lex_error)) {
         free_tree(print_root);
         return nullptr;
     }
 
     // Missing ( after print
-    if (next_token.id != TOKEN_LPAREN) {
-        set_print_token_error(Error{}, NCC_SYNTAX_ERROR);
-        goto_next_semicolon();
+    if (unexpected_token(TOKEN_LPAREN, NCC_SYNTAX_ERROR)) {
         free_tree(print_root);
         return nullptr;
     }
     
-    // Lexer error
     lex_error = get_token(next_token);
-    if (invalid_lookahead() || handle_lex_error(lex_error)) {
-        goto_next_semicolon();
+    if (skip_if_invalid_or_lexerr(lex_error)) {
         free_tree(print_root);
         return nullptr;
     }
 
-    // Empty print
-    if (next_token.id == TOKEN_RPAREN) {
-        set_print_token_error(Error{}, NCC_EXPECTED_EXPRESSION);
-        goto_next_semicolon();
+    // If we have an rparen here the print statement is empty, illegal.
+    if (wrong_next_token(TOKEN_RPAREN, NCC_EXPECTED_EXPRESSION)) {
         free_tree(print_root);
         return nullptr;
     }
@@ -287,30 +263,30 @@ AST_NODE* parse_print() {
     AST_NODE* expr = A(expr_error);
     AST_NODE* ast_expr = pttoast(expr);
 
+    // Free the parse tree after converting to an AST
     free_tree(expr);
 
     // Toss out the print statement if the expression does not form a 
     // syntactically and semantically valid AST
     if (!ast_expr) {
-        goto_next_semicolon();
+        onepast_next_semicolon();
         free_tree(print_root);
         return nullptr;
     }
 
+    // Otherwise the expression is valid and we add it to the root
     print_root->add_child(ast_expr);
 
+    // Process all subsequent expressions
     while (next_token.id == TOKEN_COMMA) {
         lex_error = get_token(next_token);
-        if (invalid_lookahead() || handle_lex_error(lex_error)) {
-            goto_next_semicolon();
+        if (skip_if_invalid_or_lexerr(lex_error)) {
             free_tree(print_root);
             return nullptr;
         }
 
-        // Comma with no expression
-        if (next_token.id == TOKEN_RPAREN) {
-            set_print_token_error(Error{}, NCC_EXPECTED_EXPRESSION);
-            goto_next_semicolon();
+        // No expression following the comma
+        if (wrong_next_token(TOKEN_RPAREN, NCC_EXPECTED_EXPRESSION)) {
             free_tree(print_root);
             return nullptr;
         }
@@ -320,7 +296,7 @@ AST_NODE* parse_print() {
         free_tree(expr);
 
         if (!ast_expr) {
-            goto_next_semicolon();
+            onepast_next_semicolon();
             free_tree(print_root);
             return nullptr;
         }
@@ -328,28 +304,27 @@ AST_NODE* parse_print() {
     }
 
     // Missing ) after expressions
-    if (next_token.id != TOKEN_RPAREN) {
-        set_print_token_error(Error{}, NCC_SYNTAX_ERROR);
-        goto_next_semicolon();
+    if (unexpected_token(TOKEN_RPAREN, NCC_SYNTAX_ERROR)) {
         free_tree(print_root);
         return nullptr;
     }
 
     // Lexer error
     lex_error = get_token(next_token);
-    if (invalid_lookahead() || handle_lex_error(lex_error)) {
-        goto_next_semicolon();
+    if (skip_if_invalid_or_lexerr(lex_error)) {
         free_tree(print_root);
         return nullptr;
     }
 
     // Missing semicolon after )
-    if (next_token.id != TOKEN_SEMICOLON) {
-        set_print_token_error(Error{}, NCC_SYNTAX_ERROR);
-        // goto_next_semicolon();
+    if (unexpected_token(TOKEN_SEMICOLON, NCC_EXPECTED_SEMICOLON)) {
         free_tree(print_root);
         return nullptr;
     }
+
+    // At semicolon. Consume it.
+    lex_error = get_token(next_token);
+    skip_if_invalid_or_lexerr(lex_error);
 
     return print_root;
 }
@@ -363,29 +338,25 @@ AST_NODE* parse_read() {
     Error lex_err{};
 
     lex_err = get_token(next_token);
-    if (invalid_lookahead() || handle_lex_error(lex_err)) {
-        goto_next_semicolon();
+    if (skip_if_invalid_or_lexerr(lex_err)) {
         free_tree(read_root);
         return nullptr;
     }
 
-    if (next_token.id != TOKEN_LPAREN) {
-        set_print_token_error(Error{}, NCC_SYNTAX_ERROR);
-        goto_next_semicolon();
+    if (unexpected_token(TOKEN_LPAREN, NCC_SYNTAX_ERROR)) {
         free_tree(read_root);
         return nullptr;
     }
 
     lex_err = get_token(next_token);
-    if (invalid_lookahead() || handle_lex_error(lex_err)) {
-        goto_next_semicolon();
+    if (skip_if_invalid_or_lexerr(lex_err)) {
         free_tree(read_root);
         return nullptr;
     }
 
     if (next_token.id == TOKEN_RPAREN || next_token.id != TOKEN_IDENT) {
         set_print_token_error(Error{}, NCC_EXPECTED_VAR);
-        goto_next_semicolon();
+        onepast_next_semicolon();
         free_tree(read_root);
         return nullptr;
     }
@@ -396,37 +367,34 @@ AST_NODE* parse_read() {
 
     read_root->add_children(var_node);
 
+    // Note: var_node must not be freed explicitly, a
+    // call to free_tree() with read_root will free it.
+
     lex_err = get_token(next_token);
-    if (invalid_lookahead() || handle_lex_error(lex_err)) {
-        goto_next_semicolon();
+    if (skip_if_invalid_or_lexerr(lex_err)) {
         free_tree(read_root);
-        free_tree(var_node);
         return nullptr;
     }
 
-    if (next_token.id != TOKEN_RPAREN) {
-        set_print_token_error(Error{}, NCC_SYNTAX_ERROR);
-        goto_next_semicolon();
+    if (unexpected_token(TOKEN_RPAREN, NCC_SYNTAX_ERROR)) {
         free_tree(read_root);
-        free_tree(var_node);
         return nullptr;
     }
 
     lex_err = get_token(next_token);
-    if (invalid_lookahead() || handle_lex_error(lex_err)) {
-        goto_next_semicolon();
+    if (skip_if_invalid_or_lexerr(lex_err)) {
         free_tree(read_root);
-        free_tree(var_node);
         return nullptr;
     }
 
-    if (next_token.id != TOKEN_SEMICOLON) {
-        set_print_token_error(Error{}, NCC_SYNTAX_ERROR);
-        // goto_next_semicolon();
+    if (unexpected_token(TOKEN_SEMICOLON, NCC_EXPECTED_SEMICOLON)) {
         free_tree(read_root);
-        free_tree(var_node);
         return nullptr;
     }
+
+    // At semicolon. Consume it.
+    lex_err = get_token(next_token);
+    skip_if_invalid_or_lexerr(lex_err);
 
     return read_root;
 }
@@ -439,16 +407,13 @@ AST_NODE* parse_decl_int4() {
     declare_root->token = next_token;
 
     lex_err = get_token(next_token);
-    if (invalid_lookahead() || handle_lex_error(lex_err)) {
-        goto_next_semicolon();
+    if (skip_if_invalid_or_lexerr(lex_err)) {
         free_tree(declare_root);
         return nullptr;
     }
 
     // Variable name must be an identifier token
-    if (next_token.id != TOKEN_IDENT) {
-        set_print_token_error(Error{}, NCC_INVALID_IDENTIFIER);
-        goto_next_semicolon();
+    if (unexpected_token(TOKEN_IDENT, NCC_INVALID_IDENTIFIER)) {
         free_tree(declare_root);
         return nullptr;
     }
@@ -456,7 +421,7 @@ AST_NODE* parse_decl_int4() {
     // Variable name is reserved
     if (is_reserved(next_token)) {
         set_print_token_error(Error{}, NCC_VARIABLE_NAME_RESERVED);
-        goto_next_semicolon();
+        onepast_next_semicolon();
         free_tree(declare_root);
         return nullptr;
     }
@@ -465,7 +430,7 @@ AST_NODE* parse_decl_int4() {
     SYMINFO* entry = SYMTABLE::add_symbol(SYMINFO(next_token.identifier, TYPE::INT4, SYMTYPE::VAR));
     if (!entry) {
         set_print_token_error(Error{}, NCC_SYMBOL_ALREADY_EXISTS);
-        goto_next_semicolon();
+        onepast_next_semicolon();
         free_tree(declare_root);
         return nullptr; 
     }
@@ -475,22 +440,24 @@ AST_NODE* parse_decl_int4() {
 
     declare_root->add_children(var);
 
+    // Note: var must not be freed explicitly on an error, a call to 
+    // free_tree with declare_root with free it.
+
     // Look for semicolon
     lex_err = get_token(next_token);
-    if (invalid_lookahead() || handle_lex_error(lex_err)) {
-        goto_next_semicolon();
+    if (skip_if_invalid_or_lexerr(lex_err)) {
         free_tree(declare_root);
-        free_tree(var);
         return nullptr;
     }
 
-    if (next_token.id != TOKEN_SEMICOLON) {
-        set_print_token_error(Error{}, NCC_SYNTAX_ERROR);
-        // goto_next_semicolon();
+    // Statement does not end with a semicolon
+    if (unexpected_token(TOKEN_SEMICOLON, NCC_SYNTAX_ERROR)) {
         free_tree(declare_root);
-        free_tree(var);
         return nullptr;
     }
+
+    lex_err = get_token(next_token);
+    skip_if_invalid_or_lexerr(lex_err);
 
     return declare_root;
 }
@@ -509,22 +476,19 @@ AST_NODE* parse_assign() {
     assign_root->add_children(var_node);
 
     lex_err = get_token(next_token);
-    if (invalid_lookahead() || handle_lex_error(lex_err)) {
-        goto_next_semicolon();
+    if (skip_if_invalid_or_lexerr(lex_err)) {
         free_tree(assign_root);
         return nullptr;
     }
 
-    if (next_token.id != TOKEN_ASSIGN) {
-        set_print_token_error(Error{}, NCC_SYNTAX_ERROR);
-        goto_next_semicolon();
+    // Next token must be assignment
+    if (unexpected_token(TOKEN_ASSIGN, NCC_SYNTAX_ERROR)) {
         free_tree(assign_root);
         return nullptr;
     }
 
     lex_err = get_token(next_token);
-    if (invalid_lookahead() || handle_lex_error(lex_err)) {
-        goto_next_semicolon();
+    if (skip_if_invalid_or_lexerr(lex_err)) {
         free_tree(assign_root);
         return nullptr;
     }
@@ -535,39 +499,24 @@ AST_NODE* parse_assign() {
     free_tree(expr);
 
     if (!ast_expr) {
-        goto_next_semicolon();
+        onepast_next_semicolon();
         free_tree(assign_root);
         return nullptr;
     }
 
     assign_root->add_children(ast_expr);
 
-    if (next_token.id != TOKEN_SEMICOLON) {
-        set_print_token_error(Error{}, NCC_SYNTAX_ERROR);
-        // goto_next_semicolon();
+    // Statement does not end with a semicolon
+    if (unexpected_token(TOKEN_SEMICOLON, NCC_EXPECTED_SEMICOLON)) {
         free_tree(assign_root);
         return nullptr;
     }
 
+    // At semicolon. Consume it.
+    lex_err = get_token(next_token);
+    skip_if_invalid_or_lexerr(lex_err);
+
     return assign_root;
-}
-
-// Statement list
-AST_NODE* get_statement() {
-
-    if (next_token.identifier == "print") {
-        return parse_print();
-    } else if (next_token.identifier == "read") {
-        return parse_read();
-    } else if (next_token.identifier == "int4") {
-        return parse_decl_int4();
-    } else if (next_token.identifier == "if") {
-        return parse_if();
-    } else if (next_token.identifier == "while") {
-        return parse_while();
-    } 
-
-    return parse_assign();
 }
 
 AST_NODE* parse_else() {
@@ -602,7 +551,7 @@ AST_NODE* parse_else() {
     if (!empty) {
         do {
             dont_move = false;
-            AST_NODE* statement = get_statement();
+            AST_NODE* statement{get_statement()};
             if (statement) {
                 else_root->add_child(statement);
             }
@@ -676,6 +625,7 @@ AST_NODE* parse_if() {
         set_print_token_error(Error{}, NCC_SYNTAX_ERROR);
         skip_if();
         free_tree(if_root);
+        return nullptr;
     }
 
     lex_err = get_token(next_token);
@@ -717,6 +667,7 @@ AST_NODE* parse_if() {
         set_print_token_error(Error{}, NCC_SYNTAX_ERROR);
         skip_if();
         free_tree(if_root);
+        return nullptr;
     }
 
     lex_err = get_token(next_token);
@@ -816,53 +767,56 @@ AST_NODE* parse_if() {
 }
 
 AST_NODE* parse_while() {
+    int lbrace_count{};
+
     AST_NODE* while_root = new AST_NODE();
     while_root->node_type = NODE_TYPE::WHILE;
 
     Error lex_err{}, expr_err{};
 
     lex_err = get_token(next_token);
-    if (invalid_lookahead() || handle_lex_error(lex_err)) {
-        skip_while();
+    if (skip_if_invalid_or_lexerr(lex_err, skip_while, lbrace_count)) {
         free_tree(while_root);
         return nullptr;
     }
 
-    if (next_token.id != TOKEN_LPAREN) {
-        set_print_token_error(Error{}, NCC_SYNTAX_ERROR);
-        skip_while();
+    // Missing (
+    if (unexpected_token(TOKEN_LPAREN, NCC_SYNTAX_ERROR, skip_while, lbrace_count)) {
         free_tree(while_root);
         return nullptr;
     }
 
     lex_err = get_token(next_token);
-    if (invalid_lookahead() || handle_lex_error(lex_err)) {
-        skip_while();
+    if (skip_if_invalid_or_lexerr(lex_err, skip_while, lbrace_count)) {
         free_tree(while_root);
         return nullptr;
     }
 
-    if (next_token.id == TOKEN_RPAREN) {
-        skip_while();
-        set_print_token_error(Error{}, NCC_EXPECTED_EXPRESSION);
+    // Missing condition
+    if (wrong_next_token(TOKEN_RPAREN, NCC_EXPECTED_EXPRESSION, skip_while, lbrace_count)) {
         free_tree(while_root);
         return nullptr;
     }
 
+    // Get parse tree for expression then convert to AST
     AST_NODE* expr = A(expr_err);
     AST_NODE* ast_expr = pttoast(expr);
+
+    // Free the parse tree
     free_tree(expr);
 
+    // Invalid expression
     if (!ast_expr) {
-        skip_while();
+        skip_while(lbrace_count);
         free_tree(ast_expr);
         free_tree(while_root);
         return nullptr;
     }
 
+    // Condition was not boolean
     if (ast_expr->data_type != TYPE::BOOL) {
         set_print_token_error(Error{}, ast_expr->token, NCC_NON_LOGICAL_CONDITION);
-        skip_while();
+        skip_while(lbrace_count);
         free_tree(ast_expr);
         free_tree(while_root);
         return nullptr;
@@ -870,91 +824,64 @@ AST_NODE* parse_while() {
 
     while_root->add_child(ast_expr);
 
-    if (next_token.id != TOKEN_RPAREN) {
-        set_print_token_error(Error{}, NCC_SYNTAX_ERROR);
-        skip_while();
+    // Token after condition was not a right parenthesis
+    if (unexpected_token(TOKEN_RPAREN, NCC_SYNTAX_ERROR, skip_while, lbrace_count)) {
         free_tree(while_root);
+        return nullptr;
     }
 
     lex_err = get_token(next_token);
-    if (invalid_lookahead() || handle_lex_error(lex_err)) {
-        skip_while();
+    if (skip_if_invalid_or_lexerr(lex_err, skip_while, lbrace_count)) {
         free_tree(while_root);
         return nullptr;
     }
 
     // Explicitly empty while 
-    if (next_token.id == TOKEN_SEMICOLON) {
+    if (next_token.is_semicolon()) {
         lex_err = get_token(next_token);
-        if (invalid_lookahead() || handle_lex_error(lex_err)) {
-            skip_while();
+        if (skip_if_invalid_or_lexerr(lex_err, skip_while, lbrace_count)) {
             free_tree(while_root);
             return nullptr;
         }
         return while_root;
     }
 
-    bool block = next_token.id == TOKEN_LBRACE ? true : false;
-    if (block) {
-        lex_err = get_token(next_token);
-        if (invalid_lookahead() || handle_lex_error(lex_err)) {
-            skip_while();
-            free_tree(while_root);
-            return nullptr;
-        }
+    // Check if we have a block ({...})
+    bool block = next_token.is_lbrace() ? true : false;
+
+    // If we have no block, we have a single statement
+    if (!block) {
+        AST_NODE* statement{get_statement()};
+        if (statement) while_root->add_children(statement);
+
+        return while_root;
     }
 
-    bool empty{};
-    if (next_token.id == TOKEN_RBRACE) {
-        empty = true;
+    // Otherwise, we have a statement block
+    ++lbrace_count;
+
+    lex_err = get_token(next_token);
+    if (skip_if_invalid_or_lexerr(lex_err, skip_while, lbrace_count)) {
+        free_tree(while_root);
+        return nullptr;
     }
 
-    bool dont_move{};
-    if (!empty) do {
-        dont_move = false;
+    // Empty block ({})
+    if (next_token.is_rbrace()) {
+        return while_root;
+    }
+
+    // Process all statements in block. Note that the block is 
+    // strictly non-empty thanks to the check above
+    for(;;) {
         AST_NODE* statement = get_statement();
-        if (statement) {
-            while_root->add_child(statement);
-        }
+        if (statement) while_root->add_children(statement);
 
-        if (statement->node_type == NODE_TYPE::IF || 
-                statement->node_type == NODE_TYPE::WHILE
-        ){
-            dont_move = true;
-        }
-
-        if (block) {
-            if (next_token.id == TOKEN_RBRACE) {
-                break;
-            }
-
-            if (!dont_move) {
-                lex_err = get_token(next_token);
-                if (invalid_lookahead() || handle_lex_error(lex_err)) {
-                    skip_while();
-                    free_tree(while_root);
-                    return nullptr;
-                }
-            }
-
-            if (next_token.id == TOKEN_EOF) {
-                skip_while();
-                set_print_token_error(Error{}, NCC_UNEXPECTED_EOF); 
-                free_tree(while_root);
-                return nullptr;
-            }
-
-            if (next_token.id == TOKEN_RBRACE) break;
-        }
-
-    } while (block);
-
-    if (!empty && !dont_move || block)  {
-        lex_err = get_token(next_token);
-        if (invalid_lookahead() || handle_lex_error(lex_err)) {
-            skip_while();
-            free_tree(while_root);
-            return nullptr;
+        // At the rbrace that terminates the while loop.
+        // Move one past it.
+        if (next_token.is_rbrace()) {
+            get_next_token_and_print_error();
+            break;
         }
     }
 
@@ -1377,20 +1304,6 @@ AST_NODE* FP(Error& err) {
         free_tree(here);
         return nullptr;
     }
-    // else if (next_token.id == TOKEN_MULT
-    //         || next_token.id == TOKEN_DIV
-    //         || next_token.id == TOKEN_MOD
-    //         || next_token.id == TOKEN_PLUS
-    //         || next_token.id == TOKEN_MINUS
-    //         || next_token.id == TOKEN_EOF
-    //         || next_token.id == TOKEN_RPAREN
-    // ) {
-    //     free_tree(here);
-    //     return nullptr;
-    // } else {
-    //     free_tree(here);
-    //     return nullptr;
-    // }
 
     here->add_children(left, right);
     return here;
@@ -1526,37 +1439,4 @@ AST_NODE* S(Error& err) {
 
     if (left) here->add_child(left);
     return here;
-}
-
-// Reclaim memory associated with tree nodes
-void free_tree(AST_NODE*& p) {
-    if (!p) return;
-
-    std::for_each(p->children.begin(), p->children.end(), [](auto it) -> void {
-        free_tree(it);
-    });
-
-    delete p;
-    p=nullptr;
-}
-
-// Free parse tree nodes
-void inhouse_cleanup(AST_NODE*& parse_tree) {
-    free_tree(parse_tree);
-}
-
-// Free all nodes created for the AST and parse tree
-void parser_cleanup() {
-    lex_cleanup();
-}
-
-// True if error is critical, false otherwise
-bool handle_lex_error(const Error& err) {
-    print_error(err);
-
-    if (err.error != NCC_OK && err.error != NCC_EOF) {
-        return true;
-    }
-
-    return false;
 }

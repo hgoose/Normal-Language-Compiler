@@ -66,6 +66,10 @@ namespace TOKEN_STRUCTURES {
     };
 };
 
+bool at_eof(const Token& t) {
+    return t.id == TOKEN_EOF;
+}
+
 // Prints a token
 void print_token(const Token& t) {
     // Guaranteed values of interest
@@ -94,4 +98,20 @@ void print_token(const Token& t) {
         cout << TOKEN_STRUCTURES::token_names[t.id] 
             << " at " << t.line_no << ":" << t.col_no << '\n';
     }
+}
+
+bool Token::is_semicolon() {
+    return id == TOKEN_SEMICOLON;
+}
+
+bool Token::is_lbrace() {
+    return id == TOKEN_LBRACE;
+}
+
+bool Token::is_rbrace() {
+    return id == TOKEN_RBRACE;
+}
+
+bool Token::is_eof() {
+    return id == TOKEN_EOF;
 }

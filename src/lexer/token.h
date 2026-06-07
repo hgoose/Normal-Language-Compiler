@@ -75,8 +75,14 @@ struct Token
     double fl{-1.0f};
     std::string str{};
     std::string identifier{};
+
+    bool is_semicolon();
+    bool is_lbrace();
+    bool is_rbrace();
+    bool is_eof();
 };
 
+bool at_eof(const Token& t);
 void print_token(const Token& t);
 
 #endif /* NCC_TOKEN_H */

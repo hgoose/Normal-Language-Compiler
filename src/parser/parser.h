@@ -33,8 +33,6 @@ AST_NODE* parse_if();
 AST_NODE* parse_else();
 AST_NODE* parse_while();
 
-AST_NODE* get_statement();
-
 // PRODUCTION RULES
 AST_NODE* A(Error& err);
 AST_NODE* AP(Error& err);
@@ -55,8 +53,5 @@ AST_NODE* S(Error& err);
 // CLEANUP
 void free_tree(AST_NODE*& p);
 void parser_cleanup();
-
-// ERROR HANDLING FOR LEXER
-bool handle_lex_error(const Error& err);
 
 #endif
