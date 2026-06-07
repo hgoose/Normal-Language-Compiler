@@ -1,4 +1,0 @@
-# Error checking -- multiple declarations
-
-int4 a, b, c, d;
-int4 e;
