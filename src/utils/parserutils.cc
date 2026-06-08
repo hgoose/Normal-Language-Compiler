@@ -8,8 +8,6 @@
 #include <algorithm>
 #include <functional>
 
-static constexpr int LBRACE_COUNT_ZERO{};
-
 // Skips to the next semicolon
 void goto_next_semicolon() {
     while (!next_token.is_semicolon() && !next_token.is_eof()) {
@@ -34,22 +32,6 @@ void onepast_next_rbrace(int sh) {
     onepast_next_token(TOKEN_RBRACE);
 }
 
-// Skips to the next rbrace
-void goto_next_rbrace() {
-    while (!next_token.is_rbrace() && !next_token.is_eof()) {
-        get_next_token_and_print_error();
-    } 
-}
-
-// Skips to the next semicolon or else identifier
-void goto_semi_or_else() {
-    do {
-        get_next_token_and_print_error();
-    } while (next_token.id != TOKEN_SEMICOLON &&
-            next_token.identifier != "else"
-    );
-}
-
 // Skips the block (ends one past closing rbrace)
 void skip_block(int lbrace_count) {
     while (lbrace_count > 0) {
@@ -71,7 +53,9 @@ void skip_block(int lbrace_count) {
 // If called with skip_while, skips entirety of while.
 // If called with skip_if, either skips entirety (if no else), 
 // or to the else identifier.
-void skip_if_or_while(int lbrace_count) {
+// If called generically, either skips to the next semicolon, or if a
+// lbrace is encounted before a semicolon, skips to the closing brace.
+void onepast_semi_or_block(int lbrace_count) {
     // If we call skip_while or skip_if while inside of a block,
     // lbrace_count will be one. So, this call will jump one past the end 
     // of the block (terminating }). Then, we pass control back to caller. 
@@ -103,16 +87,20 @@ void skip_if_or_while(int lbrace_count) {
 
 // Skips entirety of if statement
 void skip_if(int lbrace_count) {
-    skip_if_or_while(lbrace_count);
+    onepast_semi_or_block(lbrace_count);
 
     if (next_token.is_ident_else()) {
-        skip_if_or_while(LBRACE_COUNT_ZERO);
+        onepast_semi_or_block(LBRACE_COUNT_ZERO);
     }
 }
 
 // Skips entirety of while statement
 void skip_while(int lbrace_count) {
-    skip_if_or_while(lbrace_count);
+    onepast_semi_or_block(lbrace_count);
+}
+
+void skip_else(int lbrace_count) {
+    onepast_semi_or_block(lbrace_count);
 }
 
 // If the next token is invalid or a lexer error occurred,

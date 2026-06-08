@@ -77,6 +77,7 @@ struct Token
     std::string identifier{};
 
     bool is(int);
+    bool is_not(int);
     bool is_ident();
     bool is_ident_if();
     bool is_ident_else();

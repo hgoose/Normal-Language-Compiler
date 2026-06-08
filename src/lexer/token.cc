@@ -104,8 +104,12 @@ bool Token::is(int token) {
     return id == token;
 }
 
+bool Token::is_not(int token) {
+    return !is(token);
+}
+
 bool Token::is_ident() {
-    return id == TOKEN_IDENT;
+    return is(TOKEN_IDENT);
 }
 
 bool Token::is_ident_if() {
@@ -121,17 +125,17 @@ bool Token::is_ident_while() {
 }
 
 bool Token::is_semicolon() {
-    return id == TOKEN_SEMICOLON;
+    return is(TOKEN_SEMICOLON);
 }
 
 bool Token::is_lbrace() {
-    return id == TOKEN_LBRACE;
+    return is(TOKEN_LBRACE);
 }
 
 bool Token::is_rbrace() {
-    return id == TOKEN_RBRACE;
+    return is(TOKEN_RBRACE);
 }
 
 bool Token::is_eof() {
-    return id == TOKEN_EOF;
+    return is(TOKEN_EOF);
 }
