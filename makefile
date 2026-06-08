@@ -3,8 +3,8 @@ CXXFLAGS = -std=c++23 -g \
 			-Isrc -Itests -Itests/drivers \
 			-Isrc/buffio -Isrc/err -Isrc/lexer \
 			-Isrc/parser -Isrc/codegen -Isrc/utils \
-			-Isrc/ncc_symbols -Isrc/ncc_strings -Isrc/ast_node \
-			-Isrc/ncc_integers
+			-Isrc/nlc_symbols -Isrc/nlc_strings -Isrc/ast_node \
+			-Isrc/nlc_integers
 
 TARGET   = bin/nlc
 OBJDIR   = obj
@@ -23,9 +23,9 @@ SRC = \
 	src/ast_node/ast_node.cc \
 	src/codegen/codegen.cc \
 	src/codegen/tree_eval.cc \
-	src/ncc_symbols/symtable.cc \
-	src/ncc_strings/ncc_strings.cc \
-	src/ncc_integers/ncc_integers.cc
+	src/nlc_symbols/symtable.cc \
+	src/nlc_strings/nlc_strings.cc \
+	src/nlc_integers/nlc_integers.cc
 	
 
 OBJ = $(SRC:%=$(OBJDIR)/%.o)

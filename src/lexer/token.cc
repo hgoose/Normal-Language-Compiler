@@ -7,6 +7,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <unordered_map>
 
 using std::cout;
 using std::cerr;
@@ -14,6 +15,25 @@ using std::string;
 
 // Will come in handy
 namespace TOKEN_STRUCTURES {
+    const std::unordered_map<int, std::string> operator_names = {
+        {TOKEN_PLUS, "add"},
+        {TOKEN_MINUS, "sub"},
+        {TOKEN_MULT, "mul"},
+        {TOKEN_DIV, "div"},
+        {TOKEN_MOD, "mod"},
+        {TOKEN_EXP, "exp"},
+        {TOKEN_UNEG, "neg"},
+        {TOKEN_UPLUS, "pos"},
+        {TOKEN_LESS, "less"},
+        {TOKEN_LESS_EQ, "leq"},
+        {TOKEN_GREATER, "greater"},
+        {TOKEN_GREATER_EQ, "geq"},
+        {TOKEN_EQUAL, "equal"},
+        {TOKEN_NOT_EQUAL, "neq"},
+        {TOKEN_AND, "and"},
+        {TOKEN_OR, "or"}
+    };
+
     const std::vector<std::string> token_names = {
         "TOKEN_NULL", "TOKEN_EOF", "TOKEN_PLUS",
         "TOKEN_MINUS", "TOKEN_MULT", "TOKEN_DIV",
@@ -42,6 +62,7 @@ namespace TOKEN_STRUCTURES {
         TOKEN_SEMICOLON, TOKEN_COMMA, TOKEN_REAL,
         TOKEN_MOD, TOKEN_UNEG, TOKEN_UPLUS
     };
+
     const std::unordered_set<int> binary_arithmetic_operators = {
         TOKEN_PLUS, TOKEN_MINUS, TOKEN_MULT,
         TOKEN_DIV, TOKEN_EXP,

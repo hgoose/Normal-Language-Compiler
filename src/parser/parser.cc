@@ -256,7 +256,7 @@ AST_NODE* parse_print() {
     // Toss out the print statement if the expression does not form a 
     // syntactically and semantically valid AST
     if (!ast_expr) {
-        onepast_next_semicolon();
+        onepast_semi_or_block(LBRACE_COUNT_ZERO);
         free_tree(print_root);
         return nullptr;
     }
@@ -283,7 +283,7 @@ AST_NODE* parse_print() {
         free_tree(expr);
 
         if (!ast_expr) {
-            onepast_next_semicolon();
+            onepast_semi_or_block(LBRACE_COUNT_ZERO);
             free_tree(print_root);
             return nullptr;
         }
@@ -343,7 +343,7 @@ AST_NODE* parse_read() {
 
     if (next_token.is(TOKEN_RPAREN) || next_token.is_not(TOKEN_IDENT)) {
         set_print_token_error(Error{}, NCC_EXPECTED_VAR);
-        onepast_next_semicolon();
+        onepast_semi_or_block(LBRACE_COUNT_ZERO);
         free_tree(read_root);
         return nullptr;
     }
@@ -408,7 +408,7 @@ AST_NODE* parse_decl_int4() {
     // Variable name is reserved
     if (is_reserved(next_token)) {
         set_print_token_error(Error{}, NCC_VARIABLE_NAME_RESERVED);
-        onepast_next_semicolon();
+        onepast_semi_or_block(LBRACE_COUNT_ZERO);
         free_tree(declare_root);
         return nullptr;
     }
@@ -417,7 +417,7 @@ AST_NODE* parse_decl_int4() {
     SYMINFO* entry = SYMTABLE::add_symbol(SYMINFO(next_token.identifier, TYPE::INT4, SYMTYPE::VAR));
     if (!entry) {
         set_print_token_error(Error{}, NCC_SYMBOL_ALREADY_EXISTS);
-        onepast_next_semicolon();
+        onepast_semi_or_block(LBRACE_COUNT_ZERO);
         free_tree(declare_root);
         return nullptr; 
     }
@@ -486,7 +486,7 @@ AST_NODE* parse_assign() {
     free_tree(expr);
 
     if (!ast_expr) {
-        onepast_next_semicolon();
+        onepast_semi_or_block(LBRACE_COUNT_ZERO);
         free_tree(assign_root);
         return nullptr;
     }
@@ -823,13 +823,13 @@ AST_NODE* A(Error& err) {
     AST_NODE* left{}, *right{};
 
     // FIRST(BA')
-    if (next_token.id == TOKEN_NOT 
-            || next_token.id == TOKEN_UPLUS
-            || next_token.id == TOKEN_UNEG
-            || next_token.id == TOKEN_LPAREN
-            || next_token.id == TOKEN_INTEGER
-            || next_token.id == TOKEN_STRING
-            || next_token.id == TOKEN_IDENT // true, false, or var
+    if (next_token.id == TOKEN_NOT  ||
+        next_token.id == TOKEN_UPLUS ||
+        next_token.id == TOKEN_UNEG ||
+        next_token.id == TOKEN_LPAREN ||
+        next_token.id == TOKEN_INTEGER ||
+        next_token.id == TOKEN_STRING ||
+        next_token.id == TOKEN_IDENT
     ) {
         left = B(err);
         right = AP(err);
@@ -877,11 +877,12 @@ AST_NODE* B(Error& err) {
     AST_NODE* left{}, *right{};
 
     // Consider FIRST(CB')
-    if (next_token.id == TOKEN_NOT |
-        next_token.id == TOKEN_UNEG |
-        next_token.id == TOKEN_LPAREN |
-        next_token.id == TOKEN_INTEGER |
-        next_token.id == TOKEN_IDENT |
+    if (next_token.id == TOKEN_NOT ||
+        next_token.id == TOKEN_UPLUS ||
+        next_token.id == TOKEN_UNEG ||
+        next_token.id == TOKEN_LPAREN ||
+        next_token.id == TOKEN_INTEGER ||
+        next_token.id == TOKEN_IDENT ||
         next_token.id == TOKEN_STRING
     ) {
         left = C(err);
@@ -1362,6 +1363,7 @@ AST_NODE* S(Error& err) {
         }
 
     } else {
+        set_print_token_error(Error{}, NCC_SYNTAX_ERROR);
         free_tree(here);
         return nullptr;
     }

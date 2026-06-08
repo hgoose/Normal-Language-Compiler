@@ -18,7 +18,6 @@ static void gen_queue(AST_NODE* p, std::queue<AST_NODE*>& terminals);
 static void r_ast_out(AST_NODE* node, int depth);
 static const char* op_name(int id);
 
-// Outputs syntax error
 void syntax_error(Error& err) {
     err.error = NCC_SYNTAX_ERROR;
     err.line = next_token.line_no;
@@ -27,10 +26,10 @@ void syntax_error(Error& err) {
     print_error(err);
 }
 
-// Simulate building the AST from the parse tree for expressions, but only check for errors, see below function
-// for details
-bool is_st_valid(AST_NODE* root, bool accept_empty) {
-    if (!root) return accept_empty;
+// Simulate building the AST from the parse tree for expressions, 
+// but only check for errors, see below function for details
+bool is_st_valid(AST_NODE* root) {
+    if (!root) return true;
 
     std::stack<AST_NODE*> children;
     std::queue<AST_NODE*> terminals;
@@ -41,8 +40,7 @@ bool is_st_valid(AST_NODE* root, bool accept_empty) {
         AST_NODE* curr = terminals.front();
         terminals.pop();
 
-        if (curr->is_operator == !OPERATOR) {
-            // Add operand to the stack
+        if (curr->is_nop()) {
             children.push(curr); 
         } 
         // Unary operator, check for a single child of the correct type
@@ -57,9 +55,6 @@ bool is_st_valid(AST_NODE* root, bool accept_empty) {
         }
         // Check that for a binary operator, we have two children available 
         // A a A -> A | A r A -> L | (L | (A r A) \ell (L | (A r A)) -> L)
-        //
-        // Note: I can't remember if I just made this syntax up or if I've seen it somewhere. 
-        // Capital letters denote the type of operand, lowercase denote the type of operator, \mid is "or".
         else if (curr->operator_is_binary()) {
             if (children.empty()) {
                 return false;
@@ -75,9 +70,8 @@ bool is_st_valid(AST_NODE* root, bool accept_empty) {
         } 
     }
 
-    // Valid tree if the stack is allowed to be empty, if not we must
-    // have at least one entry in the stack.
-    return accept_empty || children.size() == 1;
+    // Children must end with at least one node (the root of the AST). 
+    return children.size() == 1;
 }
 
 // Traverse parse tree bottom up, place terminals in queue
@@ -110,7 +104,7 @@ AST_NODE* pttoast(AST_NODE* root) {
 
     // Can't make a valid AST for the whole tree for whatever reason, 
     // through out the tree
-    if (!is_st_valid(root, ACCEPT_EMPTY)) {
+    if (!is_st_valid(root)) {
         return nullptr;
     }
 
@@ -121,7 +115,7 @@ AST_NODE* pttoast(AST_NODE* root) {
 
         // Not an operator, although if integer would also work
         // add to the stack
-        if (curr->is_operator == !OPERATOR) {
+        if (curr->is_nop()) {
             children.push(curr); 
         } 
         // Unary operator, grab a single child
@@ -216,7 +210,6 @@ TYPE assign_types(AST_NODE* root) {
         }
 
         return root->data_type;
-
     }
 
     return here_type;
@@ -251,26 +244,10 @@ void ast_postorder(AST_NODE* root) {
 }
 
 const char* op_name(int id) {
-    switch (id) {
-        case TOKEN_PLUS:  return "add";
-        case TOKEN_MINUS: return "sub";
-        case TOKEN_MULT:  return "mul";
-        case TOKEN_DIV:   return "div";
-        case TOKEN_MOD:   return "mod";
-        case TOKEN_EXP:   return "exp";
-        case TOKEN_UNEG:  return "neg";
-        case TOKEN_UPLUS: return "pos";
-        case TOKEN_LESS: return "less than";
-        case TOKEN_LESS_EQ: return "less than or equal";
-        case TOKEN_GREATER: return "greater than";
-        case TOKEN_GREATER_EQ: return "greater than or equal";
-        case TOKEN_EQUAL: return "equal";
-        case TOKEN_NOT_EQUAL: return "not equal";
-        case TOKEN_NOT: return "not";
-        case TOKEN_AND: return "and";
-        case TOKEN_OR: return "or";
-        default:          return "";
-    }
+    auto m_find = TOKEN_STRUCTURES::operator_names.find(id);
+    auto end = TOKEN_STRUCTURES::operator_names.end();
+
+    return m_find != end ? m_find->second.data() : "unknown";
 }
 
 void r_ast_out(AST_NODE* node, int depth) {
@@ -290,7 +267,7 @@ void r_ast_out(AST_NODE* node, int depth) {
         std::cout << "Var: " << node->token.identifier << '\n';
     }
     // Operator node
-    else if (node->is_operator == OPERATOR) {
+    else if (node->is_op()) {
         std::cout << node->token.lexeme
                   << " (" << op_name(node->token.id) << ")"
                   << "\n";

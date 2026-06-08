@@ -187,3 +187,11 @@ bool AST_NODE::is_type_integral() {
 bool AST_NODE::is_type_logical() {
     return data_type == TYPE::BOOL;
 }
+
+bool AST_NODE::is_op() {
+    return is_operator;
+}
+
+bool AST_NODE::is_nop() {
+    return !is_op();
+}

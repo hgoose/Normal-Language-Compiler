@@ -131,6 +131,9 @@ struct AST_NODE {
 
     bool is_type_integral(); 
     bool is_type_logical();
+
+    bool is_op();
+    bool is_nop();
 };
 
 #endif

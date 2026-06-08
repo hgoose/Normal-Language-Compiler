@@ -22,16 +22,6 @@ void onepast_next_token(int token) {
     get_next_token_and_print_error();
 }
 
-// Moves one past next semicolon (or to eof). Prints
-// errors as it finds them.
-void onepast_next_semicolon(int sh) {
-    onepast_next_token(TOKEN_SEMICOLON);
-}
-
-void onepast_next_rbrace(int sh) {
-    onepast_next_token(TOKEN_RBRACE);
-}
-
 // Skips the block (ends one past closing rbrace)
 void skip_block(int lbrace_count) {
     while (lbrace_count > 0) {

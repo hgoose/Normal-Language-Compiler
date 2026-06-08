@@ -8,14 +8,6 @@
 #include "ast_node.h"
 #include "error.h"
 
-// No terminals in a subtree is unacceptable
-#define NO_ACCEPT_EMPTY 0
-
-// No terminals in a subtree is acceptable
-#define ACCEPT_EMPTY    1
-
-#define IS_ELSE true
-
 // Lookahead token
 extern Token next_token;
 
