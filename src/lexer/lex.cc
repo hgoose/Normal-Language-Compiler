@@ -1,8 +1,3 @@
-// Nate Warner z2004109
-// CS 490D/515
-// Assignment 4
-// lex.cc
-
 #include "token.h"
 #include "error.h"
 #include "buffio.h"
@@ -26,13 +21,13 @@ void check_replace_escape(char& c, int& rc, string& utf8) {
     utf8.clear();
 
     // Start return code as OK
-    rc = NCC_OK;
+    rc = NLC_OK;
 
     char next{};
 
     // EOF is not good here, unexpected, didn't finish string token yet
-    if (buffer_get_next_char(next) == NCC_EOF) {
-        rc = NCC_UNEXPECTED_EOF;
+    if (buffer_get_next_char(next) == NLC_EOF) {
+        rc = NLC_UNEXPECTED_EOF;
         return;
     }
 
@@ -56,8 +51,8 @@ void check_replace_escape(char& c, int& rc, string& utf8) {
 
         // Try to consume the next six, should be hex digits
         // If, return error
-        if (buffer_consume_k(6,hex) == NCC_EOF) {
-            rc = NCC_UNEXPECTED_EOF;
+        if (buffer_consume_k(6,hex) == NLC_EOF) {
+            rc = NLC_UNEXPECTED_EOF;
             return;
         }
         // Get the utf8 rep
@@ -67,7 +62,7 @@ void check_replace_escape(char& c, int& rc, string& utf8) {
         c = EMPTY;
     // Unknown escape sequence, get rid of it
     } else {
-        rc = NCC_ILLEGAL_ESCAPE;
+        rc = NLC_ILLEGAL_ESCAPE;
     }
 
 }
@@ -99,9 +94,9 @@ Error get_token(Token& t) {
     t.str = "";
     t.identifier = "";
 
-    // Start out with NCC_OK
+    // Start out with NLC_OK
     Error err;
-    err.error = NCC_OK;
+    err.error = NLC_OK;
 
     // Set default token properties
     string lexeme{};
@@ -120,13 +115,13 @@ Error get_token(Token& t) {
         rc = buffer_get_next_char(curr_char);
 
         // At this point EOF is fine, haven't started token yet
-        if (rc == NCC_EOF) {
+        if (rc == NLC_EOF) {
             // Build EOF token
             t.id = TOKEN_EOF;
             t.line_no = src_line_no;
             t.col_no = src_col_no;
 
-            err.error = NCC_EOF;
+            err.error = NLC_EOF;
             return err;
         }
 
@@ -206,7 +201,7 @@ Error get_token(Token& t) {
         rc = buffer_get_next_char(curr_char);
 
         // In this case its just TOKEN_LESS 
-        if (rc == NCC_EOF || curr_char == ' ' || curr_char == '\n' || curr_char == '\t') {
+        if (rc == NLC_EOF || curr_char == ' ' || curr_char == '\n' || curr_char == '\t') {
             t.id = TOKEN_LESS; 
             t.lexeme = lexeme;
         // In this case its TOKEN_LESS_EQ
@@ -230,8 +225,8 @@ Error get_token(Token& t) {
                     rc = buffer_get_next_char(curr_char);
 
                     // Unexpected EOF, block comment was not closed
-                    if (rc == NCC_EOF) {
-                        err.error = NCC_UNEXPECTED_EOF;
+                    if (rc == NLC_EOF) {
+                        err.error = NLC_UNEXPECTED_EOF;
                         err.line = src_line_no;
                         err.col = src_col_no;
 
@@ -247,8 +242,8 @@ Error get_token(Token& t) {
                         rc2 = buffer_consume_k(2, next_two);
 
                         // No end of block comment
-                        if (rc2 == NCC_EOF) {
-                            err.error = NCC_UNEXPECTED_EOF;
+                        if (rc2 == NLC_EOF) {
+                            err.error = NLC_UNEXPECTED_EOF;
                             err.line = src_line_no;
                             err.col = src_col_no;
 
@@ -278,7 +273,7 @@ Error get_token(Token& t) {
         rc = buffer_get_next_char(curr_char);
 
         // In this case its TOKEN_GREATER
-        if (rc == NCC_EOF || curr_char == ' ' || curr_char == '\n' || curr_char == '\t') {
+        if (rc == NLC_EOF || curr_char == ' ' || curr_char == '\n' || curr_char == '\t') {
             t.id = TOKEN_GREATER; 
             t.lexeme = lexeme;
         } else {
@@ -338,7 +333,7 @@ Error get_token(Token& t) {
         rc = buffer_get_next_char(curr_char);
 
         // In this case its TOKEN_COLON
-        if (rc == NCC_EOF || curr_char == ' ' || curr_char == '\n' || curr_char == '\t') {
+        if (rc == NLC_EOF || curr_char == ' ' || curr_char == '\n' || curr_char == '\t') {
             t.id = TOKEN_COLON; 
             t.lexeme = lexeme;
         } else {
@@ -368,8 +363,8 @@ Error get_token(Token& t) {
             t.id = TOKEN_NOT_EQUAL;
             t.lexeme = lexeme;
         // If EOF, report unexpected EOF
-        } else if (rc == NCC_EOF) {
-            err.error = NCC_UNEXPECTED_EOF;
+        } else if (rc == NLC_EOF) {
+            err.error = NLC_UNEXPECTED_EOF;
             err.line = t.line_no;
             err.col = t.col_no;
 
@@ -378,7 +373,7 @@ Error get_token(Token& t) {
         // Otherwise, token is undefined, just a lone ~
         else {
             buffer_back_char();
-            err.error = NCC_UNDEFINED_TOKEN; 
+            err.error = NLC_UNDEFINED_TOKEN; 
             err.line = src_line_no;
             err.col = src_col_no;
 
@@ -394,8 +389,8 @@ Error get_token(Token& t) {
             if (curr_char == '\n') break;
 
             // Must end with newline, otherwise it's unexpected EOF
-            if (rc == NCC_EOF) {
-                err.error = NCC_UNEXPECTED_EOF;
+            if (rc == NLC_EOF) {
+                err.error = NLC_UNEXPECTED_EOF;
                 err.line = src_line_no;
                 err.col = src_col_no;
 
@@ -416,7 +411,7 @@ Error get_token(Token& t) {
 
             // This may not be correct, can't remember what I was thinking here. I'll come 
             // back to this later if there are problems
-            if (rc == NCC_EOF) {
+            if (rc == NLC_EOF) {
                 t.id = TOKEN_EOF;
                 t.lexeme = lexeme;
                 t.identifier = lexeme;
@@ -425,7 +420,7 @@ Error get_token(Token& t) {
                 err.col = src_col_no;
 
                 // Might want this to be unexpected EOF
-                err.error = NCC_EOF;
+                err.error = NLC_EOF;
 
                 return err;
             }
@@ -461,8 +456,8 @@ Error get_token(Token& t) {
             rc = buffer_get_next_char(curr_char);
 
             // Reached EOF before closing string
-            if (rc == NCC_EOF) {
-                err.error = NCC_UNEXPECTED_EOF;
+            if (rc == NLC_EOF) {
+                err.error = NLC_UNEXPECTED_EOF;
                 err.line = src_line_no;
                 err.col = src_col_no;
 
@@ -484,15 +479,15 @@ Error get_token(Token& t) {
                 }
 
                 // Unexpected EOF
-                if (return_code == NCC_UNEXPECTED_EOF) {
-                    err.error = NCC_UNEXPECTED_EOF;
+                if (return_code == NLC_UNEXPECTED_EOF) {
+                    err.error = NLC_UNEXPECTED_EOF;
                     err.line = src_line_no;
                     err.col = src_col_no;
 
                     return err;
                     // Illegal escape sequence
-                } else if (return_code == NCC_ILLEGAL_ESCAPE) {
-                    err.error = NCC_ILLEGAL_ESCAPE;
+                } else if (return_code == NLC_ILLEGAL_ESCAPE) {
+                    err.error = NLC_ILLEGAL_ESCAPE;
                     err.line = src_line_no;
                     err.col = src_col_no;
 
@@ -519,10 +514,10 @@ Error get_token(Token& t) {
         rc = buffer_get_next_char(next);
 
         // Lone '.' at EOF, report token as dot and EOF
-        if (rc == NCC_EOF) {
+        if (rc == NLC_EOF) {
             t.id = TOKEN_DOT;
             t.lexeme = lexeme; 
-            err.error = NCC_EOF; 
+            err.error = NLC_EOF; 
 
             return err;
         }
@@ -540,7 +535,7 @@ Error get_token(Token& t) {
             // Consume remaining fractional digits
             for (;;) {
                 rc = buffer_get_next_char(curr_char);
-                if (rc == NCC_EOF) break;
+                if (rc == NLC_EOF) break;
 
                 if (is_digit(curr_char)) {
                     lexeme.push_back(curr_char);
@@ -553,7 +548,7 @@ Error get_token(Token& t) {
             // Optional exponent is allowed here, we have fractional digits
             char epeek{};
             rc = buffer_get_next_char(epeek);
-            if (rc != NCC_EOF && (epeek == 'e' || epeek == 'E')) {
+            if (rc != NLC_EOF && (epeek == 'e' || epeek == 'E')) {
                 // record exponent start position (the 'e'/'E')
                 int e_line = src_line_no;
                 int e_col  = src_col_no;
@@ -567,8 +562,8 @@ Error get_token(Token& t) {
                 // Look for optional sign, if EOF, invalid number (last was e or E)
                 // can't end with e
                 rc = buffer_get_next_char(sign);
-                if (rc == NCC_EOF) {
-                    err.error = NCC_INVALID_NUMBER;
+                if (rc == NLC_EOF) {
+                    err.error = NLC_INVALID_NUMBER;
                     err.line = e_line;
                     err.col  = e_col;
                     return err;
@@ -589,12 +584,12 @@ Error get_token(Token& t) {
 
                     // If EOF, we have no digits after exponent and option sign, 
                     // not a valid real
-                    if (rc == NCC_EOF || !is_digit(first_exp_digit)) {
+                    if (rc == NLC_EOF || !is_digit(first_exp_digit)) {
                         // If its not EOF, back up, might be the start of something new
-                        if (rc != NCC_EOF) buffer_back_char();
+                        if (rc != NLC_EOF) buffer_back_char();
 
                         // Report invalid number
-                        err.error = NCC_INVALID_NUMBER;
+                        err.error = NLC_INVALID_NUMBER;
                         err.line = s_line;
                         err.col  = s_col; 
                         return err;
@@ -610,7 +605,7 @@ Error get_token(Token& t) {
                     buffer_back_char();
 
                     // Report invalid number
-                    err.error = NCC_INVALID_NUMBER;
+                    err.error = NLC_INVALID_NUMBER;
                     err.line = e_line;
                     err.col  = e_col;
                     return err;
@@ -623,7 +618,7 @@ Error get_token(Token& t) {
                     rc = buffer_get_next_char(curr_char);
 
                     // Break if at EOF
-                    if (rc == NCC_EOF) break;
+                    if (rc == NLC_EOF) break;
 
                     // If we have a new digit, push
                     if (is_digit(curr_char)) lexeme.push_back(curr_char);
@@ -637,7 +632,7 @@ Error get_token(Token& t) {
             // Last thing we grabbed was not a new digit and not an exponent, put back whatever we grabbed
             // the real has concluded
             } else {
-                if (rc != NCC_EOF) buffer_back_char();
+                if (rc != NLC_EOF) buffer_back_char();
             }
 
             t.id = TOKEN_REAL;
@@ -654,7 +649,7 @@ Error get_token(Token& t) {
             rc = buffer_get_next_char(curr_char);
 
             // End at EOF
-            if (rc == NCC_EOF) break;
+            if (rc == NLC_EOF) break;
 
             // If digit, continue building
             if (is_digit(curr_char)) {
@@ -675,7 +670,7 @@ Error get_token(Token& t) {
         rc = buffer_get_next_char(peek);
 
         // Found a DOT
-        if (rc != NCC_EOF && peek == '.') {
+        if (rc != NLC_EOF && peek == '.') {
 
             // Report that we saw a dot and push dot to lexeme
             saw_dot = true;
@@ -686,7 +681,7 @@ Error get_token(Token& t) {
             rc = buffer_get_next_char(d);
 
             // Consume fractional digits if they exist
-            if (rc != NCC_EOF && is_digit(d)) {
+            if (rc != NLC_EOF && is_digit(d)) {
 
                 // Report that we saw a fractional digit
                 saw_frac_digit = true;
@@ -699,7 +694,7 @@ Error get_token(Token& t) {
                     rc = buffer_get_next_char(curr_char);
 
                     // Break at EOF, done
-                    if (rc == NCC_EOF) break;
+                    if (rc == NLC_EOF) break;
 
                     // Consume digit
                     if (is_digit(curr_char)) {
@@ -713,11 +708,11 @@ Error get_token(Token& t) {
             } else {
                 // No fractional digit after '.', so it's like "5." 
                 // Note: Exponent after this is not allowed
-                if (rc != NCC_EOF) buffer_back_char();
+                if (rc != NLC_EOF) buffer_back_char();
             }
         // not '.', put it back
         } else {
-            if (rc != NCC_EOF) buffer_back_char();
+            if (rc != NLC_EOF) buffer_back_char();
         }
 
         // Optional exponent:
@@ -732,7 +727,7 @@ Error get_token(Token& t) {
             rc = buffer_get_next_char(epeek);
 
             // If we found it, we continue in the same way as before
-            if (rc != NCC_EOF && (epeek == 'e' || epeek == 'E')) {
+            if (rc != NLC_EOF && (epeek == 'e' || epeek == 'E')) {
                 // Report position of exponent
                 int e_line = src_line_no;
                 int e_col  = src_col_no;
@@ -748,9 +743,9 @@ Error get_token(Token& t) {
 
                 // If EOF, number is invalid, recall that we found an exponent, but 
                 // this means their is no digits that follow
-                if (rc == NCC_EOF) {
+                if (rc == NLC_EOF) {
                     // Report invalid number
-                    err.error = NCC_INVALID_NUMBER;
+                    err.error = NLC_INVALID_NUMBER;
                     err.line = e_line;
                     err.col  = e_col;
                     return err;
@@ -770,13 +765,13 @@ Error get_token(Token& t) {
                     rc = buffer_get_next_char(first_exp_digit);
 
                     // If no digit after exponent, invalid number
-                    if (rc == NCC_EOF || !is_digit(first_exp_digit)) {
+                    if (rc == NLC_EOF || !is_digit(first_exp_digit)) {
                         // Might be the start of something new, back up
-                        if (rc != NCC_EOF) buffer_back_char();
+                        if (rc != NLC_EOF) buffer_back_char();
 
                         // Report invalid number, cant end with a sign after exponent
                         // must have at least one digit
-                        err.error = NCC_INVALID_NUMBER;
+                        err.error = NLC_INVALID_NUMBER;
                         err.line = s_line;
                         err.col  = s_col; 
 
@@ -793,7 +788,7 @@ Error get_token(Token& t) {
                     buffer_back_char();
 
                     // Report invalid number
-                    err.error = NCC_INVALID_NUMBER;
+                    err.error = NLC_INVALID_NUMBER;
                     err.line = e_line;
                     err.col  = e_col;
                      
@@ -805,7 +800,7 @@ Error get_token(Token& t) {
                     rc = buffer_get_next_char(curr_char);
 
                     // Break at EOF, our number is valid
-                    if (rc == NCC_EOF) break;
+                    if (rc == NLC_EOF) break;
 
                     // Consume digits
                     if (is_digit(curr_char)) lexeme.push_back(curr_char);
@@ -818,7 +813,7 @@ Error get_token(Token& t) {
                 }
             // No exponent, no digits, done with number, go back one
             } else {
-                if (rc != NCC_EOF) buffer_back_char();
+                if (rc != NLC_EOF) buffer_back_char();
             }
         }
 
@@ -853,7 +848,7 @@ Error get_token(Token& t) {
 
     last_token = t;
 
-    // Return our NCC_OK Error
+    // Return our NLC_OK Error
     return err;
 }
 

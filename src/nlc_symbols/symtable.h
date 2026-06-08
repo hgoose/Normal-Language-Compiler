@@ -1,19 +1,11 @@
-#ifndef NCC_SYMTABLE_H
-#define NCC_SYMTABLE_H
+#ifndef NLC_SYMTABLE_H
+#define NLC_SYMTABLE_H
+
+#include "types.h"
 
 #include <string>
 #include <cstddef>
 #include <list>
-
-enum class TYPE : unsigned int;
-
-enum class SYMTYPE : unsigned int {
-    null, VAR
-};
-
-enum LOCATION_TYPE : unsigned int {
-    MEMORY, REG, STACK
-};
 
 struct SYMLOCATION {
     LOCATION_TYPE location_type{};

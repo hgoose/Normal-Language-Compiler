@@ -1,14 +1,10 @@
-// Nate Warner z2004109
-
-// main.cc: Take a file as a command line argument and pass it to the parser
-
 #include "drivers.h"
 #include "error.h"
 #include "lex.h"
+#include "token.h"
+
 #include <iostream> 
 #include <cstdlib> 
-
-#include "token.h"
 
 using std::cout;
 

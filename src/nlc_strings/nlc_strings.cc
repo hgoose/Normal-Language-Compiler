@@ -1,4 +1,4 @@
-#include "ncc_strings.h"
+#include "nlc_strings.h"
 #include "error.h"
 
 STR_TABLE_ENTRY::STR_TABLE_ENTRY(bool vi, size_t offset) 
@@ -21,7 +21,7 @@ STR_TABLE_ENTRY STR_TABLE::add_string(std::string& str) {
         str_table[used++] = ch; 
     } 
     if (overflow() || _overflow) {
-        set_print_token_error(Error{}, NCC_STR_TABLE_OVERFLOW);
+        set_print_token_error(Error{}, NLC_STR_TABLE_OVERFLOW);
 
         return STR_TABLE_ENTRY{};
     }

@@ -1,9 +1,5 @@
-// Nate warner 
-// CS 515
-// Assignment 4
-
-#ifndef NCC_AST_UTILS_H
-#define NCC_AST_UTILS_H
+#ifndef NLC_AST_UTILS_H
+#define NLC_AST_UTILS_H
 
 #include "ast_node.h"
 

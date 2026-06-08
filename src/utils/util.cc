@@ -1,7 +1,3 @@
-// Nate Warner z2004109
-//
-// util.cc: Various utility functions, used in other parts of the project
-
 #include "buffio.h"
 #include "util.h"
 #include "error.h"
@@ -131,7 +127,7 @@ void read_file_to_file(const char* infile, const char* outfile) {
 
     // If reading file to buffer has any problems, output error and return
     int rc{};
-    if ((rc = buffer_init(infile)) != NCC_OK) {
+    if ((rc = buffer_init(infile)) != NLC_OK) {
         Error err;
         err.error = rc;
         err.line = src_line_no;
@@ -143,7 +139,7 @@ void read_file_to_file(const char* infile, const char* outfile) {
     // Char c holds buffer bytes
     char c{};
     // While we get grab a next char from buffer
-    while (buffer_get_cur_char(c) == NCC_OK) {
+    while (buffer_get_cur_char(c) == NLC_OK) {
         // Output that char to output file
         out << c;
         // Move to next position in buffer
@@ -158,7 +154,7 @@ void read_file_to_file(const char* infile, const char* outfile) {
 int parse_hex6_codepoint(const std::string& hex6, uint32_t& value) {
     // If here are not exactly 6 hex digits, error
     if (hex6.size() != 6) {
-        return NCC_ILLEGAL_ESCAPE;
+        return NLC_ILLEGAL_ESCAPE;
     }
 
     // For each hex digit
@@ -176,11 +172,11 @@ int parse_hex6_codepoint(const std::string& hex6, uint32_t& value) {
         else if ('A' <= c && c <= 'F') value |= (c - 'A' + 10);
 
         // Not a valid hex digit
-        else return NCC_ILLEGAL_ESCAPE;
+        else return NLC_ILLEGAL_ESCAPE;
     }
 
     // All is good
-    return NCC_OK;
+    return NLC_OK;
 }
 
 // Calls parse_hex6_codepoint and encode_utf8, we get returned the utf8 representation
@@ -199,12 +195,12 @@ std::string hex6_to_utf8(const std::string& hex6) {
 int encode_utf8(uint32_t cp, std::string& out) {
     // Validate Unicode scalar value
     if (cp > 0x10FFFF) {
-        return NCC_ILLEGAL_ESCAPE;
+        return NLC_ILLEGAL_ESCAPE;
     }
 
     // In the removed group, error
     if (0xD800 <= cp && cp <= 0xDFFF) {
-        return NCC_ILLEGAL_ESCAPE;
+        return NLC_ILLEGAL_ESCAPE;
     }
 
     // 1 Byte
@@ -228,5 +224,5 @@ int encode_utf8(uint32_t cp, std::string& out) {
         out.push_back(static_cast<char>(0x80 | (cp & 0x3F)));
     }
 
-    return NCC_OK; 
+    return NLC_OK; 
 }

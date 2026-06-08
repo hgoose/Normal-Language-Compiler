@@ -1,5 +1,5 @@
-#ifndef NCC_INTEGERS_H
-#define NCC_INTEGERS_H
+#ifndef NLC_INTEGERS_H
+#define NLC_INTEGERS_H
 
 #include <cstddef>
 

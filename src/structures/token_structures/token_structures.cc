@@ -1,0 +1,76 @@
+#include "types.h"
+#include "token_structures.h"
+#include "token.h"
+
+namespace TOKEN_STRUCTURES {
+    const TokenMap<std::string> operator_names = {
+        {TOKEN_PLUS, "add"},
+        {TOKEN_MINUS, "sub"},
+        {TOKEN_MULT, "mul"},
+        {TOKEN_DIV, "div"},
+        {TOKEN_MOD, "mod"},
+        {TOKEN_EXP, "exp"},
+        {TOKEN_UNEG, "neg"},
+        {TOKEN_UPLUS, "pos"},
+        {TOKEN_LESS, "less"},
+        {TOKEN_LESS_EQ, "leq"},
+        {TOKEN_GREATER, "greater"},
+        {TOKEN_GREATER_EQ, "geq"},
+        {TOKEN_EQUAL, "equal"},
+        {TOKEN_NOT_EQUAL, "neq"},
+        {TOKEN_AND, "and"},
+        {TOKEN_OR, "or"}
+    };
+
+    const TokenNames token_names = {
+        "TOKEN_NULL", "TOKEN_EOF", "TOKEN_PLUS",
+        "TOKEN_MINUS", "TOKEN_MULT", "TOKEN_DIV",
+        "TOKEN_IDENT", "TOKEN_EXP", "TOKEN_LESS",
+        "TOKEN_LESS_EQ", "TOKEN_GREATER", "TOKEN_GREATER_EQ",
+        "TOKEN_EQUAL", "TOKEN_NOT_EQUAL", "TOKEN_ASSIGN",
+        "TOKEN_NOT", "TOKEN_LPAREN", "TOKEN_RPAREN",
+        "TOKEN_LBRACE", "TOKEN_RBRACE", "TOKEN_LBRACKET",
+        "TOKEN_RBRACKET", "TOKEN_AND", "TOKEN_OR",
+        "TOKEN_DOT", "TOKEN_AT", "TOKEN_INTEGER",
+        "TOKEN_STRING", "TOKEN_COLON", "TOKEN_SEMICOLON",
+        "TOKEN_COMMA", "TOKEN_REAL", "TOKEN_MOD",
+        "TOKEN_UNEG", "TOKEN_UPLUS" 
+    };
+
+    const TokenSet terminals = {
+        TOKEN_PLUS, TOKEN_MINUS, TOKEN_MULT,
+        TOKEN_DIV, TOKEN_IDENT, TOKEN_EXP,
+        TOKEN_LESS, TOKEN_LESS_EQ, TOKEN_GREATER,
+        TOKEN_GREATER_EQ, TOKEN_EQUAL, TOKEN_NOT_EQUAL,
+        TOKEN_ASSIGN, TOKEN_NOT, TOKEN_LPAREN,
+        TOKEN_RPAREN, TOKEN_LBRACE, TOKEN_RBRACE,
+        TOKEN_LBRACKET, TOKEN_RBRACKET, TOKEN_AND,
+        TOKEN_OR, TOKEN_DOT, TOKEN_AT,
+        TOKEN_INTEGER, TOKEN_STRING, TOKEN_COLON,
+        TOKEN_SEMICOLON, TOKEN_COMMA, TOKEN_REAL,
+        TOKEN_MOD, TOKEN_UNEG, TOKEN_UPLUS
+    };
+
+    const TokenSet binary_arithmetic_operators = {
+        TOKEN_PLUS, TOKEN_MINUS, TOKEN_MULT,
+        TOKEN_DIV, TOKEN_EXP,
+        TOKEN_MOD
+    };
+
+    const TokenSet unary_arithmetic_operators = {
+        TOKEN_UNEG, TOKEN_UPLUS
+    };
+
+    const TokenSet binary_relational_operators = {
+        TOKEN_LESS, TOKEN_LESS_EQ, TOKEN_GREATER,
+        TOKEN_GREATER_EQ, TOKEN_EQUAL, TOKEN_NOT_EQUAL
+    };
+
+    const TokenSet binary_logical_operators = {
+        TOKEN_OR, TOKEN_AND
+    };
+
+    const TokenSet unary_logical_operators = {
+        TOKEN_NOT
+    };
+};

@@ -1,10 +1,10 @@
-#ifndef NCC_TOKEN_H
-#define NCC_TOKEN_H
+#ifndef NLC_TOKEN_H
+#define NLC_TOKEN_H
+
+#include "types.h"
 
 #include <string>
 #include <vector>
-#include <unordered_set>
-#include <unordered_map>
 
 /*******     Token  id  values   ******/
 #define TOKEN_NULL               0
@@ -53,17 +53,6 @@
 #define ESC_BACKSPACE            8
 #define EMPTY                    0
 
-namespace TOKEN_STRUCTURES {
-    extern const std::unordered_map<int, std::string> operator_names;
-    extern const std::vector<std::string> token_names;
-    extern const std::unordered_set<int> terminals; 
-    extern const std::unordered_set<int> binary_arithmetic_operators;
-    extern const std::unordered_set<int> unary_arithmetic_operators;
-    extern const std::unordered_set<int> binary_relational_operators;
-    extern const std::unordered_set<int> binary_logical_operators;
-    extern const std::unordered_set<int> unary_logical_operators;
-};
-
 struct Token
 {
     // Guaranteed to have
@@ -78,8 +67,8 @@ struct Token
     std::string str{};
     std::string identifier{};
 
-    bool is(int);
-    bool is_not(int);
+    bool is(TokenValue);
+    bool is_not(TokenValue);
     bool is_ident();
     bool is_ident_if();
     bool is_ident_else();
@@ -90,7 +79,6 @@ struct Token
     bool is_eof();
 };
 
-bool at_eof(const Token& t);
 void print_token(const Token& t);
 
 #endif /* NCC_TOKEN_H */

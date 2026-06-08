@@ -94,53 +94,33 @@
             \item Otherwise, syntax error.
         \end{enumerate}
 */
-
-
 #include <algorithm>
 #include <iostream>
 #include <unordered_map>
 #include <functional>
 
 #include "parser.h"
-#include "error.h"
+#include "parser_structures.h"
+#include "parserutils.h"
+#include "util.h"
 #include "lex.h"
+#include "error.h"
 #include "ast_node.h"
 #include "ast_utils.h"
-#include "parserutils.h"
 #include "tree_eval.h"
 #include "codegen.h"
-#include "ncc_integers.h"
+#include "nlc_integers.h"
 #include "symtable.h"
-#include "util.h"
-
-typedef std::unordered_map<std::string, std::function<AST_NODE*(void)>> PARSE_MAP;
-typedef std::unordered_map<NODE_TYPE, std::function<bool(AST_NODE*)>> EVAL_MAP;
+#include "types.h"
 
 Token next_token;
-
-static PARSE_MAP parse_map = {
-    {"print", parse_print},
-    {"read", parse_read},
-    {"int4", parse_decl_int4},
-    {"if", parse_if},
-    {"while", parse_while}
-};
-
-static EVAL_MAP eval_map = {
-    {NODE_TYPE::PRINT, evaluate_print},
-    {NODE_TYPE::DECL, init_var},
-    {NODE_TYPE::ASSIGN, update_var},
-    {NODE_TYPE::READ, process_read},
-    {NODE_TYPE::IF, process_if},
-    {NODE_TYPE::WHILE, process_while}
-};
 
 // Calls the correct function in parse_map based on the
 // current identifier.
 static AST_NODE* get_statement() {
     std::string ident = next_token.identifier;
     if (parse_map.find(ident) != parse_map.end()) {
-        return parse_map[ident]();
+        return parse_map.at(ident)();
     }
 
     return parse_assign();
@@ -190,7 +170,7 @@ int parse() {
         // Essentially a continue
         if (eval_map.find(statement_type) == eval_map.end()) return;
 
-        bool success = eval_map[statement_type](statement);
+        bool success = eval_map.at(statement_type)(statement);
 
         if (!success) {
             free_tree(statement);
@@ -229,7 +209,7 @@ AST_NODE* parse_print() {
     }
 
     // Missing ( after print
-    if (unexpected_token(TOKEN_LPAREN, NCC_SYNTAX_ERROR)) {
+    if (unexpected_token(TOKEN_LPAREN, NLC_SYNTAX_ERROR)) {
         free_tree(print_root);
         return nullptr;
     }
@@ -241,7 +221,7 @@ AST_NODE* parse_print() {
     }
 
     // If we have an rparen here the print statement is empty, illegal.
-    if (wrong_next_token(TOKEN_RPAREN, NCC_EXPECTED_EXPRESSION)) {
+    if (wrong_next_token(TOKEN_RPAREN, NLC_EXPECTED_EXPRESSION)) {
         free_tree(print_root);
         return nullptr;
     }
@@ -273,7 +253,7 @@ AST_NODE* parse_print() {
         }
 
         // No expression following the comma
-        if (wrong_next_token(TOKEN_RPAREN, NCC_EXPECTED_EXPRESSION)) {
+        if (wrong_next_token(TOKEN_RPAREN, NLC_EXPECTED_EXPRESSION)) {
             free_tree(print_root);
             return nullptr;
         }
@@ -291,7 +271,7 @@ AST_NODE* parse_print() {
     }
 
     // Missing ) after expressions
-    if (unexpected_token(TOKEN_RPAREN, NCC_SYNTAX_ERROR)) {
+    if (unexpected_token(TOKEN_RPAREN, NLC_SYNTAX_ERROR)) {
         free_tree(print_root);
         return nullptr;
     }
@@ -304,7 +284,7 @@ AST_NODE* parse_print() {
     }
 
     // Missing semicolon after )
-    if (unexpected_token(TOKEN_SEMICOLON, NCC_EXPECTED_SEMICOLON)) {
+    if (unexpected_token(TOKEN_SEMICOLON, NLC_EXPECTED_SEMICOLON)) {
         free_tree(print_root);
         return nullptr;
     }
@@ -330,7 +310,7 @@ AST_NODE* parse_read() {
         return nullptr;
     }
 
-    if (unexpected_token(TOKEN_LPAREN, NCC_SYNTAX_ERROR)) {
+    if (unexpected_token(TOKEN_LPAREN, NLC_SYNTAX_ERROR)) {
         free_tree(read_root);
         return nullptr;
     }
@@ -342,7 +322,7 @@ AST_NODE* parse_read() {
     }
 
     if (next_token.is(TOKEN_RPAREN) || next_token.is_not(TOKEN_IDENT)) {
-        set_print_token_error(Error{}, NCC_EXPECTED_VAR);
+        set_print_token_error(Error{}, NLC_EXPECTED_VAR);
         onepast_semi_or_block(LBRACE_COUNT_ZERO);
         free_tree(read_root);
         return nullptr;
@@ -363,7 +343,7 @@ AST_NODE* parse_read() {
         return nullptr;
     }
 
-    if (unexpected_token(TOKEN_RPAREN, NCC_SYNTAX_ERROR)) {
+    if (unexpected_token(TOKEN_RPAREN, NLC_SYNTAX_ERROR)) {
         free_tree(read_root);
         return nullptr;
     }
@@ -374,7 +354,7 @@ AST_NODE* parse_read() {
         return nullptr;
     }
 
-    if (unexpected_token(TOKEN_SEMICOLON, NCC_EXPECTED_SEMICOLON)) {
+    if (unexpected_token(TOKEN_SEMICOLON, NLC_EXPECTED_SEMICOLON)) {
         free_tree(read_root);
         return nullptr;
     }
@@ -400,14 +380,14 @@ AST_NODE* parse_decl_int4() {
     }
 
     // Variable name must be an identifier token
-    if (unexpected_token(TOKEN_IDENT, NCC_INVALID_IDENTIFIER)) {
+    if (unexpected_token(TOKEN_IDENT, NLC_INVALID_IDENTIFIER)) {
         free_tree(declare_root);
         return nullptr;
     }
 
     // Variable name is reserved
     if (is_reserved(next_token)) {
-        set_print_token_error(Error{}, NCC_VARIABLE_NAME_RESERVED);
+        set_print_token_error(Error{}, NLC_VARIABLE_NAME_RESERVED);
         onepast_semi_or_block(LBRACE_COUNT_ZERO);
         free_tree(declare_root);
         return nullptr;
@@ -416,7 +396,7 @@ AST_NODE* parse_decl_int4() {
     // Put into symbol table 
     SYMINFO* entry = SYMTABLE::add_symbol(SYMINFO(next_token.identifier, TYPE::INT4, SYMTYPE::VAR));
     if (!entry) {
-        set_print_token_error(Error{}, NCC_SYMBOL_ALREADY_EXISTS);
+        set_print_token_error(Error{}, NLC_SYMBOL_ALREADY_EXISTS);
         onepast_semi_or_block(LBRACE_COUNT_ZERO);
         free_tree(declare_root);
         return nullptr; 
@@ -438,7 +418,7 @@ AST_NODE* parse_decl_int4() {
     }
 
     // Statement does not end with a semicolon
-    if (unexpected_token(TOKEN_SEMICOLON, NCC_SYNTAX_ERROR)) {
+    if (unexpected_token(TOKEN_SEMICOLON, NLC_SYNTAX_ERROR)) {
         free_tree(declare_root);
         return nullptr;
     }
@@ -469,7 +449,7 @@ AST_NODE* parse_assign() {
     }
 
     // Next token must be assignment
-    if (unexpected_token(TOKEN_ASSIGN, NCC_SYNTAX_ERROR)) {
+    if (unexpected_token(TOKEN_ASSIGN, NLC_SYNTAX_ERROR)) {
         free_tree(assign_root);
         return nullptr;
     }
@@ -494,7 +474,7 @@ AST_NODE* parse_assign() {
     assign_root->add_children(ast_expr);
 
     // Statement does not end with a semicolon
-    if (unexpected_token(TOKEN_SEMICOLON, NCC_EXPECTED_SEMICOLON)) {
+    if (unexpected_token(TOKEN_SEMICOLON, NLC_EXPECTED_SEMICOLON)) {
         free_tree(assign_root);
         return nullptr;
     }
@@ -552,7 +532,7 @@ AST_NODE* parse_else() {
         } 
         // Never terminated structure
         else if (next_token.is_eof()) {
-            set_print_token_error(Error{}, NCC_UNEXPECTED_EOF);
+            set_print_token_error(Error{}, NLC_UNEXPECTED_EOF);
             free_tree(else_root);
             return nullptr;
         }
@@ -575,7 +555,7 @@ AST_NODE* parse_if() {
     }
 
     // Next token after if keyword must be an lparen
-    if (unexpected_token(TOKEN_LPAREN, NCC_SYNTAX_ERROR, skip_if, LBRACE_COUNT_ZERO)) {
+    if (unexpected_token(TOKEN_LPAREN, NLC_SYNTAX_ERROR, skip_if, LBRACE_COUNT_ZERO)) {
         free_tree(if_root);
         return nullptr;
     }
@@ -587,7 +567,7 @@ AST_NODE* parse_if() {
     }
 
     // If the next token after lparen is an rparen, we are missing an expression
-    if (wrong_next_token(TOKEN_RPAREN, NCC_EXPECTED_EXPRESSION, skip_if, LBRACE_COUNT_ZERO)) {
+    if (wrong_next_token(TOKEN_RPAREN, NLC_EXPECTED_EXPRESSION, skip_if, LBRACE_COUNT_ZERO)) {
         free_tree(if_root);
         return nullptr;
     }
@@ -605,7 +585,7 @@ AST_NODE* parse_if() {
 
     // Ensure that the conditional is indeed a conditional
     if (!ast_expr->is_type_logical()) {
-        set_print_token_error(Error{}, ast_expr->token, NCC_NON_LOGICAL_CONDITION);
+        set_print_token_error(Error{}, ast_expr->token, NLC_NON_LOGICAL_CONDITION);
         skip_if(LBRACE_COUNT_ZERO);
         free_tree(ast_expr);
         free_tree(if_root);
@@ -616,7 +596,7 @@ AST_NODE* parse_if() {
     if_root->add_child(ast_expr);
 
     // Token following logical expression must be a right parenthesis
-    if (unexpected_token(TOKEN_RPAREN, NCC_SYNTAX_ERROR, skip_if, LBRACE_COUNT_ZERO)) {
+    if (unexpected_token(TOKEN_RPAREN, NLC_SYNTAX_ERROR, skip_if, LBRACE_COUNT_ZERO)) {
         free_tree(if_root);
         return nullptr;
     }
@@ -665,7 +645,7 @@ AST_NODE* parse_if() {
             } 
             // Structure was never terminated
             else if (next_token.is_eof()) {
-                set_print_token_error(Error{}, NCC_UNEXPECTED_EOF);
+                set_print_token_error(Error{}, NLC_UNEXPECTED_EOF);
                 free_tree(if_root);
                 return nullptr;
             }
@@ -694,7 +674,7 @@ AST_NODE* parse_while() {
     }
 
     // Missing (
-    if (unexpected_token(TOKEN_LPAREN, NCC_SYNTAX_ERROR, skip_while, lbrace_count)) {
+    if (unexpected_token(TOKEN_LPAREN, NLC_SYNTAX_ERROR, skip_while, lbrace_count)) {
         free_tree(while_root);
         return nullptr;
     }
@@ -706,7 +686,7 @@ AST_NODE* parse_while() {
     }
 
     // Missing condition
-    if (wrong_next_token(TOKEN_RPAREN, NCC_EXPECTED_EXPRESSION, skip_while, lbrace_count)) {
+    if (wrong_next_token(TOKEN_RPAREN, NLC_EXPECTED_EXPRESSION, skip_while, lbrace_count)) {
         free_tree(while_root);
         return nullptr;
     }
@@ -728,7 +708,7 @@ AST_NODE* parse_while() {
 
     // Condition was not boolean
     if (!ast_expr->is_type_logical()) {
-        set_print_token_error(Error{}, ast_expr->token, NCC_NON_LOGICAL_CONDITION);
+        set_print_token_error(Error{}, ast_expr->token, NLC_NON_LOGICAL_CONDITION);
         skip_while(lbrace_count);
         free_tree(ast_expr);
         free_tree(while_root);
@@ -738,7 +718,7 @@ AST_NODE* parse_while() {
     while_root->add_child(ast_expr);
 
     // Token after condition was not a right parenthesis
-    if (unexpected_token(TOKEN_RPAREN, NCC_SYNTAX_ERROR, skip_while, lbrace_count)) {
+    if (unexpected_token(TOKEN_RPAREN, NLC_SYNTAX_ERROR, skip_while, lbrace_count)) {
         free_tree(while_root);
         return nullptr;
     }
@@ -808,7 +788,7 @@ AST_NODE* parse_while() {
         } 
         // Structure was never terminated
         else if (next_token.is_eof()) {
-            set_print_token_error(Error{}, NCC_UNEXPECTED_EOF);
+            set_print_token_error(Error{}, NLC_UNEXPECTED_EOF);
             free_tree(while_root);
             return nullptr;
         }
@@ -953,7 +933,7 @@ AST_NODE* C(Error& err) {
         left = D(err);
 
     } else {
-        set_print_token_error(Error{}, NCC_SYNTAX_ERROR);
+        set_print_token_error(Error{}, NLC_SYNTAX_ERROR);
         free_tree(here);
         return nullptr;
     }
@@ -981,7 +961,7 @@ AST_NODE* D(Error& err) {
         left = E(err);
         right = DP(err);
     } else {
-        set_print_token_error(Error{}, NCC_SYNTAX_ERROR);
+        set_print_token_error(Error{}, NLC_SYNTAX_ERROR);
         free_tree(here);
         return nullptr;
     }
@@ -1078,7 +1058,7 @@ AST_NODE* E(Error& err) {
         }
         return left;
     } else {
-        set_print_token_error(Error{}, NCC_SYNTAX_ERROR);
+        set_print_token_error(Error{}, NLC_SYNTAX_ERROR);
     }
 
     return nullptr;
@@ -1128,7 +1108,7 @@ AST_NODE* T(Error& err) {
         }
         return left;
     } else {
-        set_print_token_error(Error{}, NCC_SYNTAX_ERROR);
+        set_print_token_error(Error{}, NLC_SYNTAX_ERROR);
     }
 
     return nullptr;
@@ -1172,7 +1152,7 @@ AST_NODE* N(Error& err) {
     ) {
         left = F(err);
     } else {
-        set_print_token_error(Error{}, NCC_SYNTAX_ERROR);
+        set_print_token_error(Error{}, NLC_SYNTAX_ERROR);
         free_tree(here);
         return nullptr;
     }
@@ -1195,7 +1175,7 @@ AST_NODE* F(Error& err) {
         left = S(err);
         right = FP(err);
     } else {
-        set_print_token_error(Error{}, NCC_SYNTAX_ERROR);
+        set_print_token_error(Error{}, NLC_SYNTAX_ERROR);
         free_tree(here);
         return nullptr;
     }
@@ -1276,7 +1256,7 @@ AST_NODE* S(Error& err) {
 
         // If next token is not ), error
         if (next_token.id != TOKEN_RPAREN) {
-            err.error = NCC_EXPECTED_RPAREN;
+            err.error = NLC_EXPECTED_RPAREN;
             err.line = next_token.line_no;
             err.col = next_token.col_no;
             print_error(err);
@@ -1345,7 +1325,7 @@ AST_NODE* S(Error& err) {
             SYMINFO* syminfo = SYMTABLE::get_symbol(next_token.identifier, SYMTYPE::VAR);
 
             if (!syminfo) {
-                set_print_token_error(Error{}, NCC_UNKNOWN_VARIABLE);
+                set_print_token_error(Error{}, NLC_UNKNOWN_VARIABLE);
                 free_tree(here);
                 return nullptr;
             }
@@ -1363,7 +1343,7 @@ AST_NODE* S(Error& err) {
         }
 
     } else {
-        set_print_token_error(Error{}, NCC_SYNTAX_ERROR);
+        set_print_token_error(Error{}, NLC_SYNTAX_ERROR);
         free_tree(here);
         return nullptr;
     }

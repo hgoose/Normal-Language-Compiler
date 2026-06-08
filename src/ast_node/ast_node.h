@@ -1,38 +1,16 @@
-// Nate warner 
-// CS 515
-// Assignment 4
-#ifndef NCC_ASTNODE_H
-#define NCC_ASTNODE_H
+#ifndef NLC_ASTNODE_H
+#define NLC_ASTNODE_H
 
 #include <list>
 #include <string>
-#include <unordered_set>
 
 #include "token.h"
-#include "ncc_strings.h"
+#include "nlc_strings.h"
 #include "symtable.h"
-
-#define OPERATOR true
 
 struct AST_NODE;
 
-enum class NODE_TYPE : unsigned int {
-    null, NOT, AND, OR,
-    LESS, LEQ, GREATER,
-    GEQ, EQ, NEQ,
-    ADD, SUB, MULT, 
-    DIV, MOD, EXP, 
-    UPLUS, UNEG, DECL, 
-    ASSIGN, PRINT, READ, 
-    BLOCK, INT, VAR, STR, 
-    BOOL, IF, ELSE, WHILE
-};
-
-enum class TYPE : unsigned int {
-    null, INT4, STRING, BOOL, TYPE_MISMATCH
-};
-
-extern std::unordered_set<std::string> reserved_words;
+inline constexpr bool OPERATOR{true};
 
 bool is_reserved(const Token& t);
 NODE_TYPE get_node_type(const Token& t);

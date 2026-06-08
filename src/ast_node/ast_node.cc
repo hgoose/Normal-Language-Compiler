@@ -4,10 +4,8 @@
 #include <cctype>
 
 #include "token.h"
-
-std::unordered_set<std::string> reserved_words = {
-    "print", "read", "int4", "while", "if", "else", "true", "false"
-};
+#include "token_structures.h"
+#include "ast_structures.h"
 
 bool is_reserved(const Token& t) {
     std::string lexeme = t.lexeme;

@@ -1,18 +1,15 @@
-// Nate warner 
-// CS 515
-// Assignment 4
-
 #include <cstdlib>
 #include <sys/mman.h>
 #include <cstdlib>
 #include <iostream>
 
-#include "ncc_strings.h"
-#include "ncc_integers.h"
+#include "nlc_strings.h"
+#include "nlc_integers.h"
 #include "codegen.h"
+#include "codegen_structures.h"
 
 // Two meg should suffice
-static constexpr size_t PROG_SIZE = 2 * 1024 * 1024;
+static constexpr size_t PROG_SIZE{2*1024*1024};
 
 // Entry into the programs address space
 static unsigned char* prog;
@@ -20,7 +17,7 @@ static unsigned char* prog;
 // Offset into the address space
 static size_t p_offset;
 
-size_t byte_count = 0;
+size_t byte_count{};
 
 void load_byte(unsigned char byte) {
     prog[p_offset++] = byte;

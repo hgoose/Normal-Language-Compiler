@@ -1,12 +1,8 @@
-// Nate warner 
-// CS 515
-// Assignment 4
-
 #include "tree_eval.h"
 #include "ast_node.h"
 #include "codegen.h"
 #include "token.h"
-#include "ncc_integers.h"
+#include "nlc_integers.h"
 #include "error.h"
 #include "ast_utils.h"
 #include "parserutils.h"
@@ -307,7 +303,7 @@ bool update_var(AST_NODE* root) {
 
     // No symbol found
     if (!symbol) {
-        set_print_token_error(Error{}, var->token, NCC_UNKNOWN_VARIABLE);
+        set_print_token_error(Error{}, var->token, NLC_UNKNOWN_VARIABLE);
         return false;
     }
 
@@ -337,7 +333,7 @@ bool process_read(AST_NODE* root) {
     SYMINFO* symbol = SYMTABLE::get_symbol(var->token.identifier, var->symbol_type);
 
     if (!symbol) {
-        set_print_token_error(Error{}, var->token, NCC_UNKNOWN_VARIABLE);
+        set_print_token_error(Error{}, var->token, NLC_UNKNOWN_VARIABLE);
         return false;
     }
 

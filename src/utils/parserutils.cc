@@ -2,6 +2,7 @@
 #include "error.h"
 #include "parser.h"
 #include "lex.h"
+#include "types.h"
 
 #include <string>
 #include <cstdint>
@@ -15,7 +16,7 @@ void goto_next_semicolon() {
     } 
 }
 
-void onepast_next_token(int token) {
+void onepast_next_token(TokenValue token) {
     while (next_token.id != token && !next_token.is_eof()) {
         get_next_token_and_print_error();
     }
@@ -95,7 +96,7 @@ void skip_else(int lbrace_count) {
 
 // If the next token is invalid or a lexer error occurred,
 // skip to start of next statement or eof.
-bool skip_if_invalid_or_lexerr(const Error& err, MOVE_PROCEDURE mv_proc, int lbrace_count){
+bool skip_if_invalid_or_lexerr(const Error& err, MoveProcedure mv_proc, int lbrace_count){
     if (invalid_lookahead() || handle_lex_error(err)) {
         mv_proc(lbrace_count);
         return true;
@@ -105,7 +106,7 @@ bool skip_if_invalid_or_lexerr(const Error& err, MOVE_PROCEDURE mv_proc, int lbr
 
 // Anything other than the expected token is an error.
 // Return true to indicate that the next_token is unexpected.
-bool unexpected_token(int expected_token, int error_to_submit, MOVE_PROCEDURE mv_proc, int lbrace_count){
+bool unexpected_token(TokenValue expected_token, ErrorValue error_to_submit, MoveProcedure mv_proc, int lbrace_count){
     if (next_token.id != expected_token) {
         set_print_token_error(Error{}, error_to_submit);
         mv_proc(lbrace_count);
@@ -116,7 +117,7 @@ bool unexpected_token(int expected_token, int error_to_submit, MOVE_PROCEDURE mv
 
 // If the next_token is wrong_token, error.
 // Return true to indicate that the next_token is wrong
-bool wrong_next_token(int wrong_token, int error_to_submit, MOVE_PROCEDURE mv_proc, int lbrace_count){
+bool wrong_next_token(TokenValue wrong_token, ErrorValue error_to_submit, MoveProcedure mv_proc, int lbrace_count){
     if (next_token.id == wrong_token) {
         set_print_token_error(Error{}, error_to_submit);
         mv_proc(lbrace_count);

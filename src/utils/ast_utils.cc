@@ -1,10 +1,7 @@
-// Nate warner 
-// CS 515
-// Assignment 4
-
 #include "ast_utils.h"
 #include "ast_node.h"
 #include "token.h"
+#include "token_structures.h"
 #include "error.h"
 #include "parser.h"
 
@@ -19,7 +16,7 @@ static void r_ast_out(AST_NODE* node, int depth);
 static const char* op_name(int id);
 
 void syntax_error(Error& err) {
-    err.error = NCC_SYNTAX_ERROR;
+    err.error = NLC_SYNTAX_ERROR;
     err.line = next_token.line_no;
     err.col = next_token.col_no;
 
@@ -197,7 +194,7 @@ TYPE assign_types(AST_NODE* root) {
     if (root->is_operator) {
         AST_NODE* offender = type_compliance(root, left, right);
         if (offender) {
-            set_print_token_error(Error{}, offender->token, NCC_UNACCEPTABLE_TYPE_MISMATCH);
+            set_print_token_error(Error{}, offender->token, NLC_UNACCEPTABLE_TYPE_MISMATCH);
             return TYPE::TYPE_MISMATCH;
         }
 

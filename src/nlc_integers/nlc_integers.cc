@@ -1,4 +1,4 @@
-#include "ncc_integers.h"
+#include "nlc_integers.h"
 #include "error.h"
 
 INT_TABLE_ENTRY::INT_TABLE_ENTRY(bool vi, size_t offset) 
@@ -20,7 +20,7 @@ int* INT_TABLE::emit_int(const INT_TABLE_ENTRY& entry) {
 INT_TABLE_ENTRY INT_TABLE::add_int(int x) {
     size_t off = used;
     if (overflow()) {
-        set_print_token_error(Error{}, NCC_INT_TABLE_OVERFLOW);
+        set_print_token_error(Error{}, NLC_INT_TABLE_OVERFLOW);
         return INT_TABLE_ENTRY{};
     }
     int_table[used++] = x;

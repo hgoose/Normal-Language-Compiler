@@ -1,5 +1,5 @@
-#ifndef NCC_STRINGS_H
-#define NCC_STRINGS_H
+#ifndef NLC_STRINGS_H
+#define NLC_STRINGS_H
 
 #include <cstddef>
 #include <string>

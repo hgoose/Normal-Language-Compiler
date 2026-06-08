@@ -1,7 +1,3 @@
-// Nate warner z2004109
-// CS-490D/515
-// buffio.cc
-
 #include "buffio.h"
 #include "error.h"
 
@@ -39,7 +35,7 @@ int buffer_init(const char* filename) {
     std::ifstream file(filename, std::ios_base::binary);
 
     // Check if any error flags were set equivalent to checking (file.fail() or file.bad())
-    if (!file) return NCC_FILE_NOT_FOUND;
+    if (!file) return NLC_FILE_NOT_FOUND;
 
     // Get the size of the file in bytes, which will be the size of the buffer
 
@@ -50,7 +46,7 @@ int buffer_init(const char* filename) {
     std::streampos end_pos = file.tellg();
 
     // If either the stream buffer associated to the stream does not support the operation, or if it fails, the tellg returns -1, return error
-    if (end_pos == std::streampos(-1)) return NCC_IO_ERROR;
+    if (end_pos == std::streampos(-1)) return NLC_IO_ERROR;
 
     // tellg returned last position of stream, aka the size of the stream
     buff_size = static_cast<size_t>(end_pos);
@@ -58,7 +54,7 @@ int buffer_init(const char* filename) {
     // Empty file, empty buffer
     if (buff_size == 0) {
         // No error here
-        return NCC_OK;
+        return NLC_OK;
     }
 
     // Place pointer back at start
@@ -73,7 +69,7 @@ int buffer_init(const char* filename) {
     // Check if any error flags were set, (file.bad() or file.fail())
     if (!file) {
         delete[] buffer;
-        return NCC_FILE_NOT_FOUND;
+        return NLC_FILE_NOT_FOUND;
     }
 
     // Read through the buffer, if \n is encountered, record index of start of next line 
@@ -102,26 +98,26 @@ int buffer_init(const char* filename) {
     }
 
     // No error
-    return NCC_OK;
+    return NLC_OK;
 }
 
 // Return the character at the current input position.  But don't
 // advance in the input
 int buffer_get_cur_char(char& c) {
     // Check if we are outside of the buffer
-    if (curr_pos >= buff_size) return NCC_EOF;
+    if (curr_pos >= buff_size) return NLC_EOF;
 
     // Grab the character at current buffer position
     c = buffer[curr_pos];
 
     // No error
-    return NCC_OK;
+    return NLC_OK;
 }
 
 // Advance to next position in the input
 int buffer_next_char(void) {
     // Check if we can advance (not at end of buffer)
-    if (curr_pos >= buff_size) return NCC_EOF;
+    if (curr_pos >= buff_size) return NLC_EOF;
 
     // Otherwise, advance
     char current_char{};
@@ -138,20 +134,20 @@ int buffer_next_char(void) {
     }
 
     // No error
-    return NCC_OK;
+    return NLC_OK;
 }
 
 // Advance to the next position and get the character there.
 int buffer_get_next_char(char& c) {
     // See if advancing would fall off the buffer, 
-    if (buffer_next_char() != NCC_OK) return NCC_EOF;
-    if (buffer_eof()) return NCC_EOF;
+    if (buffer_next_char() != NLC_OK) return NLC_EOF;
+    if (buffer_eof()) return NLC_EOF;
 
     // Otherwise, position is advanced and we get the character
     c = buffer[curr_pos];
 
     // No error
-    return NCC_OK;
+    return NLC_OK;
 }
 
 bool buffer_eof(void) {
@@ -162,7 +158,7 @@ bool buffer_eof(void) {
 // Go back one position in the input
 int buffer_back_char(void) {
     // Can't back up from the start of the buffer
-    if (curr_pos == 0) return NCC_BOF;
+    if (curr_pos == 0) return NLC_BOF;
 
     // Past start of buffer, we can move backwards
     --curr_pos;
@@ -179,17 +175,17 @@ int buffer_back_char(void) {
     }
 
     // No error
-    return NCC_OK;
+    return NLC_OK;
 }
 
 
 // Looks ahead one position in the buffer, and returns the character
 int buffer_peek_next(char& c) {
-    if (curr_pos + 1 >= buff_size) return NCC_EOF;
+    if (curr_pos + 1 >= buff_size) return NLC_EOF;
 
     c = buffer[curr_pos + 1];
 
-    return NCC_OK;
+    return NLC_OK;
 }
 
 int buffer_consume_k(size_t k, string& next_k) {
@@ -197,7 +193,7 @@ int buffer_consume_k(size_t k, string& next_k) {
     next_k.clear();
 
     // Make sure we aren't going to hit EOF before we peek k characters
-    if ((curr_pos + k) >= buff_size) return NCC_EOF;
+    if ((curr_pos + k) >= buff_size) return NLC_EOF;
 
     // Construct a string with the next k characters.
     // This loop runs k times
@@ -208,7 +204,7 @@ int buffer_consume_k(size_t k, string& next_k) {
 
     // Ending position of curr_pos is curr_pos + k
 
-    return NCC_OK;
+    return NLC_OK;
 }
 
 int buffer_cleanup(void) {
@@ -233,7 +229,7 @@ int buffer_cleanup(void) {
     line_sizes.clear();
 
     // No error
-    return NCC_OK;
+    return NLC_OK;
 }
 
 // Return a specified line of the source code.  Intended for error
@@ -242,7 +238,7 @@ int get_src_line(size_t line_no, string& line) {
     line.clear();
 
     // If passed in line_no doesn't exist for some reason
-    if (line_no <= 0 || line_no >= line_start.size()) return NCC_NOT_FOUND;
+    if (line_no <= 0 || line_no >= line_start.size()) return NLC_NOT_FOUND;
 
     // Get start and line size
     size_t start = line_start[line_no];
@@ -253,5 +249,5 @@ int get_src_line(size_t line_no, string& line) {
         line+=buffer[i];
     }
 
-    return NCC_OK;
+    return NLC_OK;
 }
