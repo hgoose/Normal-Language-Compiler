@@ -19,8 +19,9 @@ bool is_reserved(const Token& t) {
 AST_NODE* binary_arithmetic_type_compliance(AST_NODE* left, AST_NODE* right) {
     if (!left->is_type_integral())
         return left;
-    else if (!right->is_type_integral())
+    else if (!right->is_type_integral()) {
         return right;
+    }
 
     return nullptr;
 }

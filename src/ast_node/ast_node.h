@@ -55,6 +55,8 @@ struct AST_NODE {
 
     AST_NODE(Token token) : token(token) {}
 
+    AST_NODE(NODE_TYPE node_type) : node_type(node_type) {}
+
     AST_NODE(Token token, NODE_TYPE node_type) 
         : token(token),
           node_type(node_type)

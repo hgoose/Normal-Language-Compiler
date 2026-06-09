@@ -26,15 +26,13 @@ namespace First {
     extern TokenSet modNTP;
     extern TokenSet uplusN;
     extern TokenSet unegN;
+    extern TokenSet expSFP; 
     extern TokenSet SFP;
-    extern TokenSet landSFP;
+    extern TokenSet F;
     extern TokenSet lpArp;
     extern TokenSet integer;
     extern TokenSet ident;
     extern TokenSet string;
-
-    bool in(TokenValue token);
 }
-
 
 #endif

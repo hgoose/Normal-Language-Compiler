@@ -40,6 +40,7 @@ bool is_st_valid(AST_NODE* root) {
         if (curr->is_nop()) {
             children.push(curr); 
         } 
+
         // Unary operator, check for a single child of the correct type
         // a A -> A | L \ell -> L
         else if (curr->operator_is_unary()) { 
@@ -50,6 +51,7 @@ bool is_st_valid(AST_NODE* root) {
             children.pop();
             children.push(curr);
         }
+
         // Check that for a binary operator, we have two children available 
         // A a A -> A | A r A -> L | (L | (A r A) \ell (L | (A r A)) -> L)
         else if (curr->operator_is_binary()) {
@@ -115,6 +117,7 @@ AST_NODE* pttoast(AST_NODE* root) {
         if (curr->is_nop()) {
             children.push(curr); 
         } 
+
         // Unary operator, grab a single child
         else if (curr->operator_is_unary()) {
             AST_NODE* right = children.top(); children.pop();
@@ -123,6 +126,7 @@ AST_NODE* pttoast(AST_NODE* root) {
             // Throw this node onto the stack
             children.push(curr);
         }
+
         // Binary operator, attach stack top to right, stack top-1 to left
         else if (curr->operator_is_binary()){
             AST_NODE* right = children.top(); children.pop();
@@ -146,23 +150,27 @@ AST_NODE* type_compliance(AST_NODE* parent, AST_NODE* left, AST_NODE* right) {
     AST_NODE* offender{};
 
     if (parent->operator_is_binary_arithmetic()) {
-        AST_NODE* offender = 
+        offender = 
             binary_arithmetic_type_compliance(left, right);
+    } 
 
-    } else if (parent->operator_is_unary_arithmetic()) {
-        AST_NODE* offender = 
+    else if (parent->operator_is_unary_arithmetic()) {
+        offender = 
             unary_arithmetic_type_compliance(left);
+    } 
 
-    } else if (parent->operator_is_binary_relational()) {
-        AST_NODE* offender = 
+    else if (parent->operator_is_binary_relational()) {
+        offender = 
             binary_relational_type_compliance(left, right);
+    } 
 
-    } else if (parent->operator_is_binary_logical()) {
-        AST_NODE* offender = 
+    else if (parent->operator_is_binary_logical()) {
+        offender = 
             binary_logical_type_compliance(left, right);
+    } 
 
-    } else if (parent->operator_is_unary_logical()) {
-        AST_NODE* offender = 
+    else if (parent->operator_is_unary_logical()) {
+        offender = 
             unary_logical_type_compliance(left);
     }
 
@@ -193,6 +201,7 @@ TYPE assign_types(AST_NODE* root) {
 
     if (root->is_operator) {
         AST_NODE* offender = type_compliance(root, left, right);
+
         if (offender) {
             set_print_token_error(Error{}, offender->token, NLC_UNACCEPTABLE_TYPE_MISMATCH);
             return TYPE::TYPE_MISMATCH;
@@ -200,9 +209,13 @@ TYPE assign_types(AST_NODE* root) {
 
         if (root->operator_is_arithmetic()) {
             root->data_type = left_type > right_type ? left_type : right_type;
-        } else if (root->operator_is_relational()) {
+        } 
+
+        else if (root->operator_is_relational()) {
             root->data_type = TYPE::BOOL;
-        } else if (root->operator_is_logical()) {
+        } 
+
+        else if (root->operator_is_logical()) {
             root->data_type = TYPE::BOOL;
         }
 

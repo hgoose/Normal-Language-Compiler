@@ -72,4 +72,8 @@ namespace First {
         TOKEN_STRING
     };
 
+    TokenSet F = {
+        TOKEN_LPAREN, TOKEN_INTEGER, TOKEN_IDENT,
+        TOKEN_STRING
+    };
 }

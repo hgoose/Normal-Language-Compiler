@@ -1,103 +1,10 @@
-/* EXPRESSION SPEC
- *
-    CFG:
-        A &\to BA^{\prime} \\
-        A^{\prime} &\to \text{or } BA^{\prime} \mid \varepsilon \\
-        B &\to CB^{\prime} \\
-        B^{\prime} &\to \text{and }CB^{\prime} \mid \varepsilon \\
-        C &\to\; \sim C \mid D\\
-        D &\to ED^{\prime} \\
-        D^{\prime} &\to ==E \mid \ne E \mid <E \mid \leq E \mid > E \mid \geq E \mid \varepsilon\\
-        E &\to TE^{\prime} \\
-        E^{\prime} &\to +TE^{\prime} \ \mid \ -TE^{\prime} \ \mid \ \varepsilon \\
-        T &\to NT^{\prime} \\
-        T^{\prime} &\to *NT^{\prime} \ \mid \ /NT^{\prime} \ \mid \ \text{ MOD } NT^{\prime} \ \mid \ \varepsilon \\
-        N &\to \oplus N \ \mid \ \neg N \ \mid \ F \\
-        F &\to SF^{\prime} \\
-        F^{\prime} &\to \land SF^{\prime} \ \mid \ \varepsilon\\
-        S &\to (A) \ \mid \ \text{int} \ \mid \ \text{var} \mid \text{true} \mid \text{false} \mid \text{string}
-
-    FIRST:
-        \text{FIRST}(S) &= \{(,\text{int}, \text{var}, \text{true}, \text{false}, \text{string}\} \\
-        \text{FIRST}(F^{\prime}) &= \{\land, \varepsilon\} \\
-        \text{FIRST}(F) &=  \text{FIRST}(S) = \{(, \text{int}, \text{var}, \text{true}, \text{false}, \text{string}\} \\
-        \text{FIRST}(N) &= \{\oplus,\neg\} \cup \text{FIRST}(F) = \left\{\oplus, \neg\right\} \cup \text{FIRST}(S) \\
-        &= \{\oplus,\neg,(,\text{int}, \text{var}, \text{true}, \text{false}, \text{string}\} \\
-        \text{FIRST}(T^{\prime}) &= \{*, /, \text{MOD}, \varepsilon\} \\
-        \text{FIRST}(T) &= \text{FIRST}(N) = \{\oplus,\neg,(,\text{int}, \text{var}, \text{true}, \text{false}, \text{string}\} \\
-        \text{FIRST}(E^{\prime}) &= \{+,-,\epsilon\} \\
-        \text{FIRST}(E) &=\text{FIRST}(T) = \{\oplus,\neg,(, \text{int}, \text{var}, \text{true}, \text{false}, \text{string}\} \\
-        \text{FIRST}(D^{\prime}) &= \left\{==,\ne,<, \leq,>, \geq,\varepsilon\right\} \\
-        \text{FIRST}(D) &= \text{FIRST}(E) = \{\oplus,\neg,(, \text{int}, \text{var}, \text{true}, \text{false}, \text{string}\} \\
-        \text{FIRST}(C) &= \left\{\sim\right\} \cup \text{FIRST}(D) = \{\sim, \oplus,\neg,(, \text{int}, \text{var}, \text{true}, \text{false}, \text{string}\} \\
-        \text{FIRST}(B^{\prime}) &= \left\{\text{and}, \varepsilon\right\} \\
-        \text{FIRST}(B) &= \text{FIRST}(C) = \{\sim, \oplus,\neg,(, \text{int}, \text{var}, \text{true}, \text{false}, \text{string}\} \\
-        \text{FIRST}(A^{\prime}) &= \left\{\text{or}, \varepsilon\right\} \\
-        \text{FIRST}(A) &= \text{FIRST}(B) =\{\sim, \oplus,\neg,(, \text{int}, \text{var}, \text{true}, \text{false}, \text{string}\} 
-
-    FOLLOW: 
-        \text{FOLLOW}(A) &= \left\{), \$\right\} \\
-        \text{FOLLOW}(A^{\prime}) &= \text{FOLLOW}(A) = \left\{), \$\right\} \\
-        \text{FOLLOW}(B) &= \text{FIRST}(A^{\prime}) - \left\{\varepsilon\right\} \cup \text{FOLLOW}(A) = \left\{\text{or}, ), \$\right\} \\
-        \text{FOLLOW}(B^{\prime}) &= \text{FOLLOW}(B) = \left\{\text{or}, ), \$\right\} \\
-        \text{FOLLOW}(C) &= \text{FIRST}(B^{\prime}) - \left\{\varepsilon\right\}\cup \text{FOLLOW}(B^{\prime}) \cup \text{FOLLOW}(B) = \left\{\text{and}, \text{or}, ), \$\right\} \\
-        \text{FOLLOW}(D) &= \text{FOLLOW}(C) = \left\{\text{and}, \text{or}, ), \$\right\} \\
-        \text{FOLLOW}(D^{\prime}) &= \text{FOLLOW}(D) = \left\{\text{and}, \text{or}, ), \$\right\} \\
-        \text{FOLLOW}(E) &= \text{FIRST}(D^{\prime}) \cup \text{FOLLOW}(D) \cup \text{FOLLOW}(D^{\prime}) \\
-        &= \left\{==, \ne, <, \leq, >, \geq, \text{and}, \text{or}, ), \$\right\} \\
-        \text{FOLLOW}(E^{\prime}) &= \text{FOLLOW}(E) \\
-        &= \left\{==, \ne, <, \leq, >, \geq, \text{and}, \text{or}, ), \$\right\} \\
-        \text{FOLLOW}(T) &= \left\{+, -, ==, \ne, <, \leq, >, \geq, \text{and}, \text{or}, ), \$\right\} \\ 
-        \text{FOLLOW}(T^{\prime}) &= \left\{+, -, ==, \ne, <, \leq, >, \geq, \text{and}, \text{or}, ), \$\right\} \\ 
-        \text{FOLLOW}(N) &= \left\{*, /, \text{MOD}, +, -, ==, \ne, <, \leq, >, \geq, \text{and}, \text{or}, ), \$\right\} \\ 
-        \text{FOLLOW}(F) &= \left\{*, /, \text{MOD}, +, -, ==, \ne, <, \leq, >, \geq, \text{and}, \text{or}, ), \$\right\} \\ 
-        \text{FOLLOW}(F^{\prime}) &= \left\{*, /, \text{MOD}, +, -, ==, \ne, <, \leq, >, \geq, \text{and}, \text{or}, ), \$\right\} \\ 
-        \text{FOLLOW}(S) &= \left\{\land, *, /, \text{MOD}, +, -, ==, \ne, <, \leq, >, \geq, \text{and}, \text{or}, ), \$\right\} 
-
-    FIRST of sequences:
-        \text{FIRST}(\varepsilon) &= \left\{\varepsilon\right\}  \\
-        \text{FIRST}(BA^{\prime}) &= \text{FIRST}(B) = \{\sim, \oplus,\neg,(, \text{int}, \text{var}, \text{true}, \text{false}, \text{string}\} \\
-        \text{FIRST}(\text{or} BA^{\prime}) &= \left\{\text{or}\right\} \\
-        \text{FIRST}(CB^{\prime}) &= \text{FIRST}(C) = \{\sim, \oplus,\neg,(, \text{int}, \text{var}, \text{true}, \text{false}, \text{string}\} \\
-        \text{FIRST}(\text{and}CB^{\prime}) &= \left\{\text{and}\right\} \\
-        \text{FIRST}(\sim C) &= \left\{\sim\right\} \\
-        \text{FIRST}(D) &= \{\oplus,\neg,(, \text{int}, \text{var}, \text{true}, \text{false}, \text{string}\} \\
-        \text{FIRST}(ED^{\prime}) &= \text{FIRST}(E) =  \{\oplus,\neg,(, \text{int}, \text{var}, \text{true}, \text{false}, \text{string}\} \\
-        \text{FIRST}(==E) &= \left\{==\right\} \\
-        \text{FIRST}(\ne E) &= \left\{\ne\right\} \\
-        \text{FIRST}(<E) &= \left\{<\right\} \\
-        \text{FIRST}(\leq E) &= \left\{\leq\right\} \\
-        \text{FIRST}(>E) &= \left\{>\right\} \\
-        \text{FIRST}(\geq E) &= \left\{\geq\right\} \\
-        \text{FIRST}(TE^{\prime}) &= \{\oplus,\neg,(, \text{int}, \text{var}, \text{true}, \text{false}, \text{string}\}\\
-        \text{FIRST}(+TE^{\prime}) &= \{+\}\\
-        \text{FIRST}(-TE^{\prime}) &= \{-\}\\
-        \text{FIRST}(NT^{\prime}) &= \{\oplus,\neg,(, \text{int}, \text{var}, \text{true}, \text{false}, \text{string}\}\\
-        \text{FIRST}(*NT^{\prime}) &= \{*\}\\
-        \text{FIRST}(/NT^{\prime}) &= \{/\}\\
-        \text{FIRST}(\text{MOD}NT^{\prime}) &= \{\text{MOD}\}\\
-        \text{FIRST}(\oplus N) &= \{\oplus\}\\
-        \text{FIRST}(\neg N) &= \{\neg\} \\
-        \text{FIRST}(SF^{\prime}) &= \{(, \text{int}, \text{var}, \text{true}, \text{false}, \text{string}\}\\
-        \text{FIRST}(\land SF^{\prime}) &= \{\land\}\\
-        \text{FIRST}((A)) &= \{(\}\\
-        \text{FIRST}(\text{int}) &= \{\text{int}\}\\
-        \text{FIRST}(\text{var}) &= \{\text{var}\} \\
-        \text{FIRST}(\text{true}) &= \{\text{true}\} \\
-        \text{FIRST}(\text{false}) &= \{\text{false}\} \\
-        \text{FIRST}(\text{string}) &= \{\text{string}\}
-
-    Recall the selection rule (considering current level A \to \alpha_1 | ... | \alpha_k)
-        \begin{enumerate}
-            \item If $a \in \text{FIRST}(\alpha_{i}) $, choose the production $\alpha_{i}$, otherwise
-            \item If $\varepsilon \in \text{FIRST}(\alpha_{k})$, and $a \in \text{FOLLOW}(A)$, choose $\alpha_{k}$,
-            \item Otherwise, syntax error.
-        \end{enumerate}
+/* Selection rule (considering current level A \to \alpha_1 | ... | \alpha_k)
+    \begin{enumerate}
+        \item If $a \in \text{FIRST}(\alpha_{i}) $, choose the production $\alpha_{i}$, otherwise
+        \item If $\varepsilon \in \text{FIRST}(\alpha_{k})$, and $a \in \text{FOLLOW}(A)$, choose $\alpha_{k}$,
+        \item Otherwise, syntax error.
+    \end{enumerate}
 */
-#include <algorithm>
-#include <iostream>
-#include <unordered_map>
-#include <functional>
 
 #include "parser.h"
 #include "parser_structures.h"
@@ -115,7 +22,17 @@
 #include "table_structures.h"
 #include "sets.h"
 
+#include <algorithm>
+#include <iostream>
+#include <unordered_map>
+#include <functional>
+
 Token next_token;
+
+Error parser_init(const char* src_code) {
+    Error err = lex_init(src_code);
+    return err;
+}
 
 // Calls the correct function in parse_map based on the
 // current identifier.
@@ -126,11 +43,6 @@ static AST_NODE* get_statement() {
     }
 
     return parse_assign();
-}
-
-Error parser_init(const char* src_code) {
-    Error err = lex_init(src_code);
-    return err;
 }
 
 // Parses the input program into an abstract syntax tree, then traverses
@@ -144,8 +56,7 @@ int parse() {
         return -1;
     }
 
-    AST_NODE* program_tree = new AST_NODE();
-    program_tree->node_type = NODE_TYPE::BLOCK;
+    AST_NODE* program_tree = new AST_NODE(NODE_TYPE::BLOCK);
 
     get_token(next_token);
 
@@ -788,6 +699,7 @@ AST_NODE* parse_while() {
             get_next_token_and_print_error();
             break;
         } 
+
         // Structure was never terminated
         else if (next_token.is_eof()) {
             set_print_token_error(Error{}, NLC_UNEXPECTED_EOF);
@@ -801,11 +713,12 @@ AST_NODE* parse_while() {
 
 // A -> BA'
 AST_NODE* A(Error& err) {
-    AST_NODE* here = new AST_NODE();
-    AST_NODE* left{}, *right{};
+    AST_NODE* here{}, *left{}, *right{};
 
     // FIRST(BA')
     if (next_token.in(First::BAP)) {
+        here = new AST_NODE();
+
         left = B(err);
         right = AP(err);
 
@@ -813,14 +726,13 @@ AST_NODE* A(Error& err) {
         return here;
     } 
 
-    free_tree(here);
+    set_print_token_error(Error{}, NLC_SYNTAX_ERROR);
     return nullptr;
 }
 
 // A' -> or BA' | \varepsilon
 AST_NODE* AP(Error& err) {
-    AST_NODE* here{};
-    AST_NODE* left{}, *right{};
+    AST_NODE* here{}, *left{}, *right{};
 
     // FIRST(or BA')
     if (next_token.in(First::orBAP)) {
@@ -830,6 +742,7 @@ AST_NODE* AP(Error& err) {
         Error tmp_error = get_token(next_token);
         if (invalid_lookahead() || handle_lex_error(tmp_error)) {
             err = tmp_error; 
+            free_tree(here);
             return nullptr;
         }
 
@@ -839,30 +752,33 @@ AST_NODE* AP(Error& err) {
         here->add_children(left, right);
         return here;
     } 
+
     // Takes A' -> \varepsilon
     return nullptr;
 }
 
 // B -> CB'
 AST_NODE* B(Error& err) {
-    AST_NODE* here = new AST_NODE();
-    AST_NODE* left{}, *right{};
+    AST_NODE* here, *left{}, *right{};
 
     // Consider FIRST(CB')
     if (next_token.in(First::CBP)) {
+        here = new AST_NODE();
+
         left = C(err);
         right = BP(err);
 
         here->add_children(left, right);
         return here;
     } 
+
+    set_print_token_error(Error{}, NLC_SYNTAX_ERROR);
     return nullptr;
 }
 
 // B' -> and CB' | \varepsilon
 AST_NODE* BP(Error& err) {
-    AST_NODE* here{};
-    AST_NODE* left{}, *right{};
+    AST_NODE* here{}, *left{}, *right{};
 
     // t \in FIRST(and CB')
     if (next_token.in(First::andCBP)) {
@@ -872,6 +788,7 @@ AST_NODE* BP(Error& err) {
         Error tmp_error = get_token(next_token);
         if (invalid_lookahead() || handle_lex_error(tmp_error)) {
             err = tmp_error; 
+            free_tree(here);
             return nullptr;
         }
 
@@ -881,13 +798,13 @@ AST_NODE* BP(Error& err) {
         here->add_children(left, right);
         return here;
     } 
+
     return nullptr;
 }
 
 // C -> ~C | D
 AST_NODE* C(Error& err) {
-    AST_NODE* here = new AST_NODE();
-    AST_NODE* left{};
+    AST_NODE* here{}, *left{};
 
     // t \in FIRST(~C)
     if (next_token.in(First::notC)) {
@@ -897,6 +814,7 @@ AST_NODE* C(Error& err) {
         Error tmp_error = get_token(next_token);
         if (invalid_lookahead() || handle_lex_error(tmp_error)) {
             err = tmp_error; 
+            free_tree(here);
             return nullptr;
         }
 
@@ -905,12 +823,12 @@ AST_NODE* C(Error& err) {
 
     // t \in FIRST(D)
     else if (next_token.in(First::D)) {
+        here = new AST_NODE();
         left = D(err);
     } 
 
     else {
         set_print_token_error(Error{}, NLC_SYNTAX_ERROR);
-        free_tree(here);
         return nullptr;
     }
 
@@ -920,31 +838,29 @@ AST_NODE* C(Error& err) {
 
 // D -> ED'
 AST_NODE* D(Error& err) {
-    AST_NODE* here = new AST_NODE();
-    AST_NODE* left{}, *right{};
+    AST_NODE* here{}, *left{}, *right{};
 
     // t \in FIRST(ED')
     if (next_token.in(First::EDP)) {
+        here = new AST_NODE();
+
         left = E(err);
         right = DP(err);
-    } else {
-        set_print_token_error(Error{}, NLC_SYNTAX_ERROR);
-        free_tree(here);
-        return nullptr;
-    }
 
-    here->add_children(left, right);
-    return here;
+        here->add_children(left, right);
+        return here;
+    } 
+
+    set_print_token_error(Error{}, NLC_SYNTAX_ERROR);
+    return nullptr;
 }
 
 // D' -> ==E | \ne E | <E | <=E | >E | >=E | \varepsilon
 AST_NODE* DP(Error& err) {
-    AST_NODE* here{};
-    AST_NODE* left{};
+    AST_NODE* here{}, *left{};
 
     // Consider these various first sets
-    if (next_token.in_union(
-        First::equalE, First::neqE, First::lessE, 
+    if (next_token.in_union(First::equalE, First::neqE, First::lessE, 
         First::leqE, First::greaterE, First::geqE
     )) {
         // Take E and consume the token
@@ -968,7 +884,7 @@ AST_NODE* DP(Error& err) {
 
 // E -> TE'
 AST_NODE* E(Error& err) {
-    AST_NODE* left = nullptr;
+    AST_NODE* left{}; 
 
     // t \in FIRST(TE'). Removed E' for this fold operation, left folds
     // +,- so that these operations are not right associative
@@ -984,16 +900,12 @@ AST_NODE* E(Error& err) {
             Error tmp_err = get_token(next_token);
             if (invalid_lookahead() || handle_lex_error(tmp_err)) {
                 err = tmp_err;
+                free_tree(left);
             	return nullptr;
             }
 
+            AST_NODE* here = new AST_NODE(op, get_node_type(op), OPERATOR);
             AST_NODE* rhs = T(err);
-            AST_NODE* here = new AST_NODE();
-
-            // Has previous token as its token (the operator)
-            here->token = op;
-            here->is_operator = true;
-            here->node_type = get_node_type(op);
 
             here->add_children(left, rhs);
 
@@ -1008,76 +920,48 @@ AST_NODE* E(Error& err) {
 
 // T -> NT'
 AST_NODE* T(Error& err) {
-    AST_NODE* left = nullptr;
+    AST_NODE* left{};
 
     // t \in FIRST(NT')
-    if (next_token.id == TOKEN_UPLUS || next_token.id == TOKEN_UNEG ||
-        next_token.id == TOKEN_LPAREN || next_token.id == TOKEN_INTEGER ||
-        next_token.id == TOKEN_STRING || next_token.id == TOKEN_IDENT) {
-
+    if (next_token.in(First::NTP)) {
         left = N(err);
 
         // Left fold *,/,mod. Same idea as for +,-
         // t \in FIRST(*NT') \cup FIRST(/NT') \cup FIRST(modNT')
-        while (next_token.id == TOKEN_MULT ||
-               next_token.id == TOKEN_DIV  ||
-               next_token.id == TOKEN_MOD) {
+        while (next_token.in_union(First::multNTP, First::divNTP, First::modNTP)) {
             Token op = next_token;
 
             Error tmp_err = get_token(next_token);
-            if (invalid_lookahead() || 
-            	handle_lex_error(tmp_err)
-            ) {
+            if (invalid_lookahead() || handle_lex_error(tmp_err)) {
                 err = tmp_err;
+                free_tree(left);
             	return nullptr;
             }
 
+            AST_NODE* node = new AST_NODE(op, get_node_type(op), OPERATOR);
             AST_NODE* rhs = N(err);
-
-            AST_NODE* node = new AST_NODE();
-            node->token = op;
-            node->is_operator = true;
-
-            if (op.id == TOKEN_MULT) {
-                node->node_type = NODE_TYPE::MULT;
-            } else if (op.id == TOKEN_DIV){
-                node->node_type = NODE_TYPE::DIV;
-            } else {
-                node->node_type = NODE_TYPE::MOD;
-            }
 
             node->add_children(left, rhs);
 
             left = node;
         }
         return left;
-    } else {
-        set_print_token_error(Error{}, NLC_SYNTAX_ERROR);
-    }
+    } 
 
+    set_print_token_error(Error{}, NLC_SYNTAX_ERROR);
     return nullptr;
 }
 
-// N -> \oplus N | \neg N | F
+// N -> \oplus F | \neg F | F
 AST_NODE* N(Error& err) {
-    AST_NODE* here = new AST_NODE();
-	AST_NODE* left{}, *right{};
+    AST_NODE* here{}, *left{}, *right{};
 
     // t \in FIRST(\neg F) or t \in FIRST(\oplus F)
-    if (next_token.id == TOKEN_UPLUS || next_token.id == TOKEN_UNEG) {
-        here->token = next_token;
-        here->is_operator = true;
-
-        if (next_token.id == TOKEN_UPLUS) {
-            here->node_type = NODE_TYPE::UPLUS;
-        } else {
-            here->node_type = NODE_TYPE::UNEG;
-        }
+    if (next_token.in_union(First::uplusN, First::unegN)) {
+        here = new AST_NODE(next_token, get_node_type(next_token), OPERATOR);
 
         Error tmp_error = get_token(next_token);
-        if (invalid_lookahead() || 
-        	handle_lex_error(tmp_error)
-        ) {
+        if (invalid_lookahead() || handle_lex_error(tmp_error)) {
             err = tmp_error;
             free_tree(here);
         	return nullptr;
@@ -1085,62 +969,53 @@ AST_NODE* N(Error& err) {
     
         left = F(err);
     } 
+
     // t \in FIRST(F)
-    else if (next_token.id == TOKEN_LPAREN 
-            || next_token.id == TOKEN_INTEGER 
-            || next_token.id == TOKEN_STRING
-            || next_token.id == TOKEN_IDENT
-    ) {
+    else if (next_token.in(First::F)) {
+        here = new AST_NODE();
+
         left = F(err);
-    } else {
+    } 
+
+    else {
         set_print_token_error(Error{}, NLC_SYNTAX_ERROR);
-        free_tree(here);
         return nullptr;
     }
 
-    here->add_child(left);
+    here->add_children(left);
     return here;
 }
 
 // F -> SF'
 AST_NODE* F(Error& err) {
-    AST_NODE* here = new AST_NODE();
-	AST_NODE* left{}, *right{};
+    AST_NODE* here{}, *left{}, *right{};
 
     // t \in FIRST(SF')
-    if (next_token.id == TOKEN_LPAREN 
-        || next_token.id == TOKEN_INTEGER 
-        || next_token.id == TOKEN_STRING 
-        || next_token.id == TOKEN_IDENT
-    ) {
-        // Take F -> SF'
+    if (next_token.in(First::SFP)) {
+        here = new AST_NODE();
+
         left = S(err);
         right = FP(err);
-    } else {
-        set_print_token_error(Error{}, NLC_SYNTAX_ERROR);
-        free_tree(here);
-        return nullptr;
-    }
 
-    here->add_children(left, right);
-    return here;
+        here->add_children(left, right);
+        return here;
+    } 
+
+    set_print_token_error(Error{}, NLC_SYNTAX_ERROR);
+    return nullptr;
 }
 
 // F' -> ^SF' | \varepsilon
 AST_NODE* FP(Error& err) {
-    AST_NODE* here = new AST_NODE();
-	AST_NODE* left{}, *right{};
+    AST_NODE* here{}, *left{}, *right{};
 
     // t \in FIRST(^SF')
-    if (next_token.id == TOKEN_EXP) {
-        here->token = next_token;
-        here->node_type = NODE_TYPE::EXP;
-        here->is_operator = true;
+    if (next_token.in(First::expSFP)) {
+        here = new AST_NODE(next_token, get_node_type(next_token), OPERATOR);
 
+        // Consume operator exp
         Error tmp_error = get_token(next_token);
-        if (invalid_lookahead() || 
-        	handle_lex_error(tmp_error)
-        ) {
+        if (invalid_lookahead() || handle_lex_error(tmp_error)) {
             err = tmp_error;
             free_tree(here);
         	return nullptr;
@@ -1149,15 +1024,11 @@ AST_NODE* FP(Error& err) {
         // Take F' -> ^SF'
         left = S(err);
         right = FP(err);
-    } 
-    // Take F' -> \varepsilon
-    else {
-        free_tree(here);
-        return nullptr;
-    }
 
-    here->add_children(left, right);
-    return here;
+        here->add_children(left, right);
+        return here;
+    } 
+    return nullptr;
 }
 
 // S -> (A) | int | ident | string
@@ -1166,7 +1037,7 @@ AST_NODE* S(Error& err) {
 	AST_NODE* left{};
 
     // t \in FIRST(int), token must be TOKEN_INTEGER, nothing to call.
-    if (next_token.id == TOKEN_INTEGER) {
+    if (next_token.in(First::integer)) {
         here->token = next_token;
         here->node_type = NODE_TYPE::INT;
         here->data_type = TYPE::INT4;
