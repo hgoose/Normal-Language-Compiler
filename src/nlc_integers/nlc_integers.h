@@ -3,9 +3,6 @@
 
 #include <cstddef>
 
-#define VALID true
-#define INVALID false
-
 struct INT_TABLE_ENTRY {
     bool vi{};
     size_t offset{};

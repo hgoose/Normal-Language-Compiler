@@ -4,9 +4,6 @@
 #include <cstddef>
 #include <string>
 
-#define VALID true
-#define INVALID false
-
 struct STR_TABLE_ENTRY {
     bool vi{};
     size_t offset{};

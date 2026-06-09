@@ -1,4 +1,5 @@
 #include "symtable.h"
+#include "table_structures.h"
 
 #include <string>
 #include <cstddef>

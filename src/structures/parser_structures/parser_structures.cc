@@ -1,4 +1,5 @@
 #include "parser_structures.h"
+#include "ast_structures.h"
 
 AST_NODE* parse_print();
 AST_NODE* parse_read();

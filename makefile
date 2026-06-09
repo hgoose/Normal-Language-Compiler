@@ -10,7 +10,9 @@ CXXFLAGS = -std=c++23 -g \
 			-Isrc/structures/token_structures \
 			-Isrc/structures/parser_structures \
 			-Isrc/structures/ast_structures  \
-			-Isrc/structures/codegen_structures 
+			-Isrc/structures/codegen_structures  \
+			-Isrc/structures/table_structures  \
+			-Isrc/structures/table_structures/symtable_structures 
 
 TARGET   = bin/nlc
 OBJDIR   = obj

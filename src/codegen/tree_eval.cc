@@ -455,8 +455,10 @@ bool process_while(AST_NODE* root) {
     load_imm32_at(jmp_start, body_size);
 
     int condition_start = get_current_position();
+
     evaluate_expr(condition);
     x86_test_al_imm8(0x1);
+
     int condition_end = get_current_position();
 
     int condition_plus_test_size = condition_end - condition_start;

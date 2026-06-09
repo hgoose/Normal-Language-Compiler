@@ -46,49 +46,13 @@ AST_NODE* unary_logical_type_compliance(AST_NODE* child) {
     return (child->is_type_logical() ? nullptr : child);
 }
 
-// Fix this abomination
 NODE_TYPE get_node_type(const Token& t) {
-    if (t.id == TOKEN_NOT) {
-        return NODE_TYPE::NOT;
-    } else if (t.id == TOKEN_AND) {
-        return NODE_TYPE::AND;
-    } else if (t.id == TOKEN_OR) {
-        return NODE_TYPE::OR;
-    } else if (t.id == TOKEN_LESS) {
-        return NODE_TYPE::LESS;
-    } else if (t.id == TOKEN_LESS_EQ) {
-        return NODE_TYPE::LEQ;
-    } else if (t.id == TOKEN_GREATER) {
-        return NODE_TYPE::GREATER;
-    } else if (t.id == TOKEN_GREATER_EQ) {
-        return NODE_TYPE::GEQ;
-    } else if (t.id == TOKEN_EQUAL) {
-        return NODE_TYPE::EQ;
-    } else if (t.id == TOKEN_NOT_EQUAL) {
-        return NODE_TYPE::NEQ;
-    } else if (t.id == TOKEN_PLUS) {
-        return NODE_TYPE::ADD;
-    } else if (t.id == TOKEN_MINUS) {
-        return NODE_TYPE::SUB;
-    } else if (t.id == TOKEN_UPLUS) {
-        return NODE_TYPE::UPLUS;
-    } else if (t.id == TOKEN_UNEG) {
-        return NODE_TYPE::UNEG;
-    } else if (t.id == TOKEN_MULT) {
-        return NODE_TYPE::MULT;
-    } else if (t.id == TOKEN_DIV) {
-        return NODE_TYPE::DIV;
-    } else if (t.id == TOKEN_MOD) {
-        return NODE_TYPE::MOD;
-    } else if (t.id == TOKEN_INTEGER) {
-        return NODE_TYPE::INT;
-    } else if (t.id == TOKEN_STRING) {
-        return NODE_TYPE::STR;
-    } else if (t.id == TOKEN_IDENT) {
-        return NODE_TYPE::VAR;
-    }
+    auto find = TOKEN_STRUCTURES::node_types.find(t.id);
+    auto end = TOKEN_STRUCTURES::node_types.end();
 
-    return NODE_TYPE::null;
+    if (find == end) return NODE_TYPE::null;
+
+    return TOKEN_STRUCTURES::node_types.at(t.id);
 }
 
 void AST_NODE::clear() {

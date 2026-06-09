@@ -7,6 +7,7 @@
 #include "token.h"
 #include "nlc_strings.h"
 #include "symtable.h"
+#include "ast_structures.h"
 
 struct AST_NODE;
 

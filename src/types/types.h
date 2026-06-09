@@ -23,30 +23,4 @@ typedef std::unordered_map<NODE_TYPE, std::function<bool(AST_NODE*)>> EvalMap;
 
 typedef std::unordered_set<std::string> ReservedWords;
 
-enum class TYPE : unsigned int;
-
-enum class SYMTYPE : unsigned int {
-    null, VAR
-};
-
-enum LOCATION_TYPE : unsigned int {
-    MEMORY, REG, STACK
-};
-
-enum class NODE_TYPE : unsigned int {
-    null, NOT, AND, OR,
-    LESS, LEQ, GREATER,
-    GEQ, EQ, NEQ,
-    ADD, SUB, MULT, 
-    DIV, MOD, EXP, 
-    UPLUS, UNEG, DECL, 
-    ASSIGN, PRINT, READ, 
-    BLOCK, INT, VAR, STR, 
-    BOOL, IF, ELSE, WHILE
-};
-
-enum class TYPE : unsigned int {
-    null, INT4, STRING, BOOL, TYPE_MISMATCH
-};
-
 #endif

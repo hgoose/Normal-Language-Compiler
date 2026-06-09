@@ -112,6 +112,8 @@
 #include "nlc_integers.h"
 #include "symtable.h"
 #include "types.h"
+#include "table_structures.h"
+#include "sets.h"
 
 Token next_token;
 
@@ -803,24 +805,16 @@ AST_NODE* A(Error& err) {
     AST_NODE* left{}, *right{};
 
     // FIRST(BA')
-    if (next_token.id == TOKEN_NOT  ||
-        next_token.id == TOKEN_UPLUS ||
-        next_token.id == TOKEN_UNEG ||
-        next_token.id == TOKEN_LPAREN ||
-        next_token.id == TOKEN_INTEGER ||
-        next_token.id == TOKEN_STRING ||
-        next_token.id == TOKEN_IDENT
-    ) {
+    if (next_token.in(First::BAP)) {
         left = B(err);
         right = AP(err);
-    } else {
-        free_tree(here);
-        return nullptr;
-    }
 
-    here->add_children(left, right);
+        here->add_children(left, right);
+        return here;
+    } 
 
-    return here;
+    free_tree(here);
+    return nullptr;
 }
 
 // A' -> or BA' | \varepsilon
@@ -829,9 +823,10 @@ AST_NODE* AP(Error& err) {
     AST_NODE* left{}, *right{};
 
     // FIRST(or BA')
-    if (next_token.id == TOKEN_OR) {
+    if (next_token.in(First::orBAP)) {
         here = new AST_NODE(next_token, NODE_TYPE::OR, OPERATOR);
 
+        // Consume the or token
         Error tmp_error = get_token(next_token);
         if (invalid_lookahead() || handle_lex_error(tmp_error)) {
             err = tmp_error; 
@@ -840,15 +835,12 @@ AST_NODE* AP(Error& err) {
 
         left = B(err);
         right = AP(err);
+
+        here->add_children(left, right);
+        return here;
     } 
-    // \epsilon \in FIRST(\varepsilon), so check if next_token \in FOLLOW(AP). 
-    else {
-        return nullptr;
-    }
-
-
-    here->add_children(left, right);
-    return here;
+    // Takes A' -> \varepsilon
+    return nullptr;
 }
 
 // B -> CB'
@@ -857,24 +849,14 @@ AST_NODE* B(Error& err) {
     AST_NODE* left{}, *right{};
 
     // Consider FIRST(CB')
-    if (next_token.id == TOKEN_NOT ||
-        next_token.id == TOKEN_UPLUS ||
-        next_token.id == TOKEN_UNEG ||
-        next_token.id == TOKEN_LPAREN ||
-        next_token.id == TOKEN_INTEGER ||
-        next_token.id == TOKEN_IDENT ||
-        next_token.id == TOKEN_STRING
-    ) {
+    if (next_token.in(First::CBP)) {
         left = C(err);
         right = BP(err);
-    } else {
-        free_tree(here);
-        return nullptr;
-    }
 
-
-    here->add_children(left, right);
-    return here;
+        here->add_children(left, right);
+        return here;
+    } 
+    return nullptr;
 }
 
 // B' -> and CB' | \varepsilon
@@ -882,10 +864,11 @@ AST_NODE* BP(Error& err) {
     AST_NODE* here{};
     AST_NODE* left{}, *right{};
 
-    // Consider FIRST(and CB')
-    if (next_token.id == TOKEN_AND) {
+    // t \in FIRST(and CB')
+    if (next_token.in(First::andCBP)) {
         here = new AST_NODE(next_token, NODE_TYPE::AND, OPERATOR);
 
+        // Consume and token
         Error tmp_error = get_token(next_token);
         if (invalid_lookahead() || handle_lex_error(tmp_error)) {
             err = tmp_error; 
@@ -894,13 +877,11 @@ AST_NODE* BP(Error& err) {
 
         left = C(err);
         right = BP(err);
-    } else {
-        return nullptr;
-    }
 
-
-    here->add_children(left, right);
-    return here;
+        here->add_children(left, right);
+        return here;
+    } 
+    return nullptr;
 }
 
 // C -> ~C | D
@@ -908,11 +889,11 @@ AST_NODE* C(Error& err) {
     AST_NODE* here = new AST_NODE();
     AST_NODE* left{};
 
-    // Consider FIRST(~C) 
-    if (next_token.id == TOKEN_NOT) {
-        // Take ~C
+    // t \in FIRST(~C)
+    if (next_token.in(First::notC)) {
         here = new AST_NODE(next_token, NODE_TYPE::NOT, OPERATOR);
 
+        // Consume not token
         Error tmp_error = get_token(next_token);
         if (invalid_lookahead() || handle_lex_error(tmp_error)) {
             err = tmp_error; 
@@ -921,43 +902,29 @@ AST_NODE* C(Error& err) {
 
         left = C(err);
     }
-    // Consider FIRST(D)
-    else if (next_token.id == TOKEN_UPLUS ||
-            next_token.id == TOKEN_UNEG ||
-            next_token.id == TOKEN_LPAREN ||
-            next_token.id == TOKEN_INTEGER ||
-            next_token.id == TOKEN_IDENT ||
-            next_token.id == TOKEN_STRING
-    ) {
-        // Take D
-        left = D(err);
 
-    } else {
+    // t \in FIRST(D)
+    else if (next_token.in(First::D)) {
+        left = D(err);
+    } 
+
+    else {
         set_print_token_error(Error{}, NLC_SYNTAX_ERROR);
         free_tree(here);
         return nullptr;
     }
-
 
     here->add_children(left);
     return here;
 }
 
 // D -> ED'
-// FIRST(ED') = {uplus, uneg, (, int, var, true, false, string}
 AST_NODE* D(Error& err) {
     AST_NODE* here = new AST_NODE();
     AST_NODE* left{}, *right{};
 
-    // Consider FIRST(ED')
-    if (next_token.id == TOKEN_UPLUS ||
-        next_token.id == TOKEN_UNEG ||
-        next_token.id == TOKEN_LPAREN ||
-        next_token.id == TOKEN_INTEGER ||
-        next_token.id == TOKEN_IDENT ||
-        next_token.id == TOKEN_STRING
-    ) {
-        // Take ED'
+    // t \in FIRST(ED')
+    if (next_token.in(First::EDP)) {
         left = E(err);
         right = DP(err);
     } else {
@@ -971,43 +938,32 @@ AST_NODE* D(Error& err) {
 }
 
 // D' -> ==E | \ne E | <E | <=E | >E | >=E | \varepsilon
-// FIRST(==) = {==}
-// FIRST(\ne) = {\ne}
-// FIRST(<) = {<}
-// FIRST(<=) = {<=}
-// FIRST(>) = {>}
-// FIRST(>=) = {>=}
 AST_NODE* DP(Error& err) {
     AST_NODE* here{};
     AST_NODE* left{};
 
     // Consider these various first sets
-    if (next_token.id == TOKEN_EQUAL ||
-        next_token.id == TOKEN_NOT_EQUAL ||
-        next_token.id == TOKEN_GREATER ||
-        next_token.id == TOKEN_GREATER_EQ ||
-        next_token.id == TOKEN_LESS ||
-        next_token.id == TOKEN_LESS_EQ
-
-    ) {
+    if (next_token.in_union(
+        First::equalE, First::neqE, First::lessE, 
+        First::leqE, First::greaterE, First::geqE
+    )) {
         // Take E and consume the token
         here = new AST_NODE(next_token, get_node_type(next_token), OPERATOR);
 
+        // Consume the operator
         Error tmp_error = get_token(next_token);
         if (invalid_lookahead() || handle_lex_error(tmp_error)) {
             goto_next_semicolon();
             err = tmp_error;
             return nullptr;
         }
+
+        left = E(err);
+
+        here->add_children(left);
+        return here;
     }
-    // Otherwise annihilate the node
-    else {
-        return nullptr;
-    }
-    
-    left = E(err);
-    here->add_children(left);
-    return here;
+    return nullptr;
 }
 
 // E -> TE'
@@ -1016,65 +972,53 @@ AST_NODE* E(Error& err) {
 
     // t \in FIRST(TE'). Removed E' for this fold operation, left folds
     // +,- so that these operations are not right associative
-    if (next_token.id == TOKEN_UPLUS || next_token.id == TOKEN_UNEG ||
-        next_token.id == TOKEN_LPAREN || next_token.id == TOKEN_INTEGER || 
-        next_token.id == TOKEN_STRING || next_token.id == TOKEN_IDENT) {
-        
-        // Get lhs sub tree
+    if (next_token.in(First::TEP)) {
         left = T(err);
 
         // Simulates the job of E', but makes +,- left associative
-        while (next_token.id == TOKEN_PLUS || next_token.id == TOKEN_MINUS) {
-            // Save current token
+        // t \in FIRST(+TE') \cup FIRST(-TE')
+        while (next_token.in_union(First::plusTEP, First::minusTEP)) {
             Token op = next_token;
 
-            // Get next token
+            // Consume operator
             Error tmp_err = get_token(next_token);
-            if (invalid_lookahead() || 
-            	handle_lex_error(tmp_err)
-            ) {
+            if (invalid_lookahead() || handle_lex_error(tmp_err)) {
                 err = tmp_err;
             	return nullptr;
             }
 
-            // Create rhs subtree
             AST_NODE* rhs = T(err);
-
-            // Here node
-            AST_NODE* node = new AST_NODE();
+            AST_NODE* here = new AST_NODE();
 
             // Has previous token as its token (the operator)
-            node->token = op;
-            node->is_operator = true;
-            if (op.id == TOKEN_PLUS) {
-                node->node_type = NODE_TYPE::ADD;
-            } else {
-                node->node_type = NODE_TYPE::SUB;
-            }
+            here->token = op;
+            here->is_operator = true;
+            here->node_type = get_node_type(op);
 
-            node->add_children(left, rhs);
+            here->add_children(left, rhs);
 
-            left = node;
+            left = here;
         }
         return left;
-    } else {
-        set_print_token_error(Error{}, NLC_SYNTAX_ERROR);
-    }
+    } 
 
+    set_print_token_error(Error{}, NLC_SYNTAX_ERROR);
     return nullptr;
 }
 
+// T -> NT'
 AST_NODE* T(Error& err) {
     AST_NODE* left = nullptr;
 
-    // Left folds *,/,mod, since the grammar I have makes these operations right associative
+    // t \in FIRST(NT')
     if (next_token.id == TOKEN_UPLUS || next_token.id == TOKEN_UNEG ||
         next_token.id == TOKEN_LPAREN || next_token.id == TOKEN_INTEGER ||
         next_token.id == TOKEN_STRING || next_token.id == TOKEN_IDENT) {
 
         left = N(err);
 
-        // Left fold *,/,mod, same idea as for +,-
+        // Left fold *,/,mod. Same idea as for +,-
+        // t \in FIRST(*NT') \cup FIRST(/NT') \cup FIRST(modNT')
         while (next_token.id == TOKEN_MULT ||
                next_token.id == TOKEN_DIV  ||
                next_token.id == TOKEN_MOD) {
@@ -1114,14 +1058,11 @@ AST_NODE* T(Error& err) {
     return nullptr;
 }
 
-
+// N -> \oplus N | \neg N | F
 AST_NODE* N(Error& err) {
     AST_NODE* here = new AST_NODE();
 	AST_NODE* left{}, *right{};
 
-    // Consider FIRST(-F), FIRST(+F), and FIRST(F). No nullable productions.
-    // No production rule is nullable, don't need to consider FOLLOW(N).
-    
     // t \in FIRST(\neg F) or t \in FIRST(\oplus F)
     if (next_token.id == TOKEN_UPLUS || next_token.id == TOKEN_UNEG) {
         here->token = next_token;
@@ -1161,8 +1102,8 @@ AST_NODE* N(Error& err) {
     return here;
 }
 
+// F -> SF'
 AST_NODE* F(Error& err) {
-    // Consider FIRST(SF'), not nullable
     AST_NODE* here = new AST_NODE();
 	AST_NODE* left{}, *right{};
 
@@ -1172,6 +1113,7 @@ AST_NODE* F(Error& err) {
         || next_token.id == TOKEN_STRING 
         || next_token.id == TOKEN_IDENT
     ) {
+        // Take F -> SF'
         left = S(err);
         right = FP(err);
     } else {
@@ -1184,13 +1126,13 @@ AST_NODE* F(Error& err) {
     return here;
 }
 
+// F' -> ^SF' | \varepsilon
 AST_NODE* FP(Error& err) {
     AST_NODE* here = new AST_NODE();
 	AST_NODE* left{}, *right{};
 
-    // Consider FIRST(\land SF') or FIRST(\varepsilon)
+    // t \in FIRST(^SF')
     if (next_token.id == TOKEN_EXP) {
-        // Consume exponentiation
         here->token = next_token;
         here->node_type = NODE_TYPE::EXP;
         here->is_operator = true;
@@ -1208,8 +1150,7 @@ AST_NODE* FP(Error& err) {
         left = S(err);
         right = FP(err);
     } 
-    // F' -> \varepsilon nullable, so consider FOLLOW(F') = FOLLOW(N). If
-    // t \in FOLLOW(F'), annihilate this node (take F' \to \varepsilon)
+    // Take F' -> \varepsilon
     else {
         free_tree(here);
         return nullptr;
@@ -1219,13 +1160,11 @@ AST_NODE* FP(Error& err) {
     return here;
 }
 
+// S -> (A) | int | ident | string
 AST_NODE* S(Error& err) {
-
     AST_NODE* here = new AST_NODE();
 	AST_NODE* left{};
 
-    // Consider FIRST((A)), FIRST(int), nothing nullable
-    
     // t \in FIRST(int), token must be TOKEN_INTEGER, nothing to call.
     if (next_token.id == TOKEN_INTEGER) {
         here->token = next_token;

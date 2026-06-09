@@ -1,10 +1,40 @@
 #ifndef NLC_LL1_SETS
 #define NLC_LL1_SETS
 
-// typedef std::unordered_set<int>
+#include "types.h"
 
-// namespace FIRST {
-//     extern FIRST_BAP
-// }
+namespace First {
+    extern TokenSet BAP;
+    extern TokenSet orBAP;
+    extern TokenSet CBP;
+    extern TokenSet andCBP;
+    extern TokenSet notC;
+    extern TokenSet D;
+    extern TokenSet EDP;
+    extern TokenSet equalE;
+    extern TokenSet neqE;
+    extern TokenSet lessE;
+    extern TokenSet leqE;
+    extern TokenSet greaterE;
+    extern TokenSet geqE;
+    extern TokenSet TEP;
+    extern TokenSet plusTEP;
+    extern TokenSet minusTEP;
+    extern TokenSet NTP;
+    extern TokenSet multNTP;
+    extern TokenSet divNTP;
+    extern TokenSet modNTP;
+    extern TokenSet uplusN;
+    extern TokenSet unegN;
+    extern TokenSet SFP;
+    extern TokenSet landSFP;
+    extern TokenSet lpArp;
+    extern TokenSet integer;
+    extern TokenSet ident;
+    extern TokenSet string;
+
+    bool in(TokenValue token);
+}
+
 
 #endif

@@ -1,3 +1,4 @@
+#include "table_structures.h"
 #include "nlc_integers.h"
 #include "error.h"
 

@@ -1,8 +1,6 @@
 #ifndef NLC_ERROR_H
 #define NLC_ERROR_H
 
-#define CRITICAL                    1
-
 #define  NLC_OK                     0
 #define  NLC_FILE_NOT_FOUND        -1
 #define  NLC_EOF                   -2
@@ -29,6 +27,8 @@
 #define  NLC_EXPECTED_STATEMENT    -23
 #define  NLC_NON_LOGICAL_CONDITION -24
 #define  NLC_EXPECTED_SEMICOLON    -25
+
+inline constexpr int CRITICAL{1};
 
 struct Token;
 

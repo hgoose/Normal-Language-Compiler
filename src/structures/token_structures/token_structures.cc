@@ -1,5 +1,6 @@
-#include "types.h"
 #include "token_structures.h"
+#include <ast_structures.h>
+#include "types.h"
 #include "token.h"
 
 namespace TOKEN_STRUCTURES {
@@ -20,6 +21,32 @@ namespace TOKEN_STRUCTURES {
         {TOKEN_NOT_EQUAL, "neq"},
         {TOKEN_AND, "and"},
         {TOKEN_OR, "or"}
+    };
+
+    const TokenMap<NODE_TYPE> node_types {
+        {TOKEN_NOT, NODE_TYPE::NOT},
+        {TOKEN_AND, NODE_TYPE::AND},
+        {TOKEN_OR, NODE_TYPE::OR},
+
+        {TOKEN_LESS, NODE_TYPE::LESS},
+        {TOKEN_LESS_EQ, NODE_TYPE::LEQ},
+        {TOKEN_GREATER, NODE_TYPE::GREATER},
+        {TOKEN_GREATER_EQ, NODE_TYPE::GEQ},
+        {TOKEN_EQUAL, NODE_TYPE::EQ},
+        {TOKEN_NOT_EQUAL, NODE_TYPE::NEQ},
+
+        {TOKEN_PLUS, NODE_TYPE::ADD},
+        {TOKEN_MINUS, NODE_TYPE::SUB},
+        {TOKEN_UPLUS, NODE_TYPE::UPLUS},
+        {TOKEN_UNEG, NODE_TYPE::UNEG},
+
+        {TOKEN_MULT, NODE_TYPE::MULT},
+        {TOKEN_DIV, NODE_TYPE::DIV},
+        {TOKEN_MOD, NODE_TYPE::MOD},
+
+        {TOKEN_INTEGER, NODE_TYPE::INT},
+        {TOKEN_STRING, NODE_TYPE::STR},
+        {TOKEN_IDENT, NODE_TYPE::VAR}
     };
 
     const TokenNames token_names = {

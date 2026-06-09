@@ -79,3 +79,7 @@ bool Token::is_rbrace() {
 bool Token::is_eof() {
     return is(TOKEN_EOF);
 }
+
+bool Token::in(const TokenSet& set)  { 
+    return set.find(id) != set.end(); 
+}

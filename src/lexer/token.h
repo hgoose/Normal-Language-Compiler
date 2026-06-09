@@ -77,6 +77,13 @@ struct Token
     bool is_lbrace();
     bool is_rbrace();
     bool is_eof();
+
+    bool in(const TokenSet&); 
+
+    template<typename...Sets>
+    bool in_union(Sets...set) {
+        return (in(set) || ...);
+    }
 };
 
 void print_token(const Token& t);

@@ -1,3 +1,4 @@
+#include "table_structures.h"
 #include "nlc_strings.h"
 #include "error.h"
 
@@ -20,6 +21,7 @@ STR_TABLE_ENTRY STR_TABLE::add_string(std::string& str) {
         if (overflow()) { _overflow = true; break; } 
         str_table[used++] = ch; 
     } 
+
     if (overflow() || _overflow) {
         set_print_token_error(Error{}, NLC_STR_TABLE_OVERFLOW);
 
@@ -33,4 +35,3 @@ STR_TABLE_ENTRY STR_TABLE::add_string(std::string& str) {
 bool STR_TABLE::overflow() {
     return used == STR_TABLE_SIZE-1;
 }
-

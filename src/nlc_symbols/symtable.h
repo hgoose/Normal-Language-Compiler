@@ -2,6 +2,8 @@
 #define NLC_SYMTABLE_H
 
 #include "types.h"
+#include "symtable_structures.h"
+#include "ast_structures.h" /* TYPE */
 
 #include <string>
 #include <cstddef>

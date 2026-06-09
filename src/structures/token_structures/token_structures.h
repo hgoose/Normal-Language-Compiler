@@ -5,6 +5,7 @@
 
 namespace TOKEN_STRUCTURES {
     extern const TokenMap<std::string> operator_names;
+    extern const TokenMap<NODE_TYPE> node_types;
     extern const std::vector<std::string> token_names;
     extern const TokenSet terminals; 
     extern const TokenSet binary_arithmetic_operators;
