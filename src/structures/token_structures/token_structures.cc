@@ -49,7 +49,12 @@ namespace TOKEN_STRUCTURES {
         {TOKEN_IDENT, NODE_TYPE::VAR}
     };
 
-    const TokenNames token_names = {
+    const IdentMap<bool> booleans {
+        {"true", true},
+        {"false", false}
+    };
+
+    const TokenNames token_names {
         "TOKEN_NULL", "TOKEN_EOF", "TOKEN_PLUS",
         "TOKEN_MINUS", "TOKEN_MULT", "TOKEN_DIV",
         "TOKEN_IDENT", "TOKEN_EXP", "TOKEN_LESS",
@@ -64,7 +69,7 @@ namespace TOKEN_STRUCTURES {
         "TOKEN_UNEG", "TOKEN_UPLUS" 
     };
 
-    const TokenSet terminals = {
+    const TokenSet terminals {
         TOKEN_PLUS, TOKEN_MINUS, TOKEN_MULT,
         TOKEN_DIV, TOKEN_IDENT, TOKEN_EXP,
         TOKEN_LESS, TOKEN_LESS_EQ, TOKEN_GREATER,
@@ -78,26 +83,26 @@ namespace TOKEN_STRUCTURES {
         TOKEN_MOD, TOKEN_UNEG, TOKEN_UPLUS
     };
 
-    const TokenSet binary_arithmetic_operators = {
+    const TokenSet binary_arithmetic_operators {
         TOKEN_PLUS, TOKEN_MINUS, TOKEN_MULT,
         TOKEN_DIV, TOKEN_EXP,
         TOKEN_MOD
     };
 
-    const TokenSet unary_arithmetic_operators = {
+    const TokenSet unary_arithmetic_operators {
         TOKEN_UNEG, TOKEN_UPLUS
     };
 
-    const TokenSet binary_relational_operators = {
+    const TokenSet binary_relational_operators {
         TOKEN_LESS, TOKEN_LESS_EQ, TOKEN_GREATER,
         TOKEN_GREATER_EQ, TOKEN_EQUAL, TOKEN_NOT_EQUAL
     };
 
-    const TokenSet binary_logical_operators = {
+    const TokenSet binary_logical_operators {
         TOKEN_OR, TOKEN_AND
     };
 
-    const TokenSet unary_logical_operators = {
+    const TokenSet unary_logical_operators {
         TOKEN_NOT
     };
 };

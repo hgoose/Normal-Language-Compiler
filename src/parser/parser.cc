@@ -20,6 +20,7 @@
 #include "symtable.h"
 #include "types.h"
 #include "table_structures.h"
+#include "token_structures.h"
 #include "sets.h"
 
 #include <algorithm>
@@ -68,6 +69,11 @@ int parse() {
                 program_tree->add_children(statement_root);
             }
         } 
+
+        else {
+            Error err{};
+            AST_NODE* unknown = A(err);
+        }
 
         if (next_token.is_eof()) break;
     }
@@ -1028,136 +1034,151 @@ AST_NODE* FP(Error& err) {
         here->add_children(left, right);
         return here;
     } 
+
     return nullptr;
 }
 
 // S -> (A) | int | ident | string
 AST_NODE* S(Error& err) {
-    AST_NODE* here = new AST_NODE();
-	AST_NODE* left{};
+    AST_NODE* here{}, *left{};
 
-    // t \in FIRST(int), token must be TOKEN_INTEGER, nothing to call.
+    // t \in FIRST(int)
     if (next_token.in(First::integer)) {
-        here->token = next_token;
-        here->node_type = NODE_TYPE::INT;
-        here->data_type = TYPE::INT4;
-
-        Error tmp_error = get_token(next_token);
-        if (invalid_lookahead() || 
-        	handle_lex_error(tmp_error)
-        ) {
-            err = tmp_error;
-            free_tree(here);
-        	return nullptr;
-        }
-    // Token is LPAREN, so we choose S -> (E), make sure to eat the parenthesis
-    } else if (next_token.id == TOKEN_LPAREN) {
-        // Eat lparen
-        Error tmp_error = get_token(next_token);
-        if (invalid_lookahead() || 
-        	handle_lex_error(tmp_error)
-        ) {
-            err = tmp_error;
-            free_tree(here);
-        	return nullptr;
-        }
-
-        left = A(err);
-
-        // If next token is not ), error
-        if (next_token.id != TOKEN_RPAREN) {
-            err.error = NLC_EXPECTED_RPAREN;
-            err.line = next_token.line_no;
-            err.col = next_token.col_no;
-            print_error(err);
-
-        } 
-        // Otherwise eat the )
-        else {
-            Error tmp_error = get_token(next_token);
-            if (invalid_lookahead() || 
-            	handle_lex_error(tmp_error)
-            ) {
-                err = tmp_error;
-                free_tree(here);
-            	return nullptr;
-            }
-        }
-    } else if (next_token.id == TOKEN_STRING) {
-        here->token = next_token;
-        here->node_type = NODE_TYPE::STR;
-        here->data_type = TYPE::STRING;
-
-        STR_TABLE_ENTRY entry = STR_TABLE::add_string(next_token.str);
-
-        // Attempted to overrun the internal string table
-        if (entry.vi == INVALID) {
-            free_tree(here);
-            return nullptr;
-        }
-
-        here->entry = entry;
-
-        Error tmp_error = get_token(next_token);
-        if (invalid_lookahead() || 
-        	handle_lex_error(tmp_error)
-        ) {
-            err = tmp_error;
-            free_tree(here);
-        	return nullptr;
-        }
+        here = integer_terminal(err);
     } 
-    // Variable
-    else if (next_token.id == TOKEN_IDENT) {
-        // Could be true or false
-        if (next_token.identifier == "true" ||
-            next_token.identifier == "false"
-        ) {
-            here = new AST_NODE(next_token, NODE_TYPE::BOOL, TYPE::BOOL); 
-            here->boolean = next_token.identifier == "true" 
-                ? true 
-                : false;
-            here->is_boolean = true;
 
-            Error tmp_error = get_token(next_token);
-            if (invalid_lookahead() || 
-                handle_lex_error(tmp_error)
-            ) {
-                err = tmp_error;
-                free_tree(here);
-                return nullptr;
-            }
-        } else {
-            here->token = next_token;
-            here->node_type = NODE_TYPE::VAR;
+    // t \in FIRST((A))
+    else if (next_token.in(First::lpArp)) { 
+        here = paren_expression(err, left);
+        here->add_children(left);
+    } 
 
-            // Search the symbol table
-            SYMINFO* syminfo = SYMTABLE::get_symbol(next_token.identifier, SYMTYPE::VAR);
+    // t \in FIRST(string)
+    else if (next_token.in(First::string)) {
+        here = string_terminal(err);
+    } 
 
-            if (!syminfo) {
-                set_print_token_error(Error{}, NLC_UNKNOWN_VARIABLE);
-                free_tree(here);
-                return nullptr;
-            }
-            here->syminfo = syminfo;
-            here->data_type = syminfo->data_type;
+    else if (next_token.is_boolean()) {
+        here = boolean_terminal(err);
+    }
 
-            Error tmp_error = get_token(next_token);
-            if (invalid_lookahead() ||
-                    handle_lex_error(tmp_error)
-               ){
-                err = tmp_error;
-                free_tree(here);
-                return nullptr;
-            }
-        }
+    // t \in FIRST(ident) (and not boolean)
+    else if (next_token.in(First::ident)) {
+        here = variable_terminal(err);
+    } 
 
-    } else {
+    else {
         set_print_token_error(Error{}, NLC_SYNTAX_ERROR);
         free_tree(here);
         return nullptr;
     }
 
-    if (left) here->add_child(left);
     return here;
 }
+
+AST_NODE* integer_terminal(Error& err) {
+    AST_NODE* here = new AST_NODE(next_token, NODE_TYPE::INT, TYPE::INT4);
+
+    Error tmp_error = get_token(next_token);
+    if (invalid_lookahead() || handle_lex_error(tmp_error)) {
+        err = tmp_error;
+        free_tree(here);
+        return nullptr;
+    }
+
+    return here;
+}
+
+AST_NODE* paren_expression(Error& err, AST_NODE* left) {
+    AST_NODE* here = new AST_NODE();
+
+    // Eat lparen
+    Error tmp_error = get_token(next_token);
+    if (invalid_lookahead() || handle_lex_error(tmp_error)) {
+        err = tmp_error;
+        free_tree(here);
+        return nullptr;
+    }
+
+    left = A(err);
+
+    // If next token is not ), error
+    if (next_token.is_not(TOKEN_RPAREN)) {
+        set_print_token_error(err, NLC_EXPECTED_RPAREN);
+        free_tree(here);
+        return nullptr;
+    } 
+
+    // Otherwise eat the )
+    else {
+        Error tmp_error = get_token(next_token);
+        if (invalid_lookahead() || handle_lex_error(tmp_error)) {
+            err = tmp_error;
+            free_tree(here);
+            return nullptr;
+        }
+    }
+
+    return here;
+}
+
+AST_NODE* string_terminal(Error& err) {
+    AST_NODE* here = new AST_NODE(next_token, NODE_TYPE::STR, TYPE::STRING);
+
+    STR_TABLE_ENTRY entry = STR_TABLE::add_string(next_token.str);
+
+    // Attempted to overrun the internal string table
+    if (entry.is_not_valid()) {
+        free_tree(here);
+        return nullptr;
+    }
+
+    here->entry = entry;
+
+    Error tmp_error = get_token(next_token);
+    if (invalid_lookahead() || handle_lex_error(tmp_error)) {
+        err = tmp_error;
+        free_tree(here);
+        return nullptr;
+    }
+
+    return here;
+}
+
+AST_NODE* boolean_terminal(Error& err) {
+    AST_NODE* here = new AST_NODE(next_token, NODE_TYPE::BOOL, TYPE::BOOL); 
+
+    Error tmp_error = get_token(next_token);
+    if (invalid_lookahead() || handle_lex_error(tmp_error)) {
+        err = tmp_error;
+        free_tree(here);
+        return nullptr;
+    }
+
+    return here;
+}
+
+AST_NODE* variable_terminal(Error& err) {
+    AST_NODE* here = new AST_NODE(next_token, NODE_TYPE::VAR, TYPE::null);
+
+    // Search the symbol table
+    SYMINFO* syminfo = SYMTABLE::get_symbol(next_token.identifier, SYMTYPE::VAR);
+
+    if (!syminfo) {
+        set_print_token_error(Error{}, NLC_UNKNOWN_VARIABLE);
+        free_tree(here);
+        return nullptr;
+    }
+
+    here->install_symbol(syminfo);
+
+    Error tmp_error = get_token(next_token);
+    if (invalid_lookahead() || handle_lex_error(tmp_error)){
+        err = tmp_error;
+        free_tree(here);
+        return nullptr;
+    }
+
+    return here;
+}
+

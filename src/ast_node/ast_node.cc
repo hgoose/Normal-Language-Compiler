@@ -158,3 +158,15 @@ bool AST_NODE::is_op() {
 bool AST_NODE::is_nop() {
     return !is_op();
 }
+
+void AST_NODE::set_boolean() {
+    if (!token.is_ident_true() && !token.is_ident_false()) return;
+
+    boolean = TOKEN_STRUCTURES::booleans.at(token.identifier);
+    is_boolean = true;
+}
+
+void AST_NODE::install_symbol(SYMINFO* info) {
+    syminfo = info; 
+    data_type = info->data_type;
+}

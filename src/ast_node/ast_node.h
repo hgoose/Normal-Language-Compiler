@@ -8,6 +8,7 @@
 #include "nlc_strings.h"
 #include "symtable.h"
 #include "ast_structures.h"
+#include "token_structures.h"
 
 struct AST_NODE;
 
@@ -72,7 +73,9 @@ struct AST_NODE {
         : token(token),
           node_type(node_type),
           data_type(data_type)
-    {}
+    {
+        set_boolean();
+    }
 
     AST_NODE(const AST_NODE& other) {
         token = other.token;
@@ -115,6 +118,10 @@ struct AST_NODE {
 
     bool is_op();
     bool is_nop();
+
+    void set_boolean();
+
+    void install_symbol(SYMINFO*);
 };
 
 #endif

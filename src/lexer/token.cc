@@ -64,6 +64,18 @@ bool Token::is_ident_while() {
     return is_ident() && identifier == "while";
 }
 
+bool Token::is_ident_true() {
+    return is_ident() && identifier == "true";
+}
+
+bool Token::is_ident_false() {
+    return is_ident() && identifier == "false";
+}
+
+bool Token::is_boolean() {
+    return is_ident_true() || is_ident_false();
+}
+
 bool Token::is_semicolon() {
     return is(TOKEN_SEMICOLON);
 }

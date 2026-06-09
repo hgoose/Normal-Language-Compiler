@@ -17,6 +17,7 @@ typedef std::function<void(int)> MoveProcedure;
 typedef std::unordered_set<TokenValue> TokenSet;
 typedef std::vector<std::string> TokenNames;
 template<typename T> using TokenMap = std::unordered_map<TokenValue, T>;
+template<typename T> using IdentMap = std::unordered_map<std::string, T>;
 
 typedef std::unordered_map<std::string, std::function<AST_NODE*(void)>> ParseMap;
 typedef std::unordered_map<NODE_TYPE, std::function<bool(AST_NODE*)>> EvalMap;

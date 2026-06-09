@@ -7,11 +7,16 @@ STR_TABLE_ENTRY::STR_TABLE_ENTRY(bool vi, size_t offset)
     offset(offset) 
 {}
 
+bool STR_TABLE_ENTRY::is_valid() {
+    return vi == VALID;
+}
+
+bool STR_TABLE_ENTRY::is_not_valid() {
+    return !is_valid();
+}
+
 const char* STR_TABLE::emit_string(STR_TABLE_ENTRY& entry) {
-    return (entry.vi 
-            ? &str_table[entry.offset] 
-            : nullptr
-   );
+    return (entry.is_valid() ? &str_table[entry.offset] : nullptr);
 }
 
 STR_TABLE_ENTRY STR_TABLE::add_string(std::string& str) {

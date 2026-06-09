@@ -28,9 +28,9 @@
 #define  NLC_NON_LOGICAL_CONDITION -24
 #define  NLC_EXPECTED_SEMICOLON    -25
 
-inline constexpr int CRITICAL{1};
-
 struct Token;
+
+inline constexpr int CRITICAL{1};
 
 struct Error
 {

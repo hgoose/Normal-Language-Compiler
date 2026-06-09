@@ -10,6 +10,9 @@ struct STR_TABLE_ENTRY {
 
     STR_TABLE_ENTRY() = default;
     STR_TABLE_ENTRY(bool vi, size_t offset);
+
+    bool is_valid();
+    bool is_not_valid();
 };
 
 struct STR_TABLE {

@@ -5,8 +5,9 @@
 #ifndef PARSER_H
 #define PARSER_H
 
-#include "ast_node.h"
-#include "error.h"
+struct AST_NODE;
+struct Error;
+struct Token;
 
 // Lookahead token
 extern Token next_token;
@@ -26,21 +27,27 @@ AST_NODE* parse_else();
 AST_NODE* parse_while();
 
 // PRODUCTION RULES
-AST_NODE* A(Error& err);
-AST_NODE* AP(Error& err);
-AST_NODE* B(Error& err);
-AST_NODE* BP(Error& err);
-AST_NODE* C(Error& err);
-AST_NODE* D(Error& err);
-AST_NODE* DP(Error& err);
-AST_NODE* E(Error& err);
-AST_NODE* EP(Error& err);
-AST_NODE* T(Error& err);
-AST_NODE* TP(Error& err);
-AST_NODE* N(Error& err);
-AST_NODE* F(Error& err);
-AST_NODE* FP(Error& err);
-AST_NODE* S(Error& err);
+AST_NODE* A(Error&);
+AST_NODE* AP(Error&);
+AST_NODE* B(Error&);
+AST_NODE* BP(Error&);
+AST_NODE* C(Error&);
+AST_NODE* D(Error&);
+AST_NODE* DP(Error&);
+AST_NODE* E(Error&);
+AST_NODE* EP(Error&);
+AST_NODE* T(Error&);
+AST_NODE* TP(Error&);
+AST_NODE* N(Error&);
+AST_NODE* F(Error&);
+AST_NODE* FP(Error&);
+AST_NODE* S(Error&);
+
+AST_NODE* integer_terminal(Error&);
+AST_NODE* paren_expression(Error&, AST_NODE*);
+AST_NODE* string_terminal(Error&);
+AST_NODE* boolean_terminal(Error&);
+AST_NODE* variable_terminal(Error&);
 
 // CLEANUP
 void free_tree(AST_NODE*& p);
