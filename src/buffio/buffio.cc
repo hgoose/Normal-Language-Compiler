@@ -1,5 +1,6 @@
 #include "buffio.h"
 #include "error.h"
+#include "bufstate.h"
 
 #include <vector>
 #include <fstream>
@@ -19,6 +20,26 @@ static vector<size_t> line_start;
 static vector<size_t> line_sizes;
 
 // All int return values are error codes
+
+BufState buffer_save_state() {
+    return BufState(
+        src_line_no,
+        src_col_no,
+        curr_pos,
+        buff_size,
+        line_start,
+        line_sizes
+    );
+}
+
+void buffer_load_state(const BufState& state) {
+    src_line_no = state.src_line_no;
+    src_col_no = state.src_col_no;
+    curr_pos = state.curr_pos;
+    buff_size = state.buff_size;
+    line_start = state.line_start;
+    line_sizes = state.line_sizes;
+}
 
 // Initializes buffer
 int buffer_init(const char* filename) {

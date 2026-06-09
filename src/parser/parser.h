@@ -5,12 +5,15 @@
 #ifndef PARSER_H
 #define PARSER_H
 
+#include "token.h"
+
 struct AST_NODE;
 struct Error;
-struct Token;
 
 // Lookahead token
 extern Token next_token;
+
+extern bool SUPPRESS_PARSER_ERRORS;
 
 // INITIALIZATION
 Error parser_init(const char* src_code);

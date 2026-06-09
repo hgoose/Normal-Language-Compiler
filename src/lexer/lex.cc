@@ -3,6 +3,8 @@
 #include "buffio.h"
 #include "util.h"
 #include "lex.h"
+#include "lexstate.h"
+#include "parser.h"
 
 #include <string>
 #include <algorithm>
@@ -292,7 +294,17 @@ Error get_token(Token& t) {
             }
         }
     } else if (curr_char == '=') {
-        t.id = TOKEN_EQUAL;
+        rc = buffer_get_next_char(curr_char);
+
+        if (curr_char == '=') {
+            t.id = TOKEN_EQUAL; 
+        }
+
+        else {
+            t.id = TOKEN_ASSIGN;
+            buffer_back_char();
+        }
+
         t.lexeme = lexeme;
     } else if (curr_char == '!') {
         t.id = TOKEN_NOT;
@@ -327,28 +339,6 @@ Error get_token(Token& t) {
     } else if (curr_char == ';') {
         t.id = TOKEN_SEMICOLON; 
         t.lexeme = lexeme;
-    // Could be TOKEN_COLON or TOKEN_ASSIGN
-    } else if (curr_char == ':') {
-        // Get next char
-        rc = buffer_get_next_char(curr_char);
-
-        // In this case its TOKEN_COLON
-        if (rc == NLC_EOF || curr_char == ' ' || curr_char == '\n' || curr_char == '\t') {
-            t.id = TOKEN_COLON; 
-            t.lexeme = lexeme;
-        } else {
-            // In this case its TOKEN_ASSIGN
-            if (curr_char == '=') {
-                lexeme.push_back(curr_char);
-                t.id = TOKEN_ASSIGN;
-                t.lexeme = lexeme;
-            // Its TOKEN_COLON, back up to end of token
-            } else {
-                t.id = TOKEN_COLON; 
-                t.lexeme = lexeme;
-                buffer_back_char();
-            }
-        }
     } else if (curr_char == ',') {
         t.id = TOKEN_COMMA; 
         t.lexeme = lexeme;
@@ -860,4 +850,14 @@ bool lex_eof(void) {
 // Cleanup the buffer
 void lex_cleanup() {
     buffer_cleanup(); 
+}
+
+LexState lex_save() {
+    BufState bufstate = buffer_save_state(); 
+    return LexState{next_token, bufstate};
+}
+
+void lex_goto_last_save(const LexState& state) {
+    next_token = state.next_token;
+    buffer_load_state(state.bufstate);
 }

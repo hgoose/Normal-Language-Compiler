@@ -71,6 +71,8 @@ bool handle_lex_error(const Error& err) {
 // If the error is not from the lexer, just output the message.
 // Note that OK, EOF, and BOF is not technically an error, nothing should be reported
 void print_error(const Error& e) {
+    if (SUPPRESS_PARSER_ERRORS) return;
+
     // Non error errors
     if (e.error == NLC_EOF || e.error == NLC_BOF || e.error == NLC_OK) return;
 

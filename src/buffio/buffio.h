@@ -1,6 +1,8 @@
 #ifndef BUFFERED_INPUT_H
 #define BUFFERED_INPUT_H
 
+struct BufState;
+
 #include <string>
 using std::string;
 
@@ -10,6 +12,9 @@ extern int src_col_no;
 // All int return values are error codes
 
 int buffer_init(const char * filename);
+
+BufState buffer_save_state();
+void buffer_load_state(const BufState&);
 
 int buffer_get_cur_char(char & c);
 // Return the character at the current input position.  But don't

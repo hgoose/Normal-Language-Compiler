@@ -21,7 +21,9 @@
 #include "types.h"
 #include "table_structures.h"
 #include "token_structures.h"
+#include "token.h"
 #include "sets.h"
+#include "lexstate.h"
 
 #include <algorithm>
 #include <iostream>
@@ -29,6 +31,8 @@
 #include <functional>
 
 Token next_token;
+
+bool SUPPRESS_PARSER_ERRORS{};
 
 Error parser_init(const char* src_code) {
     Error err = lex_init(src_code);
@@ -43,7 +47,26 @@ static AST_NODE* get_statement() {
         return parse_map.at(ident)();
     }
 
-    return parse_assign();
+    // Suppress errors, save state, and try to 
+    // parse as assignment.
+    SUPPRESS_PARSER_ERRORS = true;
+    LexState state = lex_save();
+    AST_NODE* possible_assign = parse_assign();
+
+    SUPPRESS_PARSER_ERRORS = false;
+
+    if (possible_assign) {
+        return possible_assign;
+    }
+
+    // Either the assignment had an error
+    // or we have an expression.
+
+    // Just call it an expression
+    lex_goto_last_save(state);
+    try_expression();
+
+    return nullptr;
 }
 
 // Parses the input program into an abstract syntax tree, then traverses
@@ -71,8 +94,7 @@ int parse() {
         } 
 
         else {
-            Error err{};
-            AST_NODE* unknown = A(err);
+            try_expression();
         }
 
         if (next_token.is_eof()) break;
@@ -562,6 +584,7 @@ AST_NODE* parse_if() {
                 get_next_token_and_print_error();
                 break;
             } 
+
             // Structure was never terminated
             else if (next_token.is_eof()) {
                 set_print_token_error(Error{}, NLC_UNEXPECTED_EOF);
@@ -875,7 +898,6 @@ AST_NODE* DP(Error& err) {
         // Consume the operator
         Error tmp_error = get_token(next_token);
         if (invalid_lookahead() || handle_lex_error(tmp_error)) {
-            goto_next_semicolon();
             err = tmp_error;
             return nullptr;
         }

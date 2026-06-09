@@ -4,6 +4,7 @@
 #include "error.h"
 
 struct Token;
+struct LexState;
 
 Error lex_init(const char*  src_code);
 
@@ -14,5 +15,8 @@ bool lex_eof(void);  // Read past end of input stream?
 void lex_cleanup();
 
 void replace_escape_character(char& c);
+
+LexState lex_save();
+void lex_goto_last_save(const LexState&);
 
 #endif /* LEXICAL_ANALYZER_H */

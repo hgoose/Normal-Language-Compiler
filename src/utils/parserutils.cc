@@ -3,6 +3,10 @@
 #include "parser.h"
 #include "lex.h"
 #include "types.h"
+#include "token.h"
+#include "ast_node.h"
+#include "error.h"
+#include "ast_utils.h"
 
 #include <string>
 #include <cstdint>
@@ -10,12 +14,6 @@
 #include <functional>
 
 // Skips to the next semicolon
-void goto_next_semicolon() {
-    while (!next_token.is_semicolon() && !next_token.is_eof()) {
-        get_next_token_and_print_error();
-    } 
-}
-
 void onepast_next_token(TokenValue token) {
     while (next_token.id != token && !next_token.is_eof()) {
         get_next_token_and_print_error();
@@ -138,12 +136,24 @@ void free_tree(AST_NODE*& p) {
     p=nullptr;
 }
 
-// Free parse tree nodes
-void inhouse_cleanup(AST_NODE*& parse_tree) {
-    free_tree(parse_tree);
-}
-
 // Free all nodes created for the AST and parse tree
 void parser_cleanup() {
     lex_cleanup();
+}
+
+bool try_expression() {
+    Error err{};
+    AST_NODE* unknown = A(err);
+    AST_NODE* ast = pttoast(unknown);
+
+    if (ast) {
+        if (next_token.is_semicolon()) {
+            get_next_token_and_print_error();
+        }
+
+        return true;
+    } 
+
+    onepast_semi_or_block(LBRACE_COUNT_ZERO);
+    return false;
 }

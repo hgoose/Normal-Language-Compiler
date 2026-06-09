@@ -6,7 +6,9 @@
 #include <unordered_set>
 #include <string>
 
+struct BufState;
 struct AST_NODE;
+
 enum class NODE_TYPE : unsigned int;
 
 typedef int TokenValue;

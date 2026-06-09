@@ -12,7 +12,9 @@ CXXFLAGS = -std=c++23 -g \
 			-Isrc/structures/ast_structures  \
 			-Isrc/structures/codegen_structures  \
 			-Isrc/structures/table_structures  \
-			-Isrc/structures/table_structures/symtable_structures 
+			-Isrc/structures/table_structures/symtable_structures  \
+			-Isrc/state/bufstate \
+			-Isrc/state/lexstate \
 
 TARGET   = bin/nlc
 OBJDIR   = obj
@@ -38,8 +40,9 @@ SRC = \
 	src/structures/token_structures/token_structures.cc \
 	src/structures/parser_structures/parser_structures.cc \
 	src/structures/ast_structures/ast_structures.cc \
-	src/structures/codegen_structures/codegen_structures.cc
-	
+	src/structures/codegen_structures/codegen_structures.cc \
+	src/state/bufstate/bufstate.cc \
+	src/state/lexstate/lexstate.cc
 
 OBJ = $(SRC:%=$(OBJDIR)/%.o)
 

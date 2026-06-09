@@ -16,7 +16,6 @@ void skip_while(int);
 void skip_else(int);
 
 void onepast_semi_or_block(int);
-void goto_next_semicolon();
 void onepast_next_token(int);
 
 void free_tree(AST_NODE*&);
@@ -26,5 +25,6 @@ bool skip_if_invalid_or_lexerr(const Error&, MoveProcedure mv_proc=onepast_semi_
 bool unexpected_token(TokenValue, ErrorValue, MoveProcedure mv_proc=onepast_semi_or_block, int lbrace_count=LBRACE_COUNT_ZERO);
 bool wrong_next_token(TokenValue, ErrorValue, MoveProcedure mv_proc=onepast_semi_or_block, int lbrace_count=LBRACE_COUNT_ZERO);
 
+bool try_expression();
 
 #endif
