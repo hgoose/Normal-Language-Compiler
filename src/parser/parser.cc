@@ -320,10 +320,12 @@ StatementReturns parse_decl_int4() {
     declare_root->node_type = NODE_TYPE::DECL;
     declare_root->token = next_token;
 
-    lex_err = get_token(next_token);
-    if (skip_if_invalid_or_lexerr(lex_err)) {
-        free_tree(declare_root);
-        return {};
+    if (next_token.is_type()) {
+        lex_err = get_token(next_token);
+        if (skip_if_invalid_or_lexerr(lex_err)) {
+            free_tree(declare_root);
+            return {};
+        }
     }
 
     // Variable name must be an identifier token
@@ -386,6 +388,12 @@ StatementReturns parse_decl_int4() {
 
     // First good declare statement
     declares.push_back(declare_root);
+
+    if (next_token.is_comma()) {
+        get_next_token_and_print_error();
+        StatementReturns others = parse_decl_int4();
+        merge_statement_returns(declares, others);
+    }
 
     // Statement does not end with a semicolon
     if (unexpected_token(TOKEN_SEMICOLON, NLC_EXPECTED_SEMICOLON)) {

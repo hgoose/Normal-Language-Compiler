@@ -69,6 +69,10 @@ namespace TOKEN_STRUCTURES {
         "TOKEN_UNEG", "TOKEN_UPLUS" 
     };
 
+    const Types types {
+        "int4"
+    };
+
     const TokenSet terminals {
         TOKEN_PLUS, TOKEN_MINUS, TOKEN_MULT,
         TOKEN_DIV, TOKEN_IDENT, TOKEN_EXP,

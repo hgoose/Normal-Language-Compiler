@@ -72,6 +72,16 @@ bool Token::is_ident_false() {
     return is_ident() && identifier == "false";
 }
 
+bool Token::is_type() {
+    return is_ident() && 
+        TOKEN_STRUCTURES::types.find(identifier) 
+        != TOKEN_STRUCTURES::types.end(); 
+}
+
+bool Token::is_type_int4() {
+    return is_ident() && identifier == "int4";
+}
+
 bool Token::is_boolean() {
     return is_ident_true() || is_ident_false();
 }

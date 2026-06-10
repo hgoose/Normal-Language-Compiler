@@ -8,6 +8,7 @@ namespace TOKEN_STRUCTURES {
     extern const TokenMap<NODE_TYPE> node_types;
     extern const IdentMap<bool> booleans;
     extern const TokenNames token_names;
+    extern const Types types;
     extern const TokenSet terminals; 
     extern const TokenSet binary_arithmetic_operators;
     extern const TokenSet unary_arithmetic_operators;

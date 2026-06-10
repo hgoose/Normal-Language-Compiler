@@ -185,3 +185,12 @@ AST_NODE* create_assign(AST_NODE* var_node, AST_NODE* expression) {
 
     return assign_root;
 }
+
+void merge_statement_returns(StatementReturns& dest, StatementReturns src) {
+    while (src.size()) {
+        AST_NODE* statement = src.front();
+        src.pop_front();
+
+        dest.push_back(statement);
+    }
+}

@@ -33,4 +33,6 @@ AST_NODE* get_initial_value();
 
 AST_NODE* create_assign(AST_NODE*, AST_NODE*);
 
+void merge_statement_returns(StatementReturns&, StatementReturns);
+
 #endif

@@ -69,17 +69,24 @@ struct Token
 
     bool is(TokenValue);
     bool is_not(TokenValue);
+
     bool is_ident();
     bool is_ident_if();
     bool is_ident_else();
     bool is_ident_while();
+
     bool is_ident_true();
     bool is_ident_false();
     bool is_boolean();
+
+    bool is_type();
+    bool is_type_int4();
+
     bool is_semicolon();
     bool is_lbrace();
     bool is_rbrace();
     bool is_comma();
+
     bool is_eof();
 
     bool in(const TokenSet&); 

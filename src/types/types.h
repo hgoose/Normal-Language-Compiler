@@ -28,6 +28,7 @@ typedef std::unordered_map<std::string, std::function<StatementReturns(void)>> P
 typedef std::unordered_map<NODE_TYPE, std::function<bool(AST_NODE*)>> EvalMap;
 
 typedef std::unordered_set<std::string> ReservedWords;
+typedef std::unordered_set<std::string> Types;
 
 typedef std::list<AST_NODE*> Children;
 
