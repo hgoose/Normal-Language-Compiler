@@ -1,5 +1,6 @@
 #include "token.h"
 #include "token_structures.h"
+#include "ast_node.h"
 
 #include <iostream>
 #include <string>
@@ -50,6 +51,14 @@ bool Token::is_not(TokenValue token) {
 
 bool Token::is_ident() {
     return is(TOKEN_IDENT);
+}
+
+bool Token::is_not_ident() {
+    return !is_ident();
+}
+
+bool Token::is_ident_reserved() {
+    return is_ident() && is_reserved(*this);
 }
 
 bool Token::is_ident_if() {

@@ -1,5 +1,5 @@
-#ifndef TREE_EVAL_H
-#define TREE_EVAL_H
+#ifndef NLC_TREE_EVAL_H
+#define NLC_TREE_EVAL_H
 
 #include <cstddef>
 

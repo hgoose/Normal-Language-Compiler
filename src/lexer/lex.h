@@ -1,5 +1,5 @@
-#ifndef  LEXICAL_ANALYZER_H
-#define  LEXICAL_ANALYZER_H
+#ifndef  NLC_LEX_H
+#define  NLC_LEX_H
 
 #include "error.h"
 

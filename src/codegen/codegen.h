@@ -1,5 +1,5 @@
-#ifndef CODEGEN_H
-#define CODEGEN_H
+#ifndef NLC_CODEGEN_H
+#define NLC_CODEGEN_H
 
 #include "codegen_structures.h"
 

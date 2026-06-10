@@ -71,6 +71,9 @@ struct Token
     bool is_not(TokenValue);
 
     bool is_ident();
+    bool is_not_ident();
+    bool is_ident_reserved();
+
     bool is_ident_if();
     bool is_ident_else();
     bool is_ident_while();

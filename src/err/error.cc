@@ -2,6 +2,7 @@
 #include "parser.h"
 #include "buffio.h"
 #include "lex.h"
+#include "parserutils.h"
 
 #include <iostream>
 using std::cerr;
@@ -22,7 +23,7 @@ const char* error_string(int err) {
         case NLC_EXPECTED_RPAREN: return "expected )";
         case NLC_EXPECTED_EXPRESSION: return "expected expression, none provided";
         case NLC_EXPECTED_STATEMENT: return "expected statement, none provided";
-        case NLC_EXPECTED_SEMICOLON: return "missing semicolon";
+        case NLC_EXPECTED_SEMICOLON: return "expected semicolon";
         case NLC_STR_TABLE_OVERFLOW: return "string table overrun";
         case NLC_INVALID_OPERAND_TYPE: return "invalid operand type";
         case NLC_INT_TABLE_OVERFLOW: return "integer table overrun";
@@ -100,7 +101,7 @@ void print_error(const Error& e) {
 }
 
 void get_next_token_and_print_error() {
-    Error e{get_token(next_token)};
+    Error e = munch();
     print_error(e);
 }
 

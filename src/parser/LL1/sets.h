@@ -1,5 +1,5 @@
-#ifndef NLC_LL1_SETS
-#define NLC_LL1_SETS
+#ifndef NLC_SETS_H
+#define NLC_SETS_H
 
 #include "types.h"
 

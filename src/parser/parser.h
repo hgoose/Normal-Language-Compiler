@@ -1,9 +1,5 @@
-// Nate warner 
-// CS 515
-// Assignment 3
-
-#ifndef PARSER_H
-#define PARSER_H
+#ifndef NLC_PARSER_H
+#define NLC_PARSER_H
 
 #include "token.h"
 

@@ -1,5 +1,5 @@
-#ifndef UTIL_H
-#define UTIL_H
+#ifndef NLC_UTIL_H
+#define NLC_UTIL_H
 
 #include <string>
 #include <cstdint>

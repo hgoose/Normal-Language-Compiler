@@ -28,12 +28,14 @@
 #include <algorithm>
 #include <iostream>
 #include <unordered_map>
-#include <functional>
 
 bool SUPPRESS_PARSER_ERRORS{};
 
 Token next_token;
 Token prev_token;
+
+static StatementReturns sub_parse_assign();
+static StatementReturns continue_assign_parse();
 
 // Globals local to this unit
 namespace {
@@ -58,20 +60,26 @@ static StatementReturns get_statement() {
     SUPPRESS_PARSER_ERRORS = true;
 
     LexState state = lex_save();
-    StatementReturns possible_assign = parse_assign();
+    AST_NODE* possible_expression = try_expression(DONT_EAT_SEMICLOON);
 
     SUPPRESS_PARSER_ERRORS = false;
+
+    // The statement was indeed an expression if after 
+    // we try to parse as expression, we are left at a semicolon.
+    // Note that we are not interested in doing anything
+    // with the expression.
+    if (possible_expression && next_token.is_semicolon()) {
+        return {};
+    }
+
+    // Either the expression had an error
+    // or we have an assignment statement.
+    lex_goto_last_save(state);
+    StatementReturns possible_assign = parse_assign();
 
     if (possible_assign.size()) {
         return {possible_assign};
     }
-
-    // Either the assignment had an error
-    // or we have an expression.
-
-    // Just call it an expression
-    lex_goto_last_save(state);
-    try_expression();
 
     return {};
 }
@@ -385,7 +393,33 @@ StatementReturns parse_decl_int() {
 
     if (next_token.is_comma()) {
         get_next_token_and_print_error();
+
+        // Semicolon immediately after a comma implies 
+        // missing identifier.
+        if (wrong_next_token(TOKEN_SEMICOLON, NLC_INVALID_IDENTIFIER)) {
+            get_next_token_and_print_error();
+            free_statement_return_list(declares);
+            return {};
+        }
+
+        // Next token after a comma must be an identifier 
+        // that is not reserved
+        if (next_token.is_not_ident() || next_token.is_ident_reserved()) {
+            set_print_token_error(Error{}, NLC_SYNTAX_ERROR);
+            free_statement_return_list(declares);
+            return {};
+        }
+
         StatementReturns others = parse_decl_int();
+
+        // Call either produced an error or was 
+        // missing an initialization.
+        if (others.empty()) {
+            onepast_semi_or_block(LBRACE_COUNT_ZERO);
+            free_statement_return_list(declares);
+            return {};
+        }
+
         merge_statement_returns(declares, others);
     }
 
@@ -403,7 +437,46 @@ StatementReturns parse_decl_int() {
     return declares;
 }
 
-StatementReturns parse_assign() {
+static bool continue_assign_parse(StatementReturns& assigns) {
+    if (next_token.is_comma()) {
+        get_next_token_and_print_error();
+
+        // Semicolon immediately after a comma implies 
+        // missing identifier.
+        if (wrong_next_token(TOKEN_SEMICOLON, NLC_INVALID_IDENTIFIER)) {
+            get_next_token_and_print_error();
+            free_statement_return_list(assigns);
+            return false;
+        }
+
+        // Next token after a comma must be an identifier 
+        // that is not reserved
+        if (next_token.is_not_ident() || next_token.is_ident_reserved()) {
+            set_print_token_error(Error{}, NLC_SYNTAX_ERROR);
+            free_statement_return_list(assigns);
+            return false;
+        }
+
+        StatementReturns others = sub_parse_assign();
+
+        // Call either produced an error or was 
+        // missing an initialization.
+        if (others.empty()) {
+            onepast_semi_or_block(LBRACE_COUNT_ZERO);
+            free_statement_return_list(assigns);
+            return false;
+        }
+
+        merge_statement_returns(assigns, others);
+    }
+
+    return true;
+}
+
+// Handles one assign in a comma separated list of assignments.
+static StatementReturns sub_parse_assign() {
+    StatementReturns assigns{};
+
     Error lex_err{}, expr_err{};
 
     AST_NODE* assign_root = new AST_NODE(NODE_TYPE::ASSIGN);
@@ -442,9 +515,32 @@ StatementReturns parse_assign() {
 
     assign_root->add_children(ast_expr);
 
+    assigns.push_back(assign_root);
+
+    if (!continue_assign_parse(assigns)) {
+        return {};
+    }
+
+    return assigns;
+}
+
+StatementReturns parse_assign() {
+    Error lex_err{};
+
+    StatementReturns assigns = sub_parse_assign();
+
+    // Call above found error in statement.
+    if (assigns.empty()) {
+        return {};
+    }
+
+    if (!continue_assign_parse(assigns)) {
+        return {};
+    }
+
     // Statement does not end with a semicolon
     if (unexpected_token(prev_token, TOKEN_SEMICOLON, NLC_EXPECTED_SEMICOLON)) {
-        free_tree(assign_root);
+        free_statement_return_list(assigns);
         return {};
     }
 
@@ -452,7 +548,7 @@ StatementReturns parse_assign() {
     lex_err = munch();
     skip_if_invalid_or_lexerr(lex_err);
 
-    return {assign_root};
+    return assigns;
 }
 
 // If this function is called while the current token is not

@@ -159,13 +159,13 @@ void parser_cleanup() {
     lex_cleanup();
 }
 
-AST_NODE* try_expression() {
+AST_NODE* try_expression(bool eat_semicolon) {
     Error err{};
     AST_NODE* unknown = A(err);
     AST_NODE* ast = pttoast(unknown);
 
     if (ast) {
-        if (next_token.is_semicolon() || next_token.is_comma()) {
+        if ((next_token.is_semicolon() && eat_semicolon) || next_token.is_comma()) {
             get_next_token_and_print_error();
         }
 

@@ -1,5 +1,5 @@
-#ifndef BUFFERED_INPUT_H
-#define BUFFERED_INPUT_H
+#ifndef NLC_BUFFIO_H
+#define NLC_BUFFIO_H
 
 struct BufState;
 

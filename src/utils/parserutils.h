@@ -1,5 +1,5 @@
-#ifndef NLC_PARSER_UTILS
-#define NLC_PARSER_UTILS
+#ifndef NLC_PARSERUTILS_H
+#define NLC_PARSERUTILS_H
 
 #include "types.h"
 
@@ -9,6 +9,9 @@ struct AST_NODE;
 
 inline constexpr int LBRACE_COUNT_ZERO{};
 inline constexpr int LBRACE_COUNT_ONE{};
+
+inline constexpr bool EAT_SEMICLOON{true};
+inline constexpr bool DONT_EAT_SEMICLOON{};
 
 void skip_block();
 void skip_if(int);
@@ -28,7 +31,7 @@ bool unexpected_token(TokenValue, ErrorValue, MoveProcedure=onepast_semi_or_bloc
 bool unexpected_token(const Token&, TokenValue, ErrorValue, MoveProcedure=onepast_semi_or_block, int=LBRACE_COUNT_ZERO);
 bool wrong_next_token(TokenValue, ErrorValue, MoveProcedure=onepast_semi_or_block, int=LBRACE_COUNT_ZERO);
 
-AST_NODE* try_expression();
+AST_NODE* try_expression(bool=EAT_SEMICLOON);
 
 AST_NODE* get_initial_value();
 
