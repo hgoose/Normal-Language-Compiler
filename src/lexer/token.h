@@ -79,6 +79,7 @@ struct Token
     bool is_semicolon();
     bool is_lbrace();
     bool is_rbrace();
+    bool is_comma();
     bool is_eof();
 
     bool in(const TokenSet&); 

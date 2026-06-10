@@ -272,7 +272,20 @@ bool evaluate_print(AST_NODE* root) {
 bool init_var(AST_NODE* root) {
     if (!root) return false;
 
-    AST_NODE* var = root->children.front();
+    auto child = root->children.begin();
+    auto children_end = root->children.end();
+
+    AST_NODE* var{}, *value{};
+    if (child != children_end) {
+        var = *child;
+        ++child;
+    }
+
+    if (child != children_end) {
+        value = *child;
+        ++child;
+    }
+
     INT_TABLE_ENTRY entry = INT_TABLE::add_int(0);
 
     // Could not get space for variable.
@@ -285,6 +298,12 @@ bool init_var(AST_NODE* root) {
     var->syminfo->location.address = entry.get_addr();
     var->syminfo->location.location_type = LOCATION_TYPE::MEMORY;
 
+    if (value) {
+        AST_NODE* assignment = create_assign(var, value);
+        update_var(assignment);
+        free_tree(assignment);
+    }
+
     return true;
 }
 
@@ -292,12 +311,17 @@ bool update_var(AST_NODE* root) {
     if (!root) return false;
 
     auto child = root->children.begin();
+    auto children_end = root->children.end();
 
     AST_NODE* var, *ast_expr;
+    if (child != children_end) {
+        var = *child;
+        ++child;
+    }
 
-    if (*child) var = *child;
-    ++child;
-    if (*child) ast_expr = *child;
+    if (child != children_end) {
+        ast_expr = *child;
+    }
 
     SYMINFO* symbol = SYMTABLE::get_symbol(var->token.identifier, var->symbol_type);
 
@@ -328,7 +352,13 @@ bool update_var(AST_NODE* root) {
 bool process_read(AST_NODE* root) {
     if (!root) return false;
 
-    AST_NODE* var = root->children.front();
+    auto child = root->children.begin();
+    auto children_end = root->children.end();
+
+    AST_NODE* var;
+    if (child != children_end) {
+        var = *child;
+    }
 
     SYMINFO* symbol = SYMTABLE::get_symbol(var->token.identifier, var->symbol_type);
 
@@ -386,9 +416,14 @@ bool process_if(AST_NODE* root) {
     AST_NODE* condition{};
 
     auto if_child = root->children.begin();
-    if (if_child != root->children.end()) {
-        condition = *(if_child++);
-    } else return false;
+    auto children_end = root->children.end();
+
+    if (if_child != children_end) {
+        condition = *if_child;
+        ++if_child;
+    } 
+
+    else return false;
 
     evaluate_expr(condition);
     x86_test_al_imm8(0x1);
@@ -398,11 +433,12 @@ bool process_if(AST_NODE* root) {
 
     bool has_else{};
     AST_NODE* else_node{};
-    while (if_child != root->children.end()) {
+    while (if_child != children_end) {
         dispatch_statement(*if_child);
+
         if ((*if_child)->node_type == NODE_TYPE::ELSE) {
             has_else = true;
-            else_node = (*if_child);
+            else_node = *if_child;
             break;
         }
 

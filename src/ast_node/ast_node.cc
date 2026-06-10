@@ -170,3 +170,13 @@ void AST_NODE::install_symbol(SYMINFO* info) {
     syminfo = info; 
     data_type = info->data_type;
 }
+
+void AST_NODE::deep_copy_children(const AST_NODE* other) {
+    Children children_copy = other->children;
+    while (children_copy.size() && children_copy.front()) {
+        AST_NODE* front = children_copy.front(); 
+        children_copy.pop_front();
+
+        children.push_back(new AST_NODE(*front));
+    }
+}

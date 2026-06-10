@@ -90,7 +90,7 @@ void gen_queue(AST_NODE* p, std::queue<AST_NODE*>& terminals) {
 AST_NODE* pttoast(AST_NODE* root) {
     if (!root) return nullptr;
 
-    AST_NODE* ast_root = nullptr;
+    AST_NODE* ast_root{};
 
     // Holds children in AST creation
     std::stack<AST_NODE*> children;
@@ -268,22 +268,28 @@ void r_ast_out(AST_NODE* node, int depth) {
         std::cout << "  ";
 
     // Integer node
-    if (node->token.id == TOKEN_INTEGER || node->token.id == TOKEN_STRING) {
+    if (node->token.is(TOKEN_INTEGER) || node->token.is(TOKEN_STRING)) {
         std::cout << node->token.lexeme << "\n";
     } 
+
     else if (node->is_boolean == true) {
         std::cout << std::boolalpha << node->boolean << '\n'; 
-    } else if (node->token.id == TOKEN_IDENT && !is_reserved(node->token)) {
+    } 
+
+    else if (node->token.is(TOKEN_IDENT) && !is_reserved(node->token)) {
         std::cout << "Var: " << node->token.identifier << '\n';
     }
+
     // Operator node
     else if (node->is_op()) {
         std::cout << node->token.lexeme
-                  << " (" << op_name(node->token.id) << ")"
-                  << "\n";
-    } else if (node->is_statement()) {
+                  << " (" << op_name(node->token.id) << ")" << "\n";
+    } 
+
+    else if (node->is_statement()) {
         std::cout << node->str_node_type() << '\n';
     } 
+
     // Other internal nodes (if any) (useful for debugging, this should not hit)
     else {
         std::cout << "?\n";

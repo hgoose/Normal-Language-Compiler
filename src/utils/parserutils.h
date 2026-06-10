@@ -25,6 +25,10 @@ bool skip_if_invalid_or_lexerr(const Error&, MoveProcedure mv_proc=onepast_semi_
 bool unexpected_token(TokenValue, ErrorValue, MoveProcedure mv_proc=onepast_semi_or_block, int lbrace_count=LBRACE_COUNT_ZERO);
 bool wrong_next_token(TokenValue, ErrorValue, MoveProcedure mv_proc=onepast_semi_or_block, int lbrace_count=LBRACE_COUNT_ZERO);
 
-bool try_expression();
+AST_NODE* try_expression();
+
+AST_NODE* get_initial_value();
+
+AST_NODE* create_assign(AST_NODE*, AST_NODE*);
 
 #endif

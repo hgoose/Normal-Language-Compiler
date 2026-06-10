@@ -141,19 +141,41 @@ void parser_cleanup() {
     lex_cleanup();
 }
 
-bool try_expression() {
+AST_NODE* try_expression() {
     Error err{};
     AST_NODE* unknown = A(err);
     AST_NODE* ast = pttoast(unknown);
 
     if (ast) {
-        if (next_token.is_semicolon()) {
+        if (next_token.is_semicolon() || next_token.is_comma()) {
             get_next_token_and_print_error();
         }
 
-        return true;
+        return ast;
     } 
 
     onepast_semi_or_block(LBRACE_COUNT_ZERO);
-    return false;
+    return nullptr;
+}
+
+AST_NODE* get_initial_value() {
+    Error err{};
+    return pttoast(A(err));
+}
+
+// Creates an AST for an assignment. We copy the nodes here
+// so that we can free the returned tree after use and not 
+// free the original variable or expression trees.
+AST_NODE* create_assign(AST_NODE* var_node, AST_NODE* expression) {
+    AST_NODE* var_copy = new AST_NODE(*var_node);
+    var_copy->deep_copy_children(var_node);
+
+    AST_NODE* expression_copy = new AST_NODE(*expression);
+    expression_copy->deep_copy_children(expression);
+
+    AST_NODE* assign_root = new AST_NODE(NODE_TYPE::ASSIGN);
+
+    assign_root->add_children(var_copy, expression_copy);
+
+    return assign_root;
 }

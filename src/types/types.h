@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <string>
+#include <list>
 
 struct BufState;
 struct AST_NODE;
@@ -25,5 +26,7 @@ typedef std::unordered_map<std::string, std::function<AST_NODE*(void)>> ParseMap
 typedef std::unordered_map<NODE_TYPE, std::function<bool(AST_NODE*)>> EvalMap;
 
 typedef std::unordered_set<std::string> ReservedWords;
+
+typedef std::list<AST_NODE*> Children;
 
 #endif

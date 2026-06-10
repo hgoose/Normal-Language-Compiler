@@ -88,6 +88,10 @@ bool Token::is_rbrace() {
     return is(TOKEN_RBRACE);
 }
 
+bool Token::is_comma() {
+    return is(TOKEN_COMMA);
+}
+
 bool Token::is_eof() {
     return is(TOKEN_EOF);
 }

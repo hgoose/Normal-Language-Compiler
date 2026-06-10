@@ -335,7 +335,10 @@ AST_NODE* parse_decl_int4() {
     }
 
     // Put into symbol table 
-    SYMINFO* entry = SYMTABLE::add_symbol(SYMINFO(next_token.identifier, TYPE::INT4, SYMTYPE::VAR));
+    SYMINFO* entry = SYMTABLE::add_symbol(
+        SYMINFO(next_token.identifier, TYPE::INT4, SYMTYPE::VAR)
+    );
+
     if (!entry) {
         set_print_token_error(Error{}, NLC_SYMBOL_ALREADY_EXISTS);
         onepast_semi_or_block(LBRACE_COUNT_ZERO);
@@ -343,8 +346,8 @@ AST_NODE* parse_decl_int4() {
         return nullptr; 
     }
 
-    AST_NODE* var = new AST_NODE(next_token);
-    var->syminfo = entry;
+    AST_NODE* var = new AST_NODE(next_token, NODE_TYPE::VAR, SYMTYPE::VAR);
+    var->install_symbol(entry);
 
     declare_root->add_children(var);
 
@@ -358,8 +361,26 @@ AST_NODE* parse_decl_int4() {
         return nullptr;
     }
 
+    // Declare with assignment
+    AST_NODE* expression{};
+    if (next_token.is(TOKEN_ASSIGN)) {
+        lex_err = get_token(next_token);
+        if (skip_if_invalid_or_lexerr(lex_err)) {
+            free_tree(declare_root);
+            return nullptr;
+        }
+
+        expression = get_initial_value(); 
+        if (expression) declare_root->add_children(expression);
+
+        else {
+            onepast_semi_or_block(LBRACE_COUNT_ZERO);
+            return nullptr;
+        }
+    }
+
     // Statement does not end with a semicolon
-    if (unexpected_token(TOKEN_SEMICOLON, NLC_SYNTAX_ERROR)) {
+    if (unexpected_token(TOKEN_SEMICOLON, NLC_EXPECTED_SEMICOLON)) {
         free_tree(declare_root);
         return nullptr;
     }
@@ -371,15 +392,10 @@ AST_NODE* parse_decl_int4() {
 }
 
 AST_NODE* parse_assign() {
-    AST_NODE* assign_root = new AST_NODE();
-    assign_root->node_type = NODE_TYPE::ASSIGN;
-
     Error lex_err{}, expr_err{};
 
-    AST_NODE* var_node = new AST_NODE();
-    var_node->token = next_token;
-    var_node->node_type = NODE_TYPE::VAR;
-    var_node->symbol_type = SYMTYPE::VAR;
+    AST_NODE* assign_root = new AST_NODE(NODE_TYPE::ASSIGN);
+    AST_NODE* var_node = new AST_NODE(next_token, NODE_TYPE::VAR, SYMTYPE::VAR);
 
     assign_root->add_children(var_node);
 

@@ -9,6 +9,7 @@
 #include "symtable.h"
 #include "ast_structures.h"
 #include "token_structures.h"
+#include "types.h"
 
 struct AST_NODE;
 
@@ -50,7 +51,7 @@ struct AST_NODE {
     // If consumed token is a variable
     SYMINFO* syminfo{};
 
-    std::list<AST_NODE*> children;
+    Children children;
 
     AST_NODE() = default;
 
@@ -76,6 +77,22 @@ struct AST_NODE {
     {
         set_boolean();
     }
+
+    AST_NODE(Token token, NODE_TYPE node_type, SYMTYPE symbol_type) 
+        : token(token),
+          node_type(node_type),
+          symbol_type(symbol_type)
+    {}
+
+    AST_NODE(Token token, NODE_TYPE node_type, TYPE data_type, SYMTYPE symbol_type) 
+        : token(token),
+        node_type(node_type),
+        data_type(data_type),
+        symbol_type(symbol_type)
+    {
+        set_boolean();
+    }
+
 
     AST_NODE(const AST_NODE& other) {
         token = other.token;
@@ -122,6 +139,8 @@ struct AST_NODE {
     void set_boolean();
 
     void install_symbol(SYMINFO*);
+
+    void deep_copy_children(const AST_NODE*);
 };
 
 #endif
