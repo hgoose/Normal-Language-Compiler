@@ -16,6 +16,15 @@ bool is_reserved(const Token& t) {
     return reserved_words.find(lexeme) != reserved_words.end();
 }
 
+void AST_NODE::add_all_statements(StatementReturns returns) {
+    while (returns.size()) {
+        AST_NODE* front = returns.front();
+        returns.pop_front();
+
+        add_children(front);
+    }
+}
+
 AST_NODE* binary_arithmetic_type_compliance(AST_NODE* left, AST_NODE* right) {
     if (!left->is_type_integral())
         return left;
@@ -171,8 +180,8 @@ void AST_NODE::install_symbol(SYMINFO* info) {
     data_type = info->data_type;
 }
 
-void AST_NODE::deep_copy_children(const AST_NODE* other) {
-    Children children_copy = other->children;
+void AST_NODE::deep_copy_children(const AST_NODE& other) {
+    Children children_copy = other.children;
     while (children_copy.size() && children_copy.front()) {
         AST_NODE* front = children_copy.front(); 
         children_copy.pop_front();

@@ -18,6 +18,8 @@ void skip_else(int);
 void onepast_semi_or_block(int);
 void onepast_next_token(int);
 
+void free_statement_return_list(StatementReturns& returns);
+
 void free_tree(AST_NODE*&);
 void parser_cleanup();
 

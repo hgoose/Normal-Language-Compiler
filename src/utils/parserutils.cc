@@ -136,6 +136,15 @@ void free_tree(AST_NODE*& p) {
     p=nullptr;
 }
 
+void free_statement_return_list(StatementReturns& returns) {
+    while (returns.size()) {
+        AST_NODE* front = returns.front();
+        returns.pop_front();
+
+        free_tree(front);
+    }
+}
+
 // Free all nodes created for the AST and parse tree
 void parser_cleanup() {
     lex_cleanup();
@@ -167,11 +176,8 @@ AST_NODE* get_initial_value() {
 // so that we can free the returned tree after use and not 
 // free the original variable or expression trees.
 AST_NODE* create_assign(AST_NODE* var_node, AST_NODE* expression) {
-    AST_NODE* var_copy = new AST_NODE(*var_node);
-    var_copy->deep_copy_children(var_node);
-
-    AST_NODE* expression_copy = new AST_NODE(*expression);
-    expression_copy->deep_copy_children(expression);
+    AST_NODE* var_copy = new AST_NODE(*var_node, COPY_CHILDREN);
+    AST_NODE* expression_copy = new AST_NODE(*expression, COPY_CHILDREN);
 
     AST_NODE* assign_root = new AST_NODE(NODE_TYPE::ASSIGN);
 

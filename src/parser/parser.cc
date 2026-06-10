@@ -30,9 +30,14 @@
 #include <unordered_map>
 #include <functional>
 
+bool SUPPRESS_PARSER_ERRORS{};
+
 Token next_token;
 
-bool SUPPRESS_PARSER_ERRORS{};
+// Globals local to this unit
+namespace {
+    AST_NODE* program_tree{new AST_NODE(NODE_TYPE::BLOCK)};
+}
 
 Error parser_init(const char* src_code) {
     Error err = lex_init(src_code);
@@ -41,7 +46,7 @@ Error parser_init(const char* src_code) {
 
 // Calls the correct function in parse_map based on the
 // current identifier.
-static AST_NODE* get_statement() {
+static StatementReturns get_statement() {
     std::string ident = next_token.identifier;
     if (parse_map.find(ident) != parse_map.end()) {
         return parse_map.at(ident)();
@@ -50,13 +55,14 @@ static AST_NODE* get_statement() {
     // Suppress errors, save state, and try to 
     // parse as assignment.
     SUPPRESS_PARSER_ERRORS = true;
+
     LexState state = lex_save();
-    AST_NODE* possible_assign = parse_assign();
+    StatementReturns possible_assign = parse_assign();
 
     SUPPRESS_PARSER_ERRORS = false;
 
-    if (possible_assign) {
-        return possible_assign;
+    if (possible_assign.size()) {
+        return {possible_assign};
     }
 
     // Either the assignment had an error
@@ -66,7 +72,7 @@ static AST_NODE* get_statement() {
     lex_goto_last_save(state);
     try_expression();
 
-    return nullptr;
+    return {};
 }
 
 // Parses the input program into an abstract syntax tree, then traverses
@@ -80,16 +86,14 @@ int parse() {
         return -1;
     }
 
-    AST_NODE* program_tree = new AST_NODE(NODE_TYPE::BLOCK);
-
     get_token(next_token);
 
     for (;;) {
         if (next_token.is_ident()) {
-            AST_NODE* statement_root{get_statement()};
+            StatementReturns statements{get_statement()};
 
-            if (statement_root) {
-                program_tree->add_children(statement_root);
+            if (statements.size()) {
+                program_tree->add_all_statements(statements);
             }
         } 
 
@@ -136,7 +140,7 @@ int parse() {
     return 0;
 }
 
-AST_NODE* parse_print() {
+StatementReturns parse_print() {
     Error lex_error{}, expr_error{};
 
     AST_NODE* print_root = new AST_NODE();
@@ -146,25 +150,25 @@ AST_NODE* parse_print() {
     lex_error = get_token(next_token);
     if (skip_if_invalid_or_lexerr(lex_error)) {
         free_tree(print_root);
-        return nullptr;
+        return {};
     }
 
     // Missing ( after print
     if (unexpected_token(TOKEN_LPAREN, NLC_SYNTAX_ERROR)) {
         free_tree(print_root);
-        return nullptr;
+        return {};
     }
     
     lex_error = get_token(next_token);
     if (skip_if_invalid_or_lexerr(lex_error)) {
         free_tree(print_root);
-        return nullptr;
+        return {};
     }
 
     // If we have an rparen here the print statement is empty, illegal.
     if (wrong_next_token(TOKEN_RPAREN, NLC_EXPECTED_EXPRESSION)) {
         free_tree(print_root);
-        return nullptr;
+        return {};
     }
 
     // Process all expressions, add as children to print node
@@ -179,7 +183,7 @@ AST_NODE* parse_print() {
     if (!ast_expr) {
         onepast_semi_or_block(LBRACE_COUNT_ZERO);
         free_tree(print_root);
-        return nullptr;
+        return {};
     }
 
     // Otherwise the expression is valid and we add it to the root
@@ -190,13 +194,13 @@ AST_NODE* parse_print() {
         lex_error = get_token(next_token);
         if (skip_if_invalid_or_lexerr(lex_error)) {
             free_tree(print_root);
-            return nullptr;
+            return {};
         }
 
         // No expression following the comma
         if (wrong_next_token(TOKEN_RPAREN, NLC_EXPECTED_EXPRESSION)) {
             free_tree(print_root);
-            return nullptr;
+            return {};
         }
 
         expr = A(expr_error);
@@ -206,7 +210,7 @@ AST_NODE* parse_print() {
         if (!ast_expr) {
             onepast_semi_or_block(LBRACE_COUNT_ZERO);
             free_tree(print_root);
-            return nullptr;
+            return {};
         }
         print_root->add_child(ast_expr);
     }
@@ -214,30 +218,30 @@ AST_NODE* parse_print() {
     // Missing ) after expressions
     if (unexpected_token(TOKEN_RPAREN, NLC_SYNTAX_ERROR)) {
         free_tree(print_root);
-        return nullptr;
+        return {};
     }
 
     // Lexer error
     lex_error = get_token(next_token);
     if (skip_if_invalid_or_lexerr(lex_error)) {
         free_tree(print_root);
-        return nullptr;
+        return {};
     }
 
     // Missing semicolon after )
     if (unexpected_token(TOKEN_SEMICOLON, NLC_EXPECTED_SEMICOLON)) {
         free_tree(print_root);
-        return nullptr;
+        return {};
     }
 
     // At semicolon. Consume it.
     lex_error = get_token(next_token);
     skip_if_invalid_or_lexerr(lex_error);
 
-    return print_root;
+    return {print_root};
 }
 
-AST_NODE* parse_read() {
+StatementReturns parse_read() {
     AST_NODE* read_root = new AST_NODE();
 
     read_root->node_type = NODE_TYPE::READ;
@@ -248,25 +252,25 @@ AST_NODE* parse_read() {
     lex_err = get_token(next_token);
     if (skip_if_invalid_or_lexerr(lex_err)) {
         free_tree(read_root);
-        return nullptr;
+        return {};
     }
 
     if (unexpected_token(TOKEN_LPAREN, NLC_SYNTAX_ERROR)) {
         free_tree(read_root);
-        return nullptr;
+        return {};
     }
 
     lex_err = get_token(next_token);
     if (skip_if_invalid_or_lexerr(lex_err)) {
         free_tree(read_root);
-        return nullptr;
+        return {};
     }
 
     if (next_token.is(TOKEN_RPAREN) || next_token.is_not(TOKEN_IDENT)) {
         set_print_token_error(Error{}, NLC_EXPECTED_VAR);
         onepast_semi_or_block(LBRACE_COUNT_ZERO);
         free_tree(read_root);
-        return nullptr;
+        return {};
     }
 
     AST_NODE* var_node = new AST_NODE(next_token);
@@ -281,33 +285,35 @@ AST_NODE* parse_read() {
     lex_err = get_token(next_token);
     if (skip_if_invalid_or_lexerr(lex_err)) {
         free_tree(read_root);
-        return nullptr;
+        return {};
     }
 
     if (unexpected_token(TOKEN_RPAREN, NLC_SYNTAX_ERROR)) {
         free_tree(read_root);
-        return nullptr;
+        return {};
     }
 
     lex_err = get_token(next_token);
     if (skip_if_invalid_or_lexerr(lex_err)) {
         free_tree(read_root);
-        return nullptr;
+        return {};
     }
 
     if (unexpected_token(TOKEN_SEMICOLON, NLC_EXPECTED_SEMICOLON)) {
         free_tree(read_root);
-        return nullptr;
+        return {};
     }
 
     // At semicolon. Consume it.
     lex_err = get_token(next_token);
     skip_if_invalid_or_lexerr(lex_err);
 
-    return read_root;
+    return {read_root};
 }
 
-AST_NODE* parse_decl_int4() {
+StatementReturns parse_decl_int4() {
+    StatementReturns declares{};
+
     Error lex_err{};
 
     AST_NODE* declare_root = new AST_NODE();
@@ -317,13 +323,13 @@ AST_NODE* parse_decl_int4() {
     lex_err = get_token(next_token);
     if (skip_if_invalid_or_lexerr(lex_err)) {
         free_tree(declare_root);
-        return nullptr;
+        return {};
     }
 
     // Variable name must be an identifier token
     if (unexpected_token(TOKEN_IDENT, NLC_INVALID_IDENTIFIER)) {
         free_tree(declare_root);
-        return nullptr;
+        return {};
     }
 
     // Variable name is reserved
@@ -331,7 +337,7 @@ AST_NODE* parse_decl_int4() {
         set_print_token_error(Error{}, NLC_VARIABLE_NAME_RESERVED);
         onepast_semi_or_block(LBRACE_COUNT_ZERO);
         free_tree(declare_root);
-        return nullptr;
+        return {};
     }
 
     // Put into symbol table 
@@ -343,7 +349,7 @@ AST_NODE* parse_decl_int4() {
         set_print_token_error(Error{}, NLC_SYMBOL_ALREADY_EXISTS);
         onepast_semi_or_block(LBRACE_COUNT_ZERO);
         free_tree(declare_root);
-        return nullptr; 
+        return {}; 
     }
 
     AST_NODE* var = new AST_NODE(next_token, NODE_TYPE::VAR, SYMTYPE::VAR);
@@ -354,11 +360,10 @@ AST_NODE* parse_decl_int4() {
     // Note: var must not be freed explicitly on an error, a call to 
     // free_tree with declare_root with free it.
 
-    // Look for semicolon
     lex_err = get_token(next_token);
     if (skip_if_invalid_or_lexerr(lex_err)) {
         free_tree(declare_root);
-        return nullptr;
+        return {};
     }
 
     // Declare with assignment
@@ -367,7 +372,7 @@ AST_NODE* parse_decl_int4() {
         lex_err = get_token(next_token);
         if (skip_if_invalid_or_lexerr(lex_err)) {
             free_tree(declare_root);
-            return nullptr;
+            return {};
         }
 
         expression = get_initial_value(); 
@@ -375,23 +380,26 @@ AST_NODE* parse_decl_int4() {
 
         else {
             onepast_semi_or_block(LBRACE_COUNT_ZERO);
-            return nullptr;
+            return {};
         }
     }
 
+    // First good declare statement
+    declares.push_back(declare_root);
+
     // Statement does not end with a semicolon
     if (unexpected_token(TOKEN_SEMICOLON, NLC_EXPECTED_SEMICOLON)) {
-        free_tree(declare_root);
-        return nullptr;
+        free_statement_return_list(declares);
+        return {};
     }
 
     lex_err = get_token(next_token);
     skip_if_invalid_or_lexerr(lex_err);
 
-    return declare_root;
+    return declares;
 }
 
-AST_NODE* parse_assign() {
+StatementReturns parse_assign() {
     Error lex_err{}, expr_err{};
 
     AST_NODE* assign_root = new AST_NODE(NODE_TYPE::ASSIGN);
@@ -402,19 +410,19 @@ AST_NODE* parse_assign() {
     lex_err = get_token(next_token);
     if (skip_if_invalid_or_lexerr(lex_err)) {
         free_tree(assign_root);
-        return nullptr;
+        return {};
     }
 
     // Next token must be assignment
     if (unexpected_token(TOKEN_ASSIGN, NLC_SYNTAX_ERROR)) {
         free_tree(assign_root);
-        return nullptr;
+        return {};
     }
 
     lex_err = get_token(next_token);
     if (skip_if_invalid_or_lexerr(lex_err)) {
         free_tree(assign_root);
-        return nullptr;
+        return {};
     }
 
     AST_NODE* expr = A(expr_err);
@@ -425,7 +433,7 @@ AST_NODE* parse_assign() {
     if (!ast_expr) {
         onepast_semi_or_block(LBRACE_COUNT_ZERO);
         free_tree(assign_root);
-        return nullptr;
+        return {};
     }
 
     assign_root->add_children(ast_expr);
@@ -433,20 +441,20 @@ AST_NODE* parse_assign() {
     // Statement does not end with a semicolon
     if (unexpected_token(TOKEN_SEMICOLON, NLC_EXPECTED_SEMICOLON)) {
         free_tree(assign_root);
-        return nullptr;
+        return {};
     }
 
     // At semicolon. Consume it.
     lex_err = get_token(next_token);
     skip_if_invalid_or_lexerr(lex_err);
 
-    return assign_root;
+    return {assign_root};
 }
 
 // If this function is called while the current token is not
 // the identifier else, it returns nullptr.
-AST_NODE* parse_else() {
-    if (!next_token.is_ident_else()) return nullptr;
+StatementReturns parse_else() {
+    if (!next_token.is_ident_else()) return {};
 
     AST_NODE* else_root = new AST_NODE();
     else_root->node_type = NODE_TYPE::ELSE;
@@ -455,17 +463,17 @@ AST_NODE* parse_else() {
     Error lex_err = get_token(next_token);
     if (skip_if_invalid_or_lexerr(lex_err, skip_else, LBRACE_COUNT_ZERO)) {
         free_tree(else_root);
-        return nullptr;
+        return {};
     }
 
     bool block = next_token.is_lbrace(); 
 
     // Grab the single statement and return
     if (!block) {
-        AST_NODE* statement = get_statement();
-        if (statement) else_root->add_children(statement);
+        StatementReturns statements = get_statement();
+        if (statements.size()) else_root->add_all_statements(statements);
 
-        return else_root;
+        return {else_root};
     }
 
     // From this point on we are inside a block
@@ -473,14 +481,14 @@ AST_NODE* parse_else() {
     lex_err = get_token(next_token);
     if (skip_if_invalid_or_lexerr(lex_err, skip_else, LBRACE_COUNT_ONE)) {
         free_tree(else_root);
-        return nullptr;
+        return {};
     }
 
     // Otherwise we have a block, parse all statements.
     for(;;) {
         // Eat statements
-        AST_NODE* statement = get_statement();
-        if (statement) else_root->add_children(statement);
+        StatementReturns statements = get_statement();
+        if (statements.size()) else_root->add_all_statements(statements);
 
         // Structure was exited
         if (next_token.is_rbrace()) {
@@ -491,14 +499,14 @@ AST_NODE* parse_else() {
         else if (next_token.is_eof()) {
             set_print_token_error(Error{}, NLC_UNEXPECTED_EOF);
             free_tree(else_root);
-            return nullptr;
+            return {};
         }
     }
 
-    return else_root;
+    return {else_root};
 }
 
-AST_NODE* parse_if() {
+StatementReturns parse_if() {
     AST_NODE* if_root = new AST_NODE(); 
     if_root->token = next_token;
     if_root->node_type = NODE_TYPE::IF;
@@ -508,25 +516,25 @@ AST_NODE* parse_if() {
     lex_err = get_token(next_token);
     if (skip_if_invalid_or_lexerr(lex_err, skip_if, LBRACE_COUNT_ZERO)) {
         free_tree(if_root);
-        return nullptr;
+        return {};
     }
 
     // Next token after if keyword must be an lparen
     if (unexpected_token(TOKEN_LPAREN, NLC_SYNTAX_ERROR, skip_if, LBRACE_COUNT_ZERO)) {
         free_tree(if_root);
-        return nullptr;
+        return {};
     }
 
     lex_err = get_token(next_token);
     if (skip_if_invalid_or_lexerr(lex_err, skip_if, LBRACE_COUNT_ZERO)) {
         free_tree(if_root);
-        return nullptr;
+        return {};
     }
 
     // If the next token after lparen is an rparen, we are missing an expression
     if (wrong_next_token(TOKEN_RPAREN, NLC_EXPECTED_EXPRESSION, skip_if, LBRACE_COUNT_ZERO)) {
         free_tree(if_root);
-        return nullptr;
+        return {};
     }
 
     AST_NODE* expr = A(expr_err);
@@ -537,7 +545,7 @@ AST_NODE* parse_if() {
         skip_if(LBRACE_COUNT_ZERO);
         free_tree(ast_expr);
         free_tree(if_root);
-        return nullptr;
+        return {};
     }
 
     // Ensure that the conditional is indeed a conditional
@@ -546,7 +554,7 @@ AST_NODE* parse_if() {
         skip_if(LBRACE_COUNT_ZERO);
         free_tree(ast_expr);
         free_tree(if_root);
-        return nullptr;
+        return {};
     }
 
     // No longer need to explicitly free ast_expr
@@ -555,13 +563,13 @@ AST_NODE* parse_if() {
     // Token following logical expression must be a right parenthesis
     if (unexpected_token(TOKEN_RPAREN, NLC_SYNTAX_ERROR, skip_if, LBRACE_COUNT_ZERO)) {
         free_tree(if_root);
-        return nullptr;
+        return {};
     }
 
     lex_err = get_token(next_token);
     if (skip_if_invalid_or_lexerr(lex_err, skip_if, LBRACE_COUNT_ZERO)) {
         free_tree(if_root);
-        return nullptr;
+        return {};
     }
 
     // Empty if statement. Parse optional else and return
@@ -569,10 +577,10 @@ AST_NODE* parse_if() {
         get_next_token_and_print_error();
 
         // Parse else if it exists
-        AST_NODE* else_root = parse_else();
-        if (else_root) if_root->add_children(else_root);
+        StatementReturns else_root = parse_else();
+        if (else_root.size()) if_root->add_all_statements(else_root);
 
-        return if_root;
+        return {if_root};
     }
 
     // Otherwise we have at least one statement or a block. 
@@ -580,20 +588,20 @@ AST_NODE* parse_if() {
     bool block = next_token.is_lbrace(); 
 
     if (!block) {
-        AST_NODE* statement = get_statement();
-        if (statement) if_root->add_children(statement);
+        StatementReturns statements = get_statement();
+        if (statements.size()) if_root->add_all_statements(statements);
     } else {
 
         lex_err = get_token(next_token);
         if (skip_if_invalid_or_lexerr(lex_err, skip_if, LBRACE_COUNT_ONE)) {
             free_tree(if_root);
-            return nullptr;
+            return {};
         }
 
         // Parse all statements in block
         for(;;) {
-            AST_NODE* statement = get_statement();
-            if (statement) if_root->add_children(statement);
+            StatementReturns statements = get_statement();
+            if (statements.size()) if_root->add_all_statements(statements);
 
             // If block is concluded. Move past the right brace.
             if (next_token.is_rbrace()) {
@@ -605,19 +613,19 @@ AST_NODE* parse_if() {
             else if (next_token.is_eof()) {
                 set_print_token_error(Error{}, NLC_UNEXPECTED_EOF);
                 free_tree(if_root);
-                return nullptr;
+                return {};
             }
         }  
     }
 
     // If there exists an else, parse it.
-    AST_NODE* else_root = parse_else();
-    if (else_root) if_root->add_children(else_root);
+    StatementReturns else_root = parse_else();
+    if (else_root.size()) if_root->add_all_statements(else_root);
 
-    return if_root;
+    return {if_root};
 }
 
-AST_NODE* parse_while() {
+StatementReturns parse_while() {
     int lbrace_count{};
 
     AST_NODE* while_root = new AST_NODE();
@@ -628,25 +636,25 @@ AST_NODE* parse_while() {
     lex_err = get_token(next_token);
     if (skip_if_invalid_or_lexerr(lex_err, skip_while, lbrace_count)) {
         free_tree(while_root);
-        return nullptr;
+        return {};
     }
 
     // Missing (
     if (unexpected_token(TOKEN_LPAREN, NLC_SYNTAX_ERROR, skip_while, lbrace_count)) {
         free_tree(while_root);
-        return nullptr;
+        return {};
     }
 
     lex_err = get_token(next_token);
     if (skip_if_invalid_or_lexerr(lex_err, skip_while, lbrace_count)) {
         free_tree(while_root);
-        return nullptr;
+        return {};
     }
 
     // Missing condition
     if (wrong_next_token(TOKEN_RPAREN, NLC_EXPECTED_EXPRESSION, skip_while, lbrace_count)) {
         free_tree(while_root);
-        return nullptr;
+        return {};
     }
 
     // Get parse tree for expression then convert to AST
@@ -661,7 +669,7 @@ AST_NODE* parse_while() {
         skip_while(lbrace_count);
         free_tree(ast_expr);
         free_tree(while_root);
-        return nullptr;
+        return {};
     }
 
     // Condition was not boolean
@@ -670,7 +678,7 @@ AST_NODE* parse_while() {
         skip_while(lbrace_count);
         free_tree(ast_expr);
         free_tree(while_root);
-        return nullptr;
+        return {};
     }
 
     while_root->add_child(ast_expr);
@@ -678,13 +686,13 @@ AST_NODE* parse_while() {
     // Token after condition was not a right parenthesis
     if (unexpected_token(TOKEN_RPAREN, NLC_SYNTAX_ERROR, skip_while, lbrace_count)) {
         free_tree(while_root);
-        return nullptr;
+        return {};
     }
 
     lex_err = get_token(next_token);
     if (skip_if_invalid_or_lexerr(lex_err, skip_while, lbrace_count)) {
         free_tree(while_root);
-        return nullptr;
+        return {};
     }
 
     // Explicitly empty while 
@@ -692,9 +700,9 @@ AST_NODE* parse_while() {
         lex_err = get_token(next_token);
         if (skip_if_invalid_or_lexerr(lex_err, skip_while, lbrace_count)) {
             free_tree(while_root);
-            return nullptr;
+            return {};
         }
-        return while_root;
+        return {while_root};
     }
 
     // Check if we have a block ({...})
@@ -702,10 +710,10 @@ AST_NODE* parse_while() {
 
     // If we have no block, we have a single statement
     if (!block) {
-        AST_NODE* statement{get_statement()};
-        if (statement) while_root->add_children(statement);
+        StatementReturns statements = get_statement();
+        if (statements.size()) while_root->add_all_statements(statements);
 
-        return while_root;
+        return {while_root};
     }
 
     // Otherwise, we have a statement block
@@ -714,19 +722,19 @@ AST_NODE* parse_while() {
     lex_err = get_token(next_token);
     if (skip_if_invalid_or_lexerr(lex_err, skip_while, lbrace_count)) {
         free_tree(while_root);
-        return nullptr;
+        return {};
     }
 
     // Empty block ({})
     if (next_token.is_rbrace()) {
-        return while_root;
+        return {while_root};
     }
 
     // Process all statements in block. Note that the block is 
     // strictly non-empty thanks to the check above
     for(;;) {
-        AST_NODE* statement = get_statement();
-        if (statement) while_root->add_children(statement);
+        StatementReturns statements = get_statement();
+        if (statements.size()) while_root->add_all_statements(statements);
 
         // Bad statements inside a while loop could be detrimental. 
         // For example, it could cause an infinite loop.
@@ -735,7 +743,7 @@ AST_NODE* parse_while() {
         else {
             skip_while(lbrace_count);
             free_tree(while_root);
-            return nullptr;
+            return {};
         }
 
         // At the rbrace that terminates the while loop.
@@ -749,11 +757,11 @@ AST_NODE* parse_while() {
         else if (next_token.is_eof()) {
             set_print_token_error(Error{}, NLC_UNEXPECTED_EOF);
             free_tree(while_root);
-            return nullptr;
+            return {};
         }
     }
 
-    return while_root;
+    return {while_root};
 }
 
 // A -> BA'

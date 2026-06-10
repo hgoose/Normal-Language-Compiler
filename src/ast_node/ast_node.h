@@ -14,6 +14,8 @@
 struct AST_NODE;
 
 inline constexpr bool OPERATOR{true};
+inline constexpr bool COPY_CHILDREN{true};
+inline constexpr bool NO_COPY_CHILDREN{false};
 
 bool is_reserved(const Token& t);
 NODE_TYPE get_node_type(const Token& t);
@@ -94,7 +96,7 @@ struct AST_NODE {
     }
 
 
-    AST_NODE(const AST_NODE& other) {
+    AST_NODE(const AST_NODE& other, bool copy_children=false) {
         token = other.token;
         data_type = other.data_type;
         node_type = other.node_type;
@@ -104,6 +106,10 @@ struct AST_NODE {
         symbol_type = other.symbol_type;
         boolean = other.boolean;
         is_boolean = other.is_boolean;
+
+        if (copy_children) {
+            deep_copy_children(other);
+        }
     }
 
     void add_child(AST_NODE* child) {
@@ -114,6 +120,8 @@ struct AST_NODE {
     void add_children(ARGS... args) {
         ((children.push_back(args)), ...);
     }
+
+    void add_all_statements(StatementReturns);
 
     void clear();
     std::string str_node_type();
@@ -140,7 +148,7 @@ struct AST_NODE {
 
     void install_symbol(SYMINFO*);
 
-    void deep_copy_children(const AST_NODE*);
+    void deep_copy_children(const AST_NODE&);
 };
 
 #endif
