@@ -8,7 +8,7 @@
 using std::cerr;
 
 // Returns the error message for a given error code
-const char* error_string(int err) {
+const char* error_string(ErrorValue err) {
     // Run through the cases
     switch (err) {
         case NLC_FILE_NOT_FOUND: return "file not found";
@@ -136,3 +136,28 @@ void set_print_token_error(Error&& e, const Token& token, ErrorValue error) {
 
     print_error(e);
 }
+
+Error create_error(ErrorValue error_value) {
+    return Error{error_value};
+}
+
+bool Error::is(ErrorValue error_value) {
+    return error == error_value;
+}
+
+bool Error::is_not(ErrorValue error_value) {
+    return !is(error_value);
+}
+
+bool Error::is_eof() {
+    return is(NLC_EOF);
+}
+
+bool Error::is_ok() {
+    return is(NLC_OK);
+}
+
+bool Error::is_unexpected_eof() {
+    return is(NLC_UNEXPECTED_EOF);
+}
+

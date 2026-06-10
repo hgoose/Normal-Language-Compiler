@@ -43,16 +43,6 @@
 #define TOKEN_UNEG               33
 #define TOKEN_UPLUS              34
 
-// Mapping these to their ascii values
-#define ESC_NEWLINE              10
-#define ESC_TAB                  9
-#define ESC_CARRIAGE_RETURN      13
-#define ESC_QUOTE                34
-#define ESC_BACKSLASH            92
-#define ESC_ALERT                7
-#define ESC_BACKSPACE            8
-#define EMPTY                    0
-
 struct Token
 {
     // Guaranteed to have
@@ -67,35 +57,37 @@ struct Token
     std::string str{};
     std::string identifier{};
 
-    bool is(TokenValue);
-    bool is_not(TokenValue);
+    bool is(TokenValue) const;
+    bool is_not(TokenValue) const;
 
-    bool is_ident();
-    bool is_not_ident();
-    bool is_ident_reserved();
+    bool is_null() const;
 
-    bool is_ident_if();
-    bool is_ident_else();
-    bool is_ident_while();
+    bool is_ident() const;
+    bool is_not_ident() const;
+    bool is_ident_reserved() const;
 
-    bool is_ident_true();
-    bool is_ident_false();
-    bool is_boolean();
+    bool is_ident_if() const;
+    bool is_ident_else() const;
+    bool is_ident_while() const;
 
-    bool is_type();
-    bool is_type_int();
+    bool is_ident_true() const;
+    bool is_ident_false() const;
+    bool is_boolean() const;
 
-    bool is_semicolon();
-    bool is_lbrace();
-    bool is_rbrace();
-    bool is_comma();
+    bool is_type() const;
+    bool is_type_int() const;
 
-    bool is_eof();
+    bool is_semicolon() const;
+    bool is_lbrace() const;
+    bool is_rbrace() const;
+    bool is_comma() const;
 
-    bool in(const TokenSet&); 
+    bool is_eof() const;
+
+    bool in(const TokenSet&) const; 
 
     template<typename...Sets>
-    bool in_union(Sets...set) {
+    bool in_union(Sets...set) const {
         return (in(set) || ...);
     }
 };

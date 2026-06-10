@@ -1,6 +1,8 @@
 #ifndef NLC_ERROR_H
 #define NLC_ERROR_H
 
+#include "types.h"
+
 #define  NLC_OK                     0
 #define  NLC_FILE_NOT_FOUND        -1
 #define  NLC_EOF                   -2
@@ -34,22 +36,37 @@ inline constexpr int CRITICAL{1};
 
 struct Error
 {
-  int error{NLC_OK};
+  ErrorValue error{NLC_OK};
   int line, col;
+
+  Error() = default;
+
+  Error(ErrorValue error) : error(error) {}
+
+  Error(ErrorValue error, int line, int col) 
+      : error(error), line(line), col(col) 
+  {}
+
+  bool is(ErrorValue);
+  bool is_not(ErrorValue);
+  bool is_eof();
+  bool is_ok();
+  bool is_unexpected_eof();
 };
 
 bool invalid_lookahead();
-bool handle_lex_error(const Error& err);
+bool handle_lex_error(const Error&);
 
-const char* error_string(int);
+const char* error_string(ErrorValue);
 void print_error(const Error&);
 
 void get_next_token_and_print_error();
 
-void set_print_token_error(Error&, int);
-void set_print_token_error(Error&&, int);
-void set_print_token_error(Error&, const Token&, int);
-void set_print_token_error(Error&&, const Token&, int);
+void set_print_token_error(Error&, ErrorValue);
+void set_print_token_error(Error&&, ErrorValue);
+void set_print_token_error(Error&, const Token&, ErrorValue);
+void set_print_token_error(Error&&, const Token&, ErrorValue);
 
+Error create_error(ErrorValue);
 
 #endif /* NCC_ERROR_H */

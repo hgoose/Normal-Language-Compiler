@@ -5,70 +5,45 @@
 #include "lex.h"
 #include "lexstate.h"
 #include "parser.h"
+#include "types.h"
+#include "lex_structures.h"
 
 #include <string>
 #include <algorithm>
 #include <cctype>
-
-using std::string;
-
-// Helper function to check if a character is a digit
-static inline bool is_digit(char c) { return c >= '0' && c <= '9'; }
+#include <iostream>
 
 namespace {
     Token last_token{};
+
+    inline bool is_digit(char c) { return c >= '0' && c <= '9'; }
 }
 
 // Checks for escape sequence and replaces character
-void check_replace_escape(char& c, int& rc, string& utf8) {
-    // Clear this just in case its not already empty
-    utf8.clear();
-
-    // Start return code as OK
-    rc = NLC_OK;
-
+static ReturnCode check_replace_escape(char& c, std::string& hex) {
     char next{};
 
-    // EOF is not good here, unexpected, didn't finish string token yet
-    if (buffer_get_next_char(next) == NLC_EOF) {
-        rc = NLC_UNEXPECTED_EOF;
-        return;
+    if (create_error(buffer_get_next_char(next)).is_eof()) {
+        return NLC_UNEXPECTED_EOF;
     }
 
-    if (next == 'n') {
-        c = ESC_NEWLINE;
-    } else if (next == 't') {
-        c = ESC_TAB;
-    } else if (next == 'r') {
-        c = ESC_CARRIAGE_RETURN;
-    } else if (next == '"') {
-        c = ESC_QUOTE;
-    } else if (next == '\\') {
-        c = ESC_BACKSLASH;
-    } else if (next == 'a') {
-        c = ESC_ALERT;
-    } else if (next == 'b') {
-        c = ESC_BACKSPACE;
-    // If unicode escape, call helper functions
-    } else  if (next == 'u') {
-        string hex{};
-
-        // Try to consume the next six, should be hex digits
-        // If, return error
-        if (buffer_consume_k(6,hex) == NLC_EOF) {
-            rc = NLC_UNEXPECTED_EOF;
-            return;
+    if (next == 'u') {
+        // Try to consume the next six, should be hex digits.
+        if (create_error(buffer_consume_k(6,hex)).is_eof()) {
+            return NLC_UNEXPECTED_EOF;
         }
+
         // Get the utf8 rep
-        utf8 = hex6_to_utf8(hex);
-    // Line continuation, replace with black
-    } else if (next == '\n') {
-        c = EMPTY;
-    // Unknown escape sequence, get rid of it
-    } else {
-        rc = NLC_ILLEGAL_ESCAPE;
+        hex = hex6_to_utf8(hex);
+
+        return NLC_OK;
     }
 
+    if (!replace_char_with_escape(c, next)) {
+        return NLC_ILLEGAL_ESCAPE;
+    }
+
+    return NLC_OK;
 }
 
 
@@ -103,9 +78,9 @@ Error get_token(Token& t) {
     err.error = NLC_OK;
 
     // Set default token properties
-    string lexeme{};
-    string identifier{};
-    string str{};
+    std::string lexeme{};
+    std::string identifier{};
+    std::string str{};
 
     unsigned long integer{};
     double fl{};
@@ -240,7 +215,7 @@ Error get_token(Token& t) {
                     int rc2{};
                     // If we find a -, read the next two characters, should be >>
                     if (curr_char == '-') {
-                        string next_two{};
+                        std::string next_two{};
 
                         // Consume next two characters into string
                         rc2 = buffer_consume_k(2, next_two);
@@ -463,22 +438,23 @@ Error get_token(Token& t) {
                 break;
                 // Some character in string
             } else {
-                string hex{};
-                int return_code{};
+                std::string hex{};
+                ReturnCode rc{};
+
                 if (curr_char == '\\') {
                     // Might get a hex value back from this
-                    check_replace_escape(curr_char, return_code, hex);
+                    rc = check_replace_escape(curr_char, hex);
                 }
 
                 // Unexpected EOF
-                if (return_code == NLC_UNEXPECTED_EOF) {
+                if (rc == NLC_UNEXPECTED_EOF) {
                     err.error = NLC_UNEXPECTED_EOF;
                     err.line = src_line_no;
                     err.col = src_col_no;
 
                     return err;
                     // Illegal escape sequence
-                } else if (return_code == NLC_ILLEGAL_ESCAPE) {
+                } else if (rc == NLC_ILLEGAL_ESCAPE) {
                     err.error = NLC_ILLEGAL_ESCAPE;
                     err.line = src_line_no;
                     err.col = src_col_no;

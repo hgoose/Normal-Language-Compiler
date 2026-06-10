@@ -1,44 +1,45 @@
 #ifndef NLC_BUFFIO_H
 #define NLC_BUFFIO_H
 
-struct BufState;
+#include "types.h"
 
 #include <string>
-using std::string;
+
+struct BufState;
 
 extern int src_line_no;
 extern int src_col_no;
 
 // All int return values are error codes
 
-int buffer_init(const char * filename);
+ErrorValue buffer_init(const char * filename);
 
 BufState buffer_save_state();
 void buffer_load_state(const BufState&);
 
-int buffer_get_cur_char(char & c);
+ErrorValue buffer_get_cur_char(char & c);
 // Return the character at the current input position.  But don't
 // advance in the input
 
-int buffer_next_char(void);
+ErrorValue buffer_next_char();
 // Advance to next position in the input
 
-int buffer_get_next_char(char & c);
+ErrorValue buffer_get_next_char(char & c);
 // Advance to the next position and get the character there.
 
-bool buffer_eof(void);
+bool buffer_eof();
 
-int buffer_back_char(void);
+ErrorValue buffer_back_char();
 // Go back one position in the input
 
-int buffer_cleanup(void);
+ErrorValue buffer_cleanup();
 
-int get_src_line(size_t line_no, string& line);
+ErrorValue get_src_line(size_t line_no, std::string& line);
 // Return a specified line of the source code.  Intended for error
 // messages
 
 // Looks ahead one position in the buffer, and returns the character
-int buffer_peek_next(char& c);
-int buffer_consume_k(size_t k, string& next_k);
+ErrorValue buffer_peek_next(char& c);
+ErrorValue buffer_consume_k(size_t k, std::string& next_k);
 
 #endif /* BUFFERED_INPUT_H */

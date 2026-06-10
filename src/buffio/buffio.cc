@@ -42,7 +42,7 @@ void buffer_load_state(const BufState& state) {
 }
 
 // Initializes buffer
-int buffer_init(const char* filename) {
+ErrorValue buffer_init(const char* filename) {
 
     // Reset states
     buffer_cleanup();
@@ -124,7 +124,7 @@ int buffer_init(const char* filename) {
 
 // Return the character at the current input position.  But don't
 // advance in the input
-int buffer_get_cur_char(char& c) {
+ErrorValue buffer_get_cur_char(char& c) {
     // Check if we are outside of the buffer
     if (curr_pos >= buff_size) return NLC_EOF;
 
@@ -136,7 +136,7 @@ int buffer_get_cur_char(char& c) {
 }
 
 // Advance to next position in the input
-int buffer_next_char(void) {
+ErrorValue buffer_next_char() {
     // Check if we can advance (not at end of buffer)
     if (curr_pos >= buff_size) return NLC_EOF;
 
@@ -159,7 +159,7 @@ int buffer_next_char(void) {
 }
 
 // Advance to the next position and get the character there.
-int buffer_get_next_char(char& c) {
+ErrorValue buffer_get_next_char(char& c) {
     // See if advancing would fall off the buffer, 
     if (buffer_next_char() != NLC_OK) return NLC_EOF;
     if (buffer_eof()) return NLC_EOF;
@@ -171,13 +171,13 @@ int buffer_get_next_char(char& c) {
     return NLC_OK;
 }
 
-bool buffer_eof(void) {
+bool buffer_eof() {
     // Buffer runs from index zero to buff_size - 1
     return curr_pos >= buff_size;
 }
 
 // Go back one position in the input
-int buffer_back_char(void) {
+ErrorValue buffer_back_char() {
     // Can't back up from the start of the buffer
     if (curr_pos == 0) return NLC_BOF;
 
@@ -201,7 +201,7 @@ int buffer_back_char(void) {
 
 
 // Looks ahead one position in the buffer, and returns the character
-int buffer_peek_next(char& c) {
+ErrorValue buffer_peek_next(char& c) {
     if (curr_pos + 1 >= buff_size) return NLC_EOF;
 
     c = buffer[curr_pos + 1];
@@ -209,7 +209,7 @@ int buffer_peek_next(char& c) {
     return NLC_OK;
 }
 
-int buffer_consume_k(size_t k, string& next_k) {
+ErrorValue buffer_consume_k(size_t k, string& next_k) {
     // Make sure this is cleared first
     next_k.clear();
 
@@ -228,7 +228,7 @@ int buffer_consume_k(size_t k, string& next_k) {
     return NLC_OK;
 }
 
-int buffer_cleanup(void) {
+ErrorValue buffer_cleanup() {
     // Free allocated memory for char buffer
     delete[] buffer;
 
@@ -255,7 +255,7 @@ int buffer_cleanup(void) {
 
 // Return a specified line of the source code.  Intended for error
 // messages
-int get_src_line(size_t line_no, string& line) {
+ErrorValue get_src_line(size_t line_no, string& line) {
     line.clear();
 
     // If passed in line_no doesn't exist for some reason

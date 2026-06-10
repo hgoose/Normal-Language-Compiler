@@ -4,6 +4,7 @@
 #include "lex.h"
 #include "token.h"
 #include "parser.h"
+#include "types.h"
 
 #include <cstdint>
 #include <fstream>
@@ -151,7 +152,7 @@ void read_file_to_file(const char* infile, const char* outfile) {
 
 
 // Helper function to turn string that contains 6 hex digits to unsigned int
-int parse_hex6_codepoint(const std::string& hex6, uint32_t& value) {
+ReturnCode parse_hex6_codepoint(const std::string& hex6, uint32_t& value) {
     // If here are not exactly 6 hex digits, error
     if (hex6.size() != 6) {
         return NLC_ILLEGAL_ESCAPE;
@@ -175,24 +176,31 @@ int parse_hex6_codepoint(const std::string& hex6, uint32_t& value) {
         else return NLC_ILLEGAL_ESCAPE;
     }
 
-    // All is good
     return NLC_OK;
 }
 
-// Calls parse_hex6_codepoint and encode_utf8, we get returned the utf8 representation
+// Calls parse_hex6_codepoint and encode_utf8.
+// We get returned the utf8 representation
 std::string hex6_to_utf8(const std::string& hex6) {
-    uint32_t cp{};
+    uint32_t code_point{};
     std::string out{};
 
     // Parse and encode
-    parse_hex6_codepoint(hex6,cp);
-    encode_utf8(cp, out);
+    ReturnCode rc = parse_hex6_codepoint(hex6, code_point);
+    if (create_error(rc).is_not(NLC_OK)) {
+        return "";
+    } 
+
+    rc = encode_utf8(code_point, out);
+    if (create_error(rc).is_not(NLC_OK)) {
+        return "";
+    }
 
     return out;
 }
 
 // Encode a Unicode scalar value to UTF-8 bytes.
-int encode_utf8(uint32_t cp, std::string& out) {
+ReturnCode encode_utf8(uint32_t cp, std::string& out) {
     // Validate Unicode scalar value
     if (cp > 0x10FFFF) {
         return NLC_ILLEGAL_ESCAPE;

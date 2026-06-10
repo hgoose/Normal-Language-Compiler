@@ -12,6 +12,8 @@ struct AST_NODE;
 
 enum class NODE_TYPE : unsigned int;
 
+typedef int ReturnCode;
+
 typedef std::list<AST_NODE*> StatementReturns;
 
 typedef int TokenValue;
@@ -31,5 +33,7 @@ typedef std::unordered_set<std::string> ReservedWords;
 typedef std::unordered_set<std::string> Types;
 
 typedef std::list<AST_NODE*> Children;
+
+template<typename T> using EscapesMap = std::unordered_map<T, TokenValue>;
 
 #endif

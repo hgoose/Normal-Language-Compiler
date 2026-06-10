@@ -13,108 +13,97 @@ using std::string;
 
 // Prints a token
 void print_token(const Token& t) {
+    if (t.is_null()) return;
+
     // Guaranteed values of interest
     if (t.id < 0 || static_cast<size_t>(t.id) >= TOKEN_STRUCTURES::token_names.size()) {
         cerr << "Tried to access a token id that does not exist\n\n";
         return;
     }
 
-    // For TOKEN_NULL just return, we want to ignore it 
-    if (t.id == TOKEN_NULL) return;
-
     // Custom output depending on token type
-    if (t.id == TOKEN_INTEGER) {
-        cout << TOKEN_STRUCTURES::token_names[t.id] << ": " << t.integer 
-            << " at " << t.line_no << ":" << t.col_no << '\n';
-    } else if (t.id == TOKEN_IDENT) {
-        cout << TOKEN_STRUCTURES::token_names[t.id] << ": "<< t.identifier 
-            << " at " << t.line_no << ":" << t.col_no << '\n';
-    } else if (t.id == TOKEN_REAL) {
-        cout << TOKEN_STRUCTURES::token_names[t.id] << ": " << t.fl 
-            << " at " << t.line_no << ":" << t.col_no << '\n';
-    } else if (t.id == TOKEN_STRING) {
-        cout << TOKEN_STRUCTURES::token_names[t.id] << ": " << t.str 
-            << " at " << t.line_no << ":" << t.col_no << '\n';
-    } else {
-        cout << TOKEN_STRUCTURES::token_names[t.id] 
-            << " at " << t.line_no << ":" << t.col_no << '\n';
-    }
+    cout << TOKEN_STRUCTURES::token_names[t.id] << ": " << t.lexeme 
+        << " at " << t.line_no << ":" << t.col_no << '\n';
 }
 
-bool Token::is(TokenValue token) {
+bool Token::is(TokenValue token) const {
     return id == token;
 }
 
-bool Token::is_not(TokenValue token) {
+bool Token::is_not(TokenValue token) const {
     return !is(token);
 }
 
-bool Token::is_ident() {
+bool Token::is_null() const {
+    return is(TOKEN_NULL);
+}
+
+bool Token::is_ident() const {
     return is(TOKEN_IDENT);
 }
 
-bool Token::is_not_ident() {
+bool Token::is_not_ident() const {
     return !is_ident();
 }
 
-bool Token::is_ident_reserved() {
+bool Token::is_ident_reserved() const {
     return is_ident() && is_reserved(*this);
 }
 
-bool Token::is_ident_if() {
+bool Token::is_ident_if() const {
     return is_ident() && identifier == "if";
 }
 
-bool Token::is_ident_else() {
+bool Token::is_ident_else() const {
     return is_ident() && identifier == "else";
 }
 
-bool Token::is_ident_while() {
+bool Token::is_ident_while() const {
     return is_ident() && identifier == "while";
 }
 
-bool Token::is_ident_true() {
+bool Token::is_ident_true() const {
     return is_ident() && identifier == "true";
 }
 
-bool Token::is_ident_false() {
+bool Token::is_ident_false() const {
     return is_ident() && identifier == "false";
 }
 
-bool Token::is_type() {
+bool Token::is_type() const {
     return is_ident() && 
         TOKEN_STRUCTURES::types.find(identifier) 
         != TOKEN_STRUCTURES::types.end(); 
 }
 
-bool Token::is_type_int() {
+bool Token::is_type_int() const {
     return is_ident() && identifier == "int";
 }
 
-bool Token::is_boolean() {
+bool Token::is_boolean() const {
     return is_ident_true() || is_ident_false();
 }
 
-bool Token::is_semicolon() {
+bool Token::is_semicolon() const {
     return is(TOKEN_SEMICOLON);
 }
 
-bool Token::is_lbrace() {
+bool Token::is_lbrace() const {
     return is(TOKEN_LBRACE);
 }
 
-bool Token::is_rbrace() {
+bool Token::is_rbrace() const {
     return is(TOKEN_RBRACE);
 }
 
-bool Token::is_comma() {
+bool Token::is_comma() const {
     return is(TOKEN_COMMA);
 }
 
-bool Token::is_eof() {
+bool Token::is_eof() const {
     return is(TOKEN_EOF);
 }
 
-bool Token::in(const TokenSet& set)  { 
+bool Token::in(const TokenSet& set) const  { 
     return set.find(id) != set.end(); 
 }
