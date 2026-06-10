@@ -312,13 +312,13 @@ StatementReturns parse_read() {
 }
 
 StatementReturns parse_decl_int4() {
+    bool top = next_token.is_type();
+
     StatementReturns declares{};
 
     Error lex_err{};
 
-    AST_NODE* declare_root = new AST_NODE();
-    declare_root->node_type = NODE_TYPE::DECL;
-    declare_root->token = next_token;
+    AST_NODE* declare_root = new AST_NODE(next_token, NODE_TYPE::DECL);
 
     if (next_token.is_type()) {
         lex_err = get_token(next_token);
@@ -394,6 +394,8 @@ StatementReturns parse_decl_int4() {
         StatementReturns others = parse_decl_int4();
         merge_statement_returns(declares, others);
     }
+
+    if (!top) return declares;
 
     // Statement does not end with a semicolon
     if (unexpected_token(TOKEN_SEMICOLON, NLC_EXPECTED_SEMICOLON)) {

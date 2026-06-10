@@ -66,7 +66,7 @@ struct AST_NODE {
           node_type(node_type)
     {}
 
-    AST_NODE(Token token, NODE_TYPE node_type, bool is_operator=false) 
+    AST_NODE(Token token, NODE_TYPE node_type, bool is_operator) 
         : token(token),
           node_type(node_type),
           is_operator(is_operator)

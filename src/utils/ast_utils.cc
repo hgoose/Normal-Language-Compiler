@@ -276,6 +276,10 @@ void r_ast_out(AST_NODE* node, int depth) {
         std::cout << std::boolalpha << node->boolean << '\n'; 
     } 
 
+    else if (node->is_statement()) {
+        std::cout << node->str_node_type() << '\n';
+    } 
+
     else if (node->token.is(TOKEN_IDENT) && !is_reserved(node->token)) {
         std::cout << "Var: " << node->token.identifier << '\n';
     }
@@ -284,10 +288,6 @@ void r_ast_out(AST_NODE* node, int depth) {
     else if (node->is_op()) {
         std::cout << node->token.lexeme
                   << " (" << op_name(node->token.id) << ")" << "\n";
-    } 
-
-    else if (node->is_statement()) {
-        std::cout << node->str_node_type() << '\n';
     } 
 
     // Other internal nodes (if any) (useful for debugging, this should not hit)
