@@ -78,8 +78,8 @@ bool Token::is_type() {
         != TOKEN_STRUCTURES::types.end(); 
 }
 
-bool Token::is_type_int4() {
-    return is_ident() && identifier == "int4";
+bool Token::is_type_int() {
+    return is_ident() && identifier == "int";
 }
 
 bool Token::is_boolean() {

@@ -113,6 +113,15 @@ bool unexpected_token(TokenValue expected_token, ErrorValue error_to_submit, Mov
     return false;
 }
 
+bool unexpected_token(const Token& token, TokenValue expected_token, ErrorValue error_to_submit, MoveProcedure mv_proc, int lbrace_count){
+    if (next_token.id != expected_token) {
+        set_print_token_error(Error{}, token, error_to_submit);
+        mv_proc(lbrace_count);
+        return true;
+    }
+    return false;
+}
+
 // If the next_token is wrong_token, error.
 // Return true to indicate that the next_token is wrong
 bool wrong_next_token(TokenValue wrong_token, ErrorValue error_to_submit, MoveProcedure mv_proc, int lbrace_count){
@@ -193,4 +202,9 @@ void merge_statement_returns(StatementReturns& dest, StatementReturns src) {
 
         dest.push_back(statement);
     }
+}
+
+Error munch() {
+    prev_token = next_token;
+    return get_token(next_token);
 }

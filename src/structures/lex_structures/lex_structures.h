@@ -1,0 +1,4 @@
+#ifndef NLC_LEX_STRUCTURES_H
+#define NLC_LEX_STRUCTURES_H
+
+#endif

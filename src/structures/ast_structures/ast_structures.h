@@ -18,7 +18,7 @@ enum class NODE_TYPE : unsigned int {
 };
 
 enum class TYPE : unsigned int {
-    null, INT4, STRING, BOOL, TYPE_MISMATCH
+    null, INT, STRING, BOOL, TYPE_MISMATCH
 };
 
 #endif

@@ -15,7 +15,9 @@ using std::string;
 // Helper function to check if a character is a digit
 static inline bool is_digit(char c) { return c >= '0' && c <= '9'; }
 
-static Token last_token{};
+namespace {
+    Token last_token{};
+}
 
 // Checks for escape sequence and replaces character
 void check_replace_escape(char& c, int& rc, string& utf8) {

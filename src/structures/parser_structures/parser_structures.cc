@@ -3,7 +3,7 @@
 
 StatementReturns parse_print();
 StatementReturns parse_read();
-StatementReturns parse_decl_int4();
+StatementReturns parse_decl_int();
 StatementReturns parse_assign();
 StatementReturns parse_if();
 StatementReturns parse_else();
@@ -19,7 +19,7 @@ bool process_while(AST_NODE*);
 const ParseMap parse_map = {
     {"print", parse_print},
     {"read", parse_read},
-    {"int4", parse_decl_int4},
+    {"int", parse_decl_int},
     {"if", parse_if},
     {"while", parse_while}
 };

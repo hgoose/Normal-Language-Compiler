@@ -153,7 +153,7 @@ bool AST_NODE::is_terminal() {
 }
 
 bool AST_NODE::is_type_integral() {
-    return data_type == TYPE::INT4;
+    return data_type == TYPE::INT;
 }
 
 bool AST_NODE::is_type_logical() {

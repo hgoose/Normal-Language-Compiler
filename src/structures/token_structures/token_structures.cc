@@ -70,7 +70,7 @@ namespace TOKEN_STRUCTURES {
     };
 
     const Types types {
-        "int4"
+        "int"
     };
 
     const TokenSet terminals {

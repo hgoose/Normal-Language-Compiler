@@ -23,9 +23,10 @@ void free_statement_return_list(StatementReturns& returns);
 void free_tree(AST_NODE*&);
 void parser_cleanup();
 
-bool skip_if_invalid_or_lexerr(const Error&, MoveProcedure mv_proc=onepast_semi_or_block, int lbrace_count=LBRACE_COUNT_ZERO);
-bool unexpected_token(TokenValue, ErrorValue, MoveProcedure mv_proc=onepast_semi_or_block, int lbrace_count=LBRACE_COUNT_ZERO);
-bool wrong_next_token(TokenValue, ErrorValue, MoveProcedure mv_proc=onepast_semi_or_block, int lbrace_count=LBRACE_COUNT_ZERO);
+bool skip_if_invalid_or_lexerr(const Error&, MoveProcedure=onepast_semi_or_block, int=LBRACE_COUNT_ZERO);
+bool unexpected_token(TokenValue, ErrorValue, MoveProcedure=onepast_semi_or_block, int=LBRACE_COUNT_ZERO);
+bool unexpected_token(const Token&, TokenValue, ErrorValue, MoveProcedure=onepast_semi_or_block, int=LBRACE_COUNT_ZERO);
+bool wrong_next_token(TokenValue, ErrorValue, MoveProcedure=onepast_semi_or_block, int=LBRACE_COUNT_ZERO);
 
 AST_NODE* try_expression();
 
@@ -34,5 +35,7 @@ AST_NODE* get_initial_value();
 AST_NODE* create_assign(AST_NODE*, AST_NODE*);
 
 void merge_statement_returns(StatementReturns&, StatementReturns);
+
+Error munch();
 
 #endif

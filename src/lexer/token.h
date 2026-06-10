@@ -80,7 +80,7 @@ struct Token
     bool is_boolean();
 
     bool is_type();
-    bool is_type_int4();
+    bool is_type_int();
 
     bool is_semicolon();
     bool is_lbrace();

@@ -3,3 +3,4 @@ dumps/
 obj/
 tests/
 gdbscripts
+.cache/

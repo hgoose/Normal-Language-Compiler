@@ -12,6 +12,7 @@ struct Error;
 
 // Lookahead token
 extern Token next_token;
+extern Token prev_token;
 
 extern bool SUPPRESS_PARSER_ERRORS;
 
@@ -23,7 +24,7 @@ int parse();
 
 StatementReturns parse_print();
 StatementReturns parse_read();
-StatementReturns parse_decl_int4();
+StatementReturns parse_decl_int();
 StatementReturns parse_assign();
 StatementReturns parse_if();
 StatementReturns parse_else();
