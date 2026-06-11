@@ -29,6 +29,7 @@
 #define  NLC_EXPECTED_STATEMENT    -23
 #define  NLC_NON_LOGICAL_CONDITION -24
 #define  NLC_EXPECTED_SEMICOLON    -25
+#define  NLC_NO_MATCH              -26
 
 struct Token;
 
@@ -51,6 +52,7 @@ struct Error
   bool is(ErrorValue);
   bool is_not(ErrorValue);
   bool is_eof();
+  bool is_bof();
   bool is_ok();
   bool is_unexpected_eof();
 };

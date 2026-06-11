@@ -153,6 +153,10 @@ bool Error::is_eof() {
     return is(NLC_EOF);
 }
 
+bool Error::is_bof() {
+    return is(NLC_BOF);
+}
+
 bool Error::is_ok() {
     return is(NLC_OK);
 }

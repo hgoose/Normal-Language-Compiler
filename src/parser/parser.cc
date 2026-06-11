@@ -98,6 +98,8 @@ int parse() {
     munch();
 
     for (;;) {
+        if (next_token.is_eof()) break;
+
         if (next_token.is_ident()) {
             StatementReturns statements{get_statement()};
 
@@ -110,7 +112,6 @@ int parse() {
             try_expression();
         }
 
-        if (next_token.is_eof()) break;
     }
 
     x86_pushr64(REGISTER::R12);

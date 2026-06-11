@@ -181,7 +181,6 @@ ErrorValue buffer_back_char() {
     // Can't back up from the start of the buffer
     if (curr_pos == 0) return NLC_BOF;
 
-    // Past start of buffer, we can move backwards
     --curr_pos;
 
     // If we back up to a \n character, decrement current line number, and
@@ -226,6 +225,15 @@ ErrorValue buffer_consume_k(size_t k, string& next_k) {
     // Ending position of curr_pos is curr_pos + k
 
     return NLC_OK;
+}
+
+// Backs up min(k, curr_pos) positions
+void buffer_unconsume_k(size_t k) {
+    for (size_t i{}; i++ < k;) {
+        Error err = create_error(buffer_back_char());
+
+        if (err.is_bof()) return;
+    }
 }
 
 ErrorValue buffer_cleanup() {

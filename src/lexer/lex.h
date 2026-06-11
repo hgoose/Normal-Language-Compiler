@@ -19,4 +19,12 @@ void replace_escape_character(char& c);
 LexState lex_save();
 void lex_goto_last_save(const LexState&);
 
+Error lex_char_less(Token&, char&);
+Error lex_char_greater(Token&, char&);
+Error lex_char_equal(Token&, char&);
+Error lex_char_not(Token&, char&);
+Error lex_char_pound(Token&, char&);
+Error lex_char_alpha(Token&, char&);
+Error lex_char_quote(Token&, char&);
+
 #endif 

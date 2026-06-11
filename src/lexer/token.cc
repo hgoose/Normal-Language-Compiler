@@ -117,6 +117,21 @@ bool Token::is_ident_false() const {
     return is_ident() && identifier == "false";
 }
 
+bool Token::is_boolean() const {
+    return is_ident_true() || is_ident_false();
+}
+
+bool Token::is_lexeme_mod() const {
+    return lexeme == "mod";
+}
+
+void Token::set_mod_if_mod() {
+    if (!is_lexeme_mod()) return;
+
+    set_id(TOKEN_MOD);
+    identifier = "";
+}
+
 bool Token::is_type() const {
     return is_ident() && 
         TOKEN_STRUCTURES::types.find(identifier) 
@@ -125,10 +140,6 @@ bool Token::is_type() const {
 
 bool Token::is_type_int() const {
     return is_ident() && identifier == "int";
-}
-
-bool Token::is_boolean() const {
-    return is_ident_true() || is_ident_false();
 }
 
 bool Token::is_semicolon() const {

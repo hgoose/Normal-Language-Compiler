@@ -85,6 +85,9 @@ struct Token
     bool is_ident_false() const;
     bool is_boolean() const;
 
+    bool is_lexeme_mod() const;
+    void set_mod_if_mod();
+
     bool is_type() const;
     bool is_type_int() const;
 

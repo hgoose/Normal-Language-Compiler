@@ -164,16 +164,19 @@ AST_NODE* try_expression(bool eat_semicolon) {
     AST_NODE* unknown = A(err);
     AST_NODE* ast = pttoast(unknown);
 
-    if (ast) {
-        if ((next_token.is_semicolon() && eat_semicolon) || next_token.is_comma()) {
-            get_next_token_and_print_error();
-        }
+    if (!ast) {
+        onepast_semi_or_block(LBRACE_COUNT_ZERO);
+        return nullptr;
+    }
 
-        return ast;
-    } 
+    if (next_token.is_comma() || unexpected_token(prev_token, TOKEN_SEMICOLON, NLC_EXPECTED_SEMICOLON)) {
+        get_next_token_and_print_error();
+        return nullptr;
+    }
 
-    onepast_semi_or_block(LBRACE_COUNT_ZERO);
-    return nullptr;
+    get_next_token_and_print_error();
+
+    return ast;
 }
 
 AST_NODE* get_initial_value() {
