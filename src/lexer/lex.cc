@@ -193,6 +193,7 @@ Error get_token(Token& t) {
                             buffer_back_char();
                             buffer_back_char();
                         } else {
+                            get_token(t);
                             break;
                         }
                     }

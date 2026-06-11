@@ -2,6 +2,7 @@
 #include "error.h"
 #include "lex.h"
 #include "token.h"
+#include "token_structures.h"
 
 #include <iostream> 
 #include <cstdlib> 
