@@ -15,7 +15,12 @@
 #define EMPTY                    0
 
 extern const EscapesMap<char> escapes_map;
+extern const WhitespaceSet whitespace;
+extern const CharSet simple_lex_set;
+extern const CharToTokenMap char_to_token;
 
 bool replace_char_with_escape(char&, char&);
+bool char_is_whitespace(char);
+bool char_in_simple_lex_set(char);
 
 #endif

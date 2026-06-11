@@ -9,6 +9,7 @@
 
 struct BufState;
 struct AST_NODE;
+struct Token;
 
 enum class NODE_TYPE : unsigned int;
 
@@ -35,5 +36,11 @@ typedef std::unordered_set<std::string> Types;
 typedef std::list<AST_NODE*> Children;
 
 template<typename T> using EscapesMap = std::unordered_map<T, TokenValue>;
+typedef std::unordered_map<char, TokenValue> CharToTokenMap;
+
+typedef std::unordered_set<char> WhitespaceSet;
+typedef std::unordered_set<char> CharSet;
+
+typedef bool (Token::*TokenMethod)() const;
 
 #endif

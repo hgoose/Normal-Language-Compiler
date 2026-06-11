@@ -25,6 +25,7 @@ SRC = \
 	src/utils/util.cc \
 	src/utils/parserutils.cc \
 	src/utils/ast_utils.cc \
+	src/utils/lex_utils.cc \
 	tests/drivers/parsertest.cc \
 	src/err/error.cc \
 	src/lexer/lex.cc \

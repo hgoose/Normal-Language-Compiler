@@ -26,6 +26,53 @@ void print_token(const Token& t) {
         << " at " << t.line_no << ":" << t.col_no << '\n';
 }
 
+void Token::reset() {
+    id = TOKEN_NULL;
+
+    line_no = -1;
+    col_no = -1;
+    integer = -1;
+
+    fl = -1.f;
+
+    lexeme = "";
+    str = "";
+    identifier = "";
+}
+
+void Token::set_id(TokenValue token_value) {
+    id = token_value;
+}
+
+void Token::set_integer(int integer) {
+    this->integer = integer;
+}
+
+void Token::set_float(double fl) {
+    this->fl = fl;
+}
+
+void Token::set_str(std::string str) {
+    this->str = str;
+}
+
+void Token::set_identifier(std::string identifier) {
+    this->identifier = identifier;
+}
+
+void Token::set_lexeme(std::string lexeme) {
+    this->lexeme = lexeme;
+}
+
+void Token::set_eof() {
+    set_id(TOKEN_EOF);
+}
+
+void Token::set_line_and_col(int line, int col) {
+    line_no = line;
+    col_no = col;
+}
+
 bool Token::is(TokenValue token) const {
     return id == token;
 }
@@ -104,6 +151,30 @@ bool Token::is_eof() const {
     return is(TOKEN_EOF);
 }
 
+bool Token::is_operator() const {
+    return TOKEN_STRUCTURES::operators.find(id) 
+        != TOKEN_STRUCTURES::operators.end();
+}
+
+bool Token::is_non_data_terminal() const {
+    return TOKEN_STRUCTURES::non_data_terminals.find(id) 
+        != TOKEN_STRUCTURES::non_data_terminals.end();
+}
+
+bool Token::legal_before_uplus_or_uneg() const {
+    return TOKEN_STRUCTURES::before_uplus_or_uneg.find(id)
+        != TOKEN_STRUCTURES::before_uplus_or_uneg.end();
+}
+
 bool Token::in(const TokenSet& set) const  { 
     return set.find(id) != set.end(); 
 }
+
+bool Token::set_id_from_predicate(TokenValue token_value, TokenMethod predicate) {
+    if ((this->*predicate)()) {
+        id = token_value; 
+        return true;
+    }
+    return false;
+}
+

@@ -10,6 +10,10 @@ namespace TOKEN_STRUCTURES {
     extern const TokenNames token_names;
     extern const Types types;
     extern const TokenSet terminals; 
+    extern const TokenSet data_terminals;
+    extern const TokenSet non_data_terminals;
+    extern const TokenSet before_uplus_or_uneg;
+    extern const TokenSet operators;
     extern const TokenSet binary_arithmetic_operators;
     extern const TokenSet unary_arithmetic_operators;
     extern const TokenSet binary_relational_operators;

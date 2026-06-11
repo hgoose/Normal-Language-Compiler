@@ -50,7 +50,7 @@ static ReturnCode check_replace_escape(char& c, std::string& hex) {
 // Initializes lexer
 Error lex_init(const char*  src_code) {
     // Call buffer init and get the error code
-    int rc = buffer_init(src_code); 
+    ReturnCode rc = buffer_init(src_code); 
 
     // Create and return the error object, set properties first
     Error err;
@@ -64,118 +64,76 @@ Error lex_init(const char*  src_code) {
 // Gets the next token
 Error get_token(Token& t) {
     // Reset token
-    t.id = TOKEN_NULL;
-    t.lexeme = "";
-    t.line_no = src_line_no;
-    t.col_no = src_col_no;
-    t.integer = -1;
-    t.fl = -1.f;
-    t.str = "";
-    t.identifier = "";
+    t.reset();
+    t.set_line_and_col(src_line_no, src_col_no);
 
-    // Start out with NLC_OK
-    Error err;
-    err.error = NLC_OK;
+    Error err{};
 
     // Set default token properties
     std::string lexeme{};
     std::string identifier{};
     std::string str{};
-
     unsigned long integer{};
     double fl{};
 
-    // Hold current char from buffer position
     char curr_char{};
 
     // Either we get first valid (non white space) character, or hit EOF
     for (;;) {
-        int rc{};
-        rc = buffer_get_next_char(curr_char);
+        Error error = create_error(buffer_get_next_char(curr_char));
 
         // At this point EOF is fine, haven't started token yet
-        if (rc == NLC_EOF) {
-            // Build EOF token
-            t.id = TOKEN_EOF;
-            t.line_no = src_line_no;
-            t.col_no = src_col_no;
+        if (error.is_eof()) {
+            t.set_eof();
+            t.set_line_and_col(src_line_no, src_col_no);
 
-            err.error = NLC_EOF;
-            return err;
+            return error;
         }
 
-        // Move past whitespace
-        if (curr_char == '\n' || curr_char == ' ' || curr_char == '\t' || curr_char == '\r') {
+        if (char_is_whitespace(curr_char)) {
             continue;
         }
-
 
         // Found first non white space character
         break;
     }
 
     // Record line and column number of first character of token
-    t.col_no = src_col_no;
-    t.line_no = src_line_no;
+    t.set_line_and_col(src_line_no, src_col_no);
 
     // Add to lexeme string, we don't want to push the opening quote for a string though
     if (curr_char != '"') lexeme.push_back(curr_char);
 
     // Now we decide token class based on first character and consume the rest
 
-    int rc{};
-    if (curr_char == '+') {
-        // Its unary plus. I acknowledge that it would be better to have a isoperator field
-        // on the token struct, maybe ill do that later.
-        if (last_token.id == TOKEN_NULL || last_token.id == TOKEN_PLUS
-            || last_token.id == TOKEN_MINUS || last_token.id == TOKEN_MULT
-            || last_token.id == TOKEN_DIV || last_token.id == TOKEN_EXP
-            || last_token.id == TOKEN_LESS || last_token.id == TOKEN_GREATER
-            || last_token.id == TOKEN_LESS_EQ || last_token.id == TOKEN_GREATER_EQ
-            || last_token.id == TOKEN_EQUAL || last_token.id == TOKEN_NOT_EQUAL
-            || last_token.id == TOKEN_ASSIGN || last_token.id == TOKEN_NOT
-            || last_token.id == TOKEN_LPAREN || last_token.id == TOKEN_COMMA
-            || last_token.id == TOKEN_DOT || last_token.id == TOKEN_MOD
-            || last_token.id == TOKEN_OR || last_token.id == TOKEN_AND 
-            || last_token.id == TOKEN_AT || last_token.id == TOKEN_UNEG
-            || last_token.id == TOKEN_UPLUS
-        ) {
-            t.id = TOKEN_UPLUS;
-        } else {
-            t.id = TOKEN_PLUS; 
+    ReturnCode rc{};
+    if (char_in_simple_lex_set(curr_char)) {
+        t.set_id(char_to_token.at(curr_char));
+        t.set_lexeme(lexeme);
+    }
+
+    else if (curr_char == '+') {
+        t = last_token;
+        // Either unary plus or plus
+        if (!t.set_id_from_predicate(TOKEN_UPLUS, &Token::legal_before_uplus_or_uneg)) {
+            t.set_id(TOKEN_PLUS);
         }
-        t.lexeme = lexeme;
-    // Its unary negation
-    } else if (curr_char == '-') {
-        if (last_token.id == TOKEN_NULL || last_token.id == TOKEN_PLUS
-            || last_token.id == TOKEN_MINUS || last_token.id == TOKEN_MULT
-            || last_token.id == TOKEN_DIV || last_token.id == TOKEN_EXP
-            || last_token.id == TOKEN_LESS || last_token.id == TOKEN_GREATER
-            || last_token.id == TOKEN_LESS_EQ || last_token.id == TOKEN_GREATER_EQ
-            || last_token.id == TOKEN_EQUAL || last_token.id == TOKEN_NOT_EQUAL
-            || last_token.id == TOKEN_ASSIGN || last_token.id == TOKEN_NOT
-            || last_token.id == TOKEN_LPAREN || last_token.id == TOKEN_COMMA
-            || last_token.id == TOKEN_DOT || last_token.id == TOKEN_MOD
-            || last_token.id == TOKEN_OR || last_token.id == TOKEN_AND 
-            || last_token.id == TOKEN_AT || last_token.id == TOKEN_UNEG
-            || last_token.id == TOKEN_UPLUS 
-        ) {
-            t.id = TOKEN_UNEG;
-        } else {
-            t.id = TOKEN_MINUS; 
+
+        t.set_lexeme(lexeme);
+    } 
+
+    else if (curr_char == '-') {
+        t = last_token;
+        // Either unary negation or minus
+        if (!t.set_id_from_predicate(TOKEN_UNEG, &Token::legal_before_uplus_or_uneg)) {
+            t.set_id(TOKEN_MINUS);
         }
-        t.lexeme = lexeme;
-    } else if (curr_char == '*') {
-        t.id = TOKEN_MULT; 
-        t.lexeme = lexeme;
-    } else if (curr_char == '/') {
-        t.id = TOKEN_DIV; 
-        t.lexeme = lexeme;
-    } else if (curr_char == '^') {
-        t.id = TOKEN_EXP; 
-        t.lexeme = lexeme;
+
+        t.set_lexeme(lexeme);
+    } 
+
     // With character <, could be <, could be <=, could be block comment
-    } else if (curr_char == '<') {
+    else if (curr_char == '<') {
         // Get next char
         rc = buffer_get_next_char(curr_char);
 
@@ -246,8 +204,10 @@ Error get_token(Token& t) {
             t.lexeme = lexeme;
             buffer_back_char();
         }
+    } 
+
     // Could be TOKEN_GREATER or TOKEN_GREATER_EQ
-    } else if (curr_char == '>') {
+    else if (curr_char == '>') {
         // Get next char
         rc = buffer_get_next_char(curr_char);
 
@@ -270,7 +230,9 @@ Error get_token(Token& t) {
                 buffer_back_char();
             }
         }
-    } else if (curr_char == '=') {
+    } 
+
+    else if (curr_char == '=') {
         rc = buffer_get_next_char(curr_char);
 
         if (curr_char == '=') {
@@ -283,44 +245,10 @@ Error get_token(Token& t) {
         }
 
         t.lexeme = lexeme;
-    } else if (curr_char == '!') {
-        t.id = TOKEN_NOT;
-        t.lexeme = lexeme;
-    } else if (curr_char == '(') {
-        t.id = TOKEN_LPAREN;
-        t.lexeme = lexeme;
-    } else if (curr_char == ')') {
-        t.id = TOKEN_RPAREN;
-        t.lexeme = lexeme;
-    } else if (curr_char == '{') {
-        t.id = TOKEN_LBRACE;
-        t.lexeme = lexeme;
-    } else if (curr_char == '}') {
-        t.id = TOKEN_RBRACE;
-        t.lexeme = lexeme;
-    } else if (curr_char == '[') {
-        t.id = TOKEN_LBRACKET; 
-        t.lexeme = lexeme;
-    } else if (curr_char == ']') {
-        t.id = TOKEN_RBRACKET; 
-        t.lexeme = lexeme;
-    } else if (curr_char == '&') {
-        t.id = TOKEN_AND; 
-        t.lexeme = lexeme;
-    } else if (curr_char == '|') {
-        t.id = TOKEN_OR; 
-        t.lexeme = lexeme;
-    } else if (curr_char == '@') {
-        t.id = TOKEN_AT; 
-        t.lexeme = lexeme;
-    } else if (curr_char == ';') {
-        t.id = TOKEN_SEMICOLON; 
-        t.lexeme = lexeme;
-    } else if (curr_char == ',') {
-        t.id = TOKEN_COMMA; 
-        t.lexeme = lexeme;
+    } 
+
     // Either TOKEN_NOT_EQUAL or undefined token
-    } else if (curr_char == '~') {
+    else if (curr_char == '~') {
         // Get next char, expecting =
         rc = buffer_get_next_char(curr_char); 
 
@@ -346,8 +274,10 @@ Error get_token(Token& t) {
 
             return err;
         }
+    } 
+
     // Line comment, consume rest of line without doing anything
-    } else if (curr_char == '#') {
+    else if (curr_char == '#') {
         // Consume rest of line
         for (;;) {
             rc = buffer_get_next_char(curr_char);
@@ -367,8 +297,10 @@ Error get_token(Token& t) {
         }
         get_token(t);
 
+    } 
+
     // Possible identifier
-    } else if (('a' <= curr_char && curr_char <= 'z') || ('A' <= curr_char && curr_char <= 'Z') || (curr_char == '_')) {
+    else if (('a' <= curr_char && curr_char <= 'z') || ('A' <= curr_char && curr_char <= 'Z') || (curr_char == '_')) {
         // Assume identifier
         t.id = TOKEN_IDENT;
 
@@ -415,8 +347,10 @@ Error get_token(Token& t) {
             t.id = TOKEN_MOD; 
             t.lexeme = lexeme;
         }
+    } 
+
     // Handle strings with escape sequences
-    } else if (curr_char == '"') {
+    else if (curr_char == '"') {
         t.id = TOKEN_NULL;
         // Consume characters and replace their escape sequences
         for (;;) {
@@ -476,7 +410,9 @@ Error get_token(Token& t) {
         t.id = TOKEN_STRING;
         t.lexeme = lexeme;
         t.str = lexeme;
-    } else if (curr_char == '.') {
+    } 
+
+    else if (curr_char == '.') {
         // Peek next char to decide between TOKEN_DOT and TOKEN_REAL
         char next{};
         rc = buffer_get_next_char(next);
@@ -611,7 +547,9 @@ Error get_token(Token& t) {
         }
     
     // Start of token is a digit, could be an integer or a float
-    } else if (is_digit(curr_char)) {
+    } 
+
+    else if (is_digit(curr_char)) {
         // Start consuming integer-part digits
         for (;;) {
             rc = buffer_get_next_char(curr_char);

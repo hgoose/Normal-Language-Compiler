@@ -1231,10 +1231,10 @@ AST_NODE* integer_terminal(Error& err) {
     return here;
 }
 
-AST_NODE* paren_expression(Error& err, AST_NODE* left) {
+AST_NODE* paren_expression(Error& err, AST_NODE*& left) {
     AST_NODE* here = new AST_NODE();
 
-    // Eat lparen
+    // Eat left parenthesis
     Error tmp_error = munch();
     if (invalid_lookahead() || handle_lex_error(tmp_error)) {
         err = tmp_error;

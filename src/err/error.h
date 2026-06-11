@@ -37,6 +37,7 @@ inline constexpr int CRITICAL{1};
 struct Error
 {
   ErrorValue error{NLC_OK};
+
   int line, col;
 
   Error() = default;

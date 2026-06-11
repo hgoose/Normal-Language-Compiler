@@ -44,7 +44,7 @@ AST_NODE* FP(Error&);
 AST_NODE* S(Error&);
 
 AST_NODE* integer_terminal(Error&);
-AST_NODE* paren_expression(Error&, AST_NODE*);
+AST_NODE* paren_expression(Error&, AST_NODE*&);
 AST_NODE* string_terminal(Error&);
 AST_NODE* boolean_terminal(Error&);
 AST_NODE* variable_terminal(Error&);

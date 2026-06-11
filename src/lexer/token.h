@@ -52,10 +52,21 @@ struct Token
     int col_no{-1};
 
     // Dependent on token type
-    unsigned long integer{0};
+    unsigned long integer{};
     double fl{-1.0f};
     std::string str{};
     std::string identifier{};
+
+    void reset();
+    void set_line_and_col(int, int);
+    void set_id(TokenValue);
+    void set_integer(int);
+    void set_float(double);
+    void set_str(std::string);
+    void set_identifier(std::string);
+    void set_lexeme(std::string);
+
+    void set_eof();
 
     bool is(TokenValue) const;
     bool is_not(TokenValue) const;
@@ -84,12 +95,21 @@ struct Token
 
     bool is_eof() const;
 
+    bool is_operator() const;
+
+    bool is_non_data_terminal() const;
+
+    bool legal_before_uplus_or_uneg() const;
+
     bool in(const TokenSet&) const; 
 
     template<typename...Sets>
     bool in_union(Sets...set) const {
         return (in(set) || ...);
     }
+
+    bool set_id_from_predicate(TokenValue, TokenMethod);
+
 };
 
 void print_token(const Token& t);
