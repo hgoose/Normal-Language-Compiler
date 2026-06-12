@@ -16,10 +16,8 @@ static void r_ast_out(AST_NODE* node, int depth);
 static const char* op_name(int id);
 
 void syntax_error(Error& err) {
-    err.error = NLC_SYNTAX_ERROR;
-    err.line = next_token.line_no;
-    err.col = next_token.col_no;
-
+    err.set_error(NLC_SYNTAX_ERROR);
+    err.set_line_and_column(next_token.line_no, next_token.col_no);
     print_error(err);
 }
 
@@ -199,7 +197,7 @@ TYPE assign_types(AST_NODE* root) {
         return TYPE::TYPE_MISMATCH;
     }
 
-    if (root->is_operator) {
+    if (root->is_op()) {
         AST_NODE* offender = type_compliance(root, left, right);
 
         if (offender) {

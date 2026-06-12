@@ -1,8 +1,5 @@
 #include "ast_node.h"
 
-#include <algorithm>
-#include <cctype>
-
 #include "token.h"
 #include "token_structures.h"
 #include "ast_structures.h"
@@ -24,9 +21,8 @@ void AST_NODE::add_all_statements(StatementReturns returns) {
 AST_NODE* binary_arithmetic_type_compliance(AST_NODE* left, AST_NODE* right) {
     if (!left->is_type_integral())
         return left;
-    else if (!right->is_type_integral()) {
+    else if (!right->is_type_integral())
         return right;
-    }
 
     return nullptr;
 }
@@ -72,27 +68,12 @@ void AST_NODE::clear() {
 }
 
 std::string AST_NODE::str_node_type() {
-    return std::vector<std::string>{
-            "_null", "ADD", "SUB", "MULT", 
-            "NOT", "AND", "OR",
-            "LESS", "LEQ", "GREATER", "GEQ",
-            "EQUAL", "NEQ", 
-            "DIV", "MOD", "EXP", "UPLUS", 
-            "UNEG", "declare", "assign", "print", 
-            "read", "Statement block", "INT", "VAR", "STR",
-            "bool", "if", "else", "while" 
-    }[(int)node_type];
+    return node_type_to_string_map.at(node_type);
 }
 
 bool AST_NODE::is_statement() {
-    return node_type == NODE_TYPE::PRINT ||
-        node_type == NODE_TYPE::DECL ||
-        node_type == NODE_TYPE::ASSIGN ||
-        node_type == NODE_TYPE::READ ||
-        node_type == NODE_TYPE::BLOCK ||
-        node_type == NODE_TYPE::IF ||
-        node_type == NODE_TYPE::ELSE ||
-        node_type == NODE_TYPE::WHILE;
+    return statement_nodes.find(node_type)
+        != statement_nodes.end();
 }
 
 bool AST_NODE::operator_is_arithmetic() {

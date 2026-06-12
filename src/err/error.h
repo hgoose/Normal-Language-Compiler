@@ -50,6 +50,9 @@ struct Error
       : error(error), line(line), col(col) 
   {}
 
+  void set_error(ErrorValue);
+  void set_line_and_column(int, int);
+
   bool is(ErrorValue) const;
   bool is_not(ErrorValue) const;
   bool is_eof() const;

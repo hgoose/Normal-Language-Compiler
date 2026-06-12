@@ -26,6 +26,7 @@ typedef std::function<void(int)> MoveProcedure;
 typedef std::unordered_set<TokenValue> TokenSet;
 typedef std::vector<std::string> TokenNames;
 template<typename T> using TokenMap = std::unordered_map<TokenValue, T>;
+template<typename T> using NodeTypeMap = std::unordered_map<NODE_TYPE, T>;
 template<typename T> using IdentMap = std::unordered_map<std::string, T>;
 
 typedef std::unordered_map<std::string, std::function<StatementReturns(void)>> ParseMap;
@@ -48,5 +49,10 @@ typedef Error(*LexMethod)(Token&, char&);
 template<typename T> using LexMethodMap = std::unordered_map<T, LexMethod>;
 
 typedef std::unordered_map<ErrorValue, std::string> ErrorMap;
+
+typedef bool(*CodegenFn)(AST_NODE*);
+typedef std::unordered_map<NODE_TYPE, CodegenFn> NodeToCodegenFnMap;
+
+typedef std::unordered_set<NODE_TYPE> StatementNodes;
 
 #endif

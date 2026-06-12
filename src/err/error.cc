@@ -85,6 +85,15 @@ Error create_error(ErrorValue error_value) {
     return Error{error_value};
 }
 
+void Error::set_error(ErrorValue error_value) {
+    error = error_value;
+}
+
+void Error::set_line_and_column(int line_no, int col_no) {
+    line = line_no;
+    col = col_no;
+}
+
 bool Error::is(ErrorValue error_value) const {
     return error == error_value;
 }

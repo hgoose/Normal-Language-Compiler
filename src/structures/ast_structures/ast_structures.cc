@@ -1,1 +1,45 @@
 #include "ast_structures.h"
+
+extern const StatementNodes statement_nodes {
+    NODE_TYPE::PRINT,
+    NODE_TYPE::DECL,
+    NODE_TYPE::ASSIGN,
+    NODE_TYPE::READ,
+    NODE_TYPE::BLOCK,
+    NODE_TYPE::IF,
+    NODE_TYPE::WHILE,
+    NODE_TYPE::ELSE
+};
+
+extern const NodeTypeMap<std::string> node_type_to_string_map {
+    {NODE_TYPE::null, "null"},
+    {NODE_TYPE::NOT, "not"},
+    {NODE_TYPE::AND, "and"},
+    {NODE_TYPE::OR, "or"},
+    {NODE_TYPE::LESS, "less"},
+    {NODE_TYPE::LEQ, "leq"},
+    {NODE_TYPE::GREATER, "greater"},
+    {NODE_TYPE::GEQ, "geq"},
+    {NODE_TYPE::EQ, "equal"},
+    {NODE_TYPE::NEQ, "neq"},
+    {NODE_TYPE::ADD, "add"},
+    {NODE_TYPE::SUB, "sub"},
+    {NODE_TYPE::MULT, "mult"},
+    {NODE_TYPE::DIV, "div"},
+    {NODE_TYPE::MOD, "mod"},
+    {NODE_TYPE::EXP, "exp"},
+    {NODE_TYPE::UPLUS, "unary plus"},
+    {NODE_TYPE::UNEG, "unary negation"},
+    {NODE_TYPE::DECL, "decl"},
+    {NODE_TYPE::ASSIGN, "assign"},
+    {NODE_TYPE::PRINT, "print"},
+    {NODE_TYPE::READ, "read"},
+    {NODE_TYPE::BLOCK, "block"},
+    {NODE_TYPE::INT, "int"},
+    {NODE_TYPE::VAR, "var"},
+    {NODE_TYPE::STR, "str"},
+    {NODE_TYPE::BOOL, "bool"},
+    {NODE_TYPE::IF, "if"},
+    {NODE_TYPE::ELSE, "else"},
+    {NODE_TYPE::WHILE, "while"}
+};

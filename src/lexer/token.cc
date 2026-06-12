@@ -184,6 +184,25 @@ bool Token::is_operator() const {
         != TOKEN_STRUCTURES::operators.end();
 }
 
+bool Token::is_relational() const {
+    return TOKEN_STRUCTURES::binary_relational_operators.find(id)
+        != TOKEN_STRUCTURES::binary_relational_operators.end();
+}
+
+bool Token::is_logical() const {
+    return TOKEN_STRUCTURES::binary_logical_operators.find(id) 
+        != TOKEN_STRUCTURES::binary_logical_operators.end()
+        || TOKEN_STRUCTURES::unary_logical_operators.find(id)
+        != TOKEN_STRUCTURES::unary_logical_operators.end();
+}
+
+bool Token::is_arithmetic() const {
+    return TOKEN_STRUCTURES::binary_arithmetic_operators.find(id) 
+        != TOKEN_STRUCTURES::binary_arithmetic_operators.end()
+        || TOKEN_STRUCTURES::unary_arithmetic_operators.find(id)
+        != TOKEN_STRUCTURES::unary_arithmetic_operators.end();
+}
+
 bool Token::is_non_data_terminal() const {
     return TOKEN_STRUCTURES::non_data_terminals.find(id) 
         != TOKEN_STRUCTURES::non_data_terminals.end();

@@ -1,6 +1,10 @@
 #ifndef NLC_CODEGEN_STRUCTURES_H
 #define NLC_CODEGEN_STRUCTURES_H
 
+#include "types.h"
+
+extern const NodeToCodegenFnMap node_type_to_codegen;
+
 enum REGISTER : unsigned int {
     EAX = 0, RAX = EAX,
     ECX = 1, RCX = ECX,
@@ -31,5 +35,8 @@ enum REGISTER_8BIT : unsigned int {
     DH = 6,
     BH = 7
 };
+
+bool node_type_has_codegen_fn(NODE_TYPE);
+CodegenFn get_codegen_fn(NODE_TYPE);
 
 #endif

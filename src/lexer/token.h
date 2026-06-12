@@ -100,6 +100,10 @@ struct Token
 
     bool is_eof() const;
 
+    bool is_relational() const;
+    bool is_logical() const;
+    bool is_arithmetic() const;
+
     bool is_operator() const;
 
     bool is_non_data_terminal() const;

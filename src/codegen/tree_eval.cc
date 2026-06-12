@@ -6,16 +6,15 @@
 #include "error.h"
 #include "ast_utils.h"
 #include "parserutils.h"
+#include "codegen_structures.h"
 
 #include <cstdlib>
 #include <algorithm>
-#include <iostream>
 
 static void r_evaluate_expr(AST_NODE* p, int& pushed) {
-    // NOOP
     if (!p) return;
 
-    if (p->token.id == TOKEN_AND) {
+    if (p->token.is(TOKEN_AND)) {
         AST_NODE* left{}, *right{};
 
         auto it = p->children.begin();
@@ -35,7 +34,6 @@ static void r_evaluate_expr(AST_NODE* p, int& pushed) {
         // if lhs == 0, result is false; skip rhs
         x86_test_al_imm8(1);
         size_t jz_false = x86_jz_rel32_missing();
-
         int jz_start = get_current_position();
 
         // evaluate rhs only if lhs was true
@@ -52,7 +50,7 @@ static void r_evaluate_expr(AST_NODE* p, int& pushed) {
         return;
     }
 
-    if (p->token.id == TOKEN_OR) {
+    if (p->token.is(TOKEN_OR)) {
         AST_NODE* left{}, *right{};
 
         auto it = p->children.begin();
@@ -101,64 +99,74 @@ static void r_evaluate_expr(AST_NODE* p, int& pushed) {
     if (p->node_type == NODE_TYPE::INT) {
         x86_push_imm32(p->token.integer); ++pushed;
     } 
+
     else if (p->node_type == NODE_TYPE::VAR) {
         // Get a pointer to the variable in r11, 
         // then push that value to the stack
         x86_get_int_for_expr(p->syminfo->location.int_table_offset);
         x86_pushm32(REGISTER::R11); ++pushed;
-    } else if (p->node_type == NODE_TYPE::BOOL) {
+    } 
+
+    else if (p->node_type == NODE_TYPE::BOOL) {
         x86_push_imm32(p->boolean); ++pushed;
     }
+
     // RUN CODE FOR UNARY NEGATION
-    else if (p->token.id == TOKEN_UNEG) {
+    else if (p->token.is(TOKEN_UNEG)) {
         x86_popr32(REGISTER::EAX); --pushed;
         x86_xor_rr32(REGISTER::ECX, REGISTER::ECX);
         x86_xchg32(REGISTER::EAX, REGISTER::ECX);
         x86_sub_rr32(REGISTER::EAX, REGISTER::ECX);
         x86_pushr32(REGISTER::EAX); ++pushed;
     } 
+
     // RUN CODE FOR BINARY ADDITION
-    else if (p->token.id == TOKEN_PLUS) {
+    else if (p->token.is(TOKEN_PLUS)) {
         x86_popr32(REGISTER::EAX); --pushed;
         x86_popr32(REGISTER::ECX); --pushed;
         // x86_xchg32(REGISTER::EAX, REGISTER::ECX);
         x86_add_rr32(REGISTER::EAX, REGISTER::ECX);
         x86_pushr32(REGISTER::EAX); ++pushed;
     }
+
     // RUN CODE FOR BINARY SUBTRACTION
-    else if (p->token.id == TOKEN_MINUS) {
+    else if (p->token.is(TOKEN_MINUS)) {
         x86_popr32(REGISTER::EAX); --pushed;
         x86_popr32(REGISTER::ECX); --pushed;
         x86_xchg32(REGISTER::EAX, REGISTER::ECX);
         x86_sub_rr32(REGISTER::EAX, REGISTER::ECX);
         x86_pushr32(REGISTER::EAX); ++pushed;
     }
+
     // RUN CODE FOR BINARY MULTIPLICATION
-    else if (p->token.id == TOKEN_MULT) {
+    else if (p->token.is(TOKEN_MULT)) {
         x86_popr32(REGISTER::EAX); --pushed;
         x86_popr32(REGISTER::ECX); --pushed;
         // x86_xchg32(REGISTER::EAX, REGISTER::ECX);
         x86_mult_rr32(REGISTER::EAX, REGISTER::ECX);
         x86_pushr32(REGISTER::EAX); ++pushed;
     }
+
     // RUN CODE FOR BINARY DIVISION
-    else if (p->token.id == TOKEN_DIV) {
+    else if (p->token.is(TOKEN_DIV)) {
         x86_popr32(REGISTER::EAX); --pushed;
         x86_popr32(REGISTER::ECX); --pushed;
         x86_xchg32(REGISTER::EAX, REGISTER::ECX);
         x86_div_rr32(REGISTER::EAX, REGISTER::ECX);
         x86_pushr32(REGISTER::EAX); ++pushed;
     }
+
     // RUN CODE FOR BINARY MODULUS
-    else if (p->token.id == TOKEN_MOD) {
+    else if (p->token.is(TOKEN_MOD)) {
         x86_popr32(REGISTER::EAX); --pushed;
         x86_popr32(REGISTER::ECX); --pushed;
         x86_xchg32(REGISTER::EAX, REGISTER::ECX);
         x86_modulo_rr32(REGISTER::EAX, REGISTER::ECX);
         x86_pushr32(REGISTER::EAX); ++pushed;
     }
+
     // RUN CODE FOR SUPER FAST EXPONENTIATION
-    else if (p->token.id == TOKEN_EXP) {
+    else if (p->token.is(TOKEN_EXP)) {
         x86_fast_exp();
 
         // fast_exp makes two pops
@@ -166,41 +174,43 @@ static void r_evaluate_expr(AST_NODE* p, int& pushed) {
 
         x86_pushr32(REGISTER::EAX); ++pushed;
     } 
-    else if (p->token.id == TOKEN_NOT) {
+
+    else if (p->token.is(TOKEN_NOT)) {
         x86_popr32(REGISTER::EAX); --pushed;
         x86_al_flip();
         x86_pushr32(REGISTER::EAX); ++pushed;
     }
-    else if (p->token.id == TOKEN_LESS ||
-            p->token.id == TOKEN_LESS_EQ ||
-            p->token.id == TOKEN_GREATER ||
-            p->token.id == TOKEN_GREATER_EQ ||
-            p->token.id == TOKEN_EQUAL ||
-            p->token.id == TOKEN_NOT_EQUAL
-    ) {
+
+    else if (p->operator_is_relational()) {
         x86_popr32(REGISTER::EAX); --pushed;
         x86_popr32(REGISTER::ECX); --pushed;
         x86_cmp_rr32(REGISTER::ECX, REGISTER::EAX);
 
-        if (p->token.id == TOKEN_LESS) {
+        if (p->token.is(TOKEN_LESS)) {
             x86_setl_al();
         } 
-        else if (p->token.id == TOKEN_LESS_EQ) {
+
+        else if (p->token.is(TOKEN_LESS_EQ)) {
             x86_setle_al();
         } 
-        else if (p->token.id == TOKEN_GREATER) {
+
+        else if (p->token.is(TOKEN_GREATER)) {
             x86_setg_al();
         }
-        else if (p->token.id == TOKEN_GREATER_EQ) {
+
+        else if (p->token.is(TOKEN_GREATER_EQ)) {
             x86_setge_al();
         }
-        else if (p->token.id == TOKEN_EQUAL) {
+
+        else if (p->token.is(TOKEN_EQUAL)) {
             x86_sete_al();
         }
-        // TOKEN_NOT_EQUAL
+
+        // Not equal
         else { 
             x86_setne_al();
         }
+
         x86_movzx_r32_r8_al(REGISTER::EAX);
         x86_pushr32(REGISTER::EAX); ++pushed;
     }
@@ -237,13 +247,15 @@ void evaluate_print_expr(AST_NODE* root) {
 
     if (pushed == 0) return;
 
+    // Result in EAX
     x86_popr32(REGISTER::EAX); --pushed;
 
-    // Result in EAX
     if (root->is_type_integral()) {
         // Call print_int with value in accumulator
         x86_call_void_sia(print_int, REGISTER::EAX);
-    } else if (root->is_type_logical()) {
+    } 
+
+    else if (root->is_type_logical()) {
         // Call print_bool with value in accumulator (al)
         x86_call_void_sba(print_bool, REGISTER::EAX);
     }
@@ -386,21 +398,9 @@ bool process_read(AST_NODE* root) {
 }
 
 void dispatch_statement(AST_NODE* root) {
-    if (!root) return;
-    
-    if (root->node_type == NODE_TYPE::PRINT) {
-        evaluate_print(root);
-    } else if (root->node_type == NODE_TYPE::READ) {
-        process_read(root);
-    } else if (root->node_type == NODE_TYPE::DECL) {
-        init_var(root);
-    } else if (root->node_type == NODE_TYPE::ASSIGN) {
-        update_var(root);
-    } else if (root->node_type == NODE_TYPE::IF) {
-        process_if(root);
-    } else if (root->node_type == NODE_TYPE::WHILE) {
-        process_while(root);
-    }
+    if (!root || !node_type_has_codegen_fn(root->node_type)) return;
+
+    get_codegen_fn(root->node_type)(root);
 }
 
 // Eval condition -> al
@@ -408,8 +408,6 @@ void dispatch_statement(AST_NODE* root) {
 // jz   ____ <- save location, generate code for statements (plus uncond jump)
 //      ^       and learn the total size. Then, insert the rel32 
 //              jump size. (Save first byte then increment poffset by four)
-//
-//  Then, below all statements inside the if, we co
 bool process_if(AST_NODE* root) {
     if (!root) return false;
 
