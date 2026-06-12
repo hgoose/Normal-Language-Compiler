@@ -98,6 +98,10 @@ int parse() {
     munch();
 
     for (;;) {
+        if (next_token.is_semicolon()) {
+            munch_all_semicolons();
+        }
+
         if (next_token.is_eof()) break;
 
         if (next_token.is_ident()) {

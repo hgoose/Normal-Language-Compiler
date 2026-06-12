@@ -1,13 +1,6 @@
 #include "parser_structures.h"
 #include "ast_structures.h"
-
-StatementReturns parse_print();
-StatementReturns parse_read();
-StatementReturns parse_decl_int();
-StatementReturns parse_assign();
-StatementReturns parse_if();
-StatementReturns parse_else();
-StatementReturns parse_while();
+#include "parser.h"
 
 bool evaluate_print(AST_NODE*);
 bool init_var(AST_NODE*);

@@ -24,6 +24,7 @@ ErrorValue buffer_get_next_char(char&);
 bool buffer_eof();
 
 ErrorValue buffer_back_char();
+ErrorValue buffer_get_back_char(char&);
 
 ErrorValue buffer_cleanup();
 

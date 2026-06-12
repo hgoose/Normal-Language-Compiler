@@ -1,5 +1,6 @@
 #include "lex_structures.h"
 #include "token.h"
+#include "lex.h"
 
 const EscapesMap<char> escapes_map {
     {'n', ESC_NEWLINE},
@@ -40,6 +41,16 @@ const CharToTokenMap char_to_token {
         {',', TOKEN_COMMA}
 };
 
+const LexMethodMap<char> char_to_lex_method {
+    {'<', lex_char_less},
+    {'>', lex_char_greater},
+    {'=', lex_char_equal},
+    {'~', lex_char_not},
+    {'#', lex_char_pound},
+    {'"', lex_char_quote},
+    {'.', lex_char_dot}
+};
+
 bool replace_char_with_escape(char& c, char& next) {
     if (escapes_map.find(next) == escapes_map.end()) {
         return false;
@@ -55,4 +66,12 @@ bool char_is_whitespace(char c) {
 
 bool char_in_simple_lex_set(char c) {
     return simple_lex_set.find(c) != simple_lex_set.end();
+}
+
+LexMethod map_char_to_lex_method(char c) {
+    if (char_to_lex_method.find(c) == char_to_lex_method.end()) {
+        return nullptr;
+    }
+
+    return char_to_lex_method.at(c);
 }

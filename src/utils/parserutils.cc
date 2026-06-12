@@ -211,3 +211,9 @@ Error munch() {
     prev_token = next_token;
     return get_token(next_token);
 }
+
+void munch_all_semicolons() {
+    while (next_token.is_semicolon()) {
+        munch();
+    }
+}

@@ -65,8 +65,11 @@ struct Token
     void set_str(std::string);
     void set_identifier(std::string);
     void set_lexeme(std::string);
+    void append_lexeme(std::string);
+    void append_lexeme(char);
 
     void set_eof();
+    void set_null();
 
     bool is(TokenValue) const;
     bool is_not(TokenValue) const;

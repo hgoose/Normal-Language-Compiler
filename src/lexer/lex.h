@@ -26,5 +26,7 @@ Error lex_char_not(Token&, char&);
 Error lex_char_pound(Token&, char&);
 Error lex_char_alpha(Token&, char&);
 Error lex_char_quote(Token&, char&);
+Error lex_char_dot(Token&, char&);
+Error lex_char_numeric(Token&, char&);
 
 #endif 

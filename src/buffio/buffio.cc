@@ -198,6 +198,13 @@ ErrorValue buffer_back_char() {
     return NLC_OK;
 }
 
+// Go back one position and get the char there
+ErrorValue buffer_get_back_char(char& c) {
+    buffer_back_char();
+    buffer_get_cur_char(c);
+
+    return NLC_OK;
+}
 
 // Looks ahead one position in the buffer, and returns the character
 ErrorValue buffer_peek_next(char& c) {

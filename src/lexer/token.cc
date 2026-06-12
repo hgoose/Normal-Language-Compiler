@@ -64,8 +64,20 @@ void Token::set_lexeme(std::string lexeme) {
     this->lexeme = lexeme;
 }
 
+void Token::append_lexeme(std::string s) {
+    lexeme += s;
+}
+
+void Token::append_lexeme(char c) {
+    lexeme += c;
+}
+
 void Token::set_eof() {
     set_id(TOKEN_EOF);
+}
+
+void Token::set_null() {
+    reset();
 }
 
 void Token::set_line_and_col(int line, int col) {

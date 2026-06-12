@@ -10,6 +10,7 @@
 struct BufState;
 struct AST_NODE;
 struct Token;
+struct Error;
 
 enum class NODE_TYPE : unsigned int;
 
@@ -42,5 +43,8 @@ typedef std::unordered_set<char> WhitespaceSet;
 typedef std::unordered_set<char> CharSet;
 
 typedef bool (Token::*TokenMethod)() const;
+typedef Error(*LexMethod)(Token&, char&);
+
+template<typename T> using LexMethodMap = std::unordered_map<T, LexMethod>;
 
 #endif

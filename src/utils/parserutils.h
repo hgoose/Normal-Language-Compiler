@@ -40,5 +40,6 @@ AST_NODE* create_assign(AST_NODE*, AST_NODE*);
 void merge_statement_returns(StatementReturns&, StatementReturns);
 
 Error munch();
+void munch_all_semicolons();
 
 #endif
