@@ -691,8 +691,9 @@ StatementReturns parse_if() {
     if (!block) {
         StatementReturns statements = get_statement();
         if (statements.size()) if_root->add_all_statements(statements);
-    } else {
+    } 
 
+    else {
         lex_err = munch();
         if (skip_if_invalid_or_lexerr(lex_err, skip_if, LBRACE_COUNT_ONE)) {
             free_tree(if_root);
