@@ -59,14 +59,6 @@ Error get_token(Token& t) {
     t.set_line_and_col(src_line_no, src_col_no);
 
     Error err{};
-    ReturnCode rc{};
-
-    // Set default token properties
-    std::string lexeme{};
-    std::string identifier{};
-    std::string str{};
-    unsigned long integer{};
-    double fl{};
 
     char curr_char{};
 
