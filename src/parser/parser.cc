@@ -43,8 +43,7 @@ namespace {
 }
 
 Error parser_init(const char* src_code) {
-    Error err = lex_init(src_code);
-    return err;
+    return lex_init(src_code);
 }
 
 // Calls the correct function in parse_map based on the
@@ -160,7 +159,7 @@ StatementReturns parse_print() {
     AST_NODE* print_root = new AST_NODE(next_token, NODE_TYPE::PRINT);
 
     lex_error = munch();
-    if (skip_if_invalid_or_lexerr(lex_error)) {
+    if (skip_if_lexerr(lex_error)) {
         free_tree(print_root);
         return {};
     }
@@ -172,7 +171,7 @@ StatementReturns parse_print() {
     }
     
     lex_error = munch();
-    if (skip_if_invalid_or_lexerr(lex_error)) {
+    if (skip_if_lexerr(lex_error)) {
         free_tree(print_root);
         return {};
     }
@@ -204,7 +203,7 @@ StatementReturns parse_print() {
     // Process all subsequent expressions
     while (next_token.is(TOKEN_COMMA)) {
         lex_error = munch();
-        if (skip_if_invalid_or_lexerr(lex_error)) {
+        if (skip_if_lexerr(lex_error)) {
             free_tree(print_root);
             return {};
         }
@@ -235,7 +234,7 @@ StatementReturns parse_print() {
 
     // Lexer error
     lex_error = munch();
-    if (skip_if_invalid_or_lexerr(lex_error)) {
+    if (skip_if_lexerr(lex_error)) {
         free_tree(print_root);
         return {};
     }
@@ -248,7 +247,7 @@ StatementReturns parse_print() {
 
     // At semicolon. Consume it.
     lex_error = munch();
-    skip_if_invalid_or_lexerr(lex_error);
+    skip_if_lexerr(lex_error);
 
     return {print_root};
 }
@@ -259,7 +258,7 @@ StatementReturns parse_read() {
     Error lex_err{};
 
     lex_err = munch();
-    if (skip_if_invalid_or_lexerr(lex_err)) {
+    if (skip_if_lexerr(lex_err)) {
         free_tree(read_root);
         return {};
     }
@@ -270,7 +269,7 @@ StatementReturns parse_read() {
     }
 
     lex_err = munch();
-    if (skip_if_invalid_or_lexerr(lex_err)) {
+    if (skip_if_lexerr(lex_err)) {
         free_tree(read_root);
         return {};
     }
@@ -290,7 +289,7 @@ StatementReturns parse_read() {
     // call to free_tree() with read_root will free it.
 
     lex_err = munch();
-    if (skip_if_invalid_or_lexerr(lex_err)) {
+    if (skip_if_lexerr(lex_err)) {
         free_tree(read_root);
         return {};
     }
@@ -301,7 +300,7 @@ StatementReturns parse_read() {
     }
 
     lex_err = munch();
-    if (skip_if_invalid_or_lexerr(lex_err)) {
+    if (skip_if_lexerr(lex_err)) {
         free_tree(read_root);
         return {};
     }
@@ -313,7 +312,7 @@ StatementReturns parse_read() {
 
     // At semicolon. Consume it.
     lex_err = munch();
-    skip_if_invalid_or_lexerr(lex_err);
+    skip_if_lexerr(lex_err);
 
     return {read_root};
 }
@@ -329,7 +328,7 @@ StatementReturns parse_decl_int() {
 
     if (next_token.is_type()) {
         lex_err = munch();
-        if (skip_if_invalid_or_lexerr(lex_err)) {
+        if (skip_if_lexerr(lex_err)) {
             free_tree(declare_root);
             return {};
         }
@@ -370,7 +369,7 @@ StatementReturns parse_decl_int() {
     // free_tree with declare_root with free it.
 
     lex_err = munch();
-    if (skip_if_invalid_or_lexerr(lex_err)) {
+    if (skip_if_lexerr(lex_err)) {
         free_tree(declare_root);
         return {};
     }
@@ -379,7 +378,7 @@ StatementReturns parse_decl_int() {
     AST_NODE* expression{};
     if (next_token.is(TOKEN_ASSIGN)) {
         lex_err = munch();
-        if (skip_if_invalid_or_lexerr(lex_err)) {
+        if (skip_if_lexerr(lex_err)) {
             free_tree(declare_root);
             return {};
         }
@@ -437,7 +436,7 @@ StatementReturns parse_decl_int() {
     }
 
     lex_err = munch();
-    skip_if_invalid_or_lexerr(lex_err);
+    skip_if_lexerr(lex_err);
 
     return declares;
 }
@@ -490,7 +489,7 @@ static StatementReturns sub_parse_assign() {
     assign_root->add_children(var_node);
 
     lex_err = munch();
-    if (skip_if_invalid_or_lexerr(lex_err)) {
+    if (skip_if_lexerr(lex_err)) {
         free_tree(assign_root);
         return {};
     }
@@ -502,7 +501,7 @@ static StatementReturns sub_parse_assign() {
     }
 
     lex_err = munch();
-    if (skip_if_invalid_or_lexerr(lex_err)) {
+    if (skip_if_lexerr(lex_err)) {
         free_tree(assign_root);
         return {};
     }
@@ -551,7 +550,7 @@ StatementReturns parse_assign() {
 
     // At semicolon. Consume it.
     lex_err = munch();
-    skip_if_invalid_or_lexerr(lex_err);
+    skip_if_lexerr(lex_err);
 
     return assigns;
 }
@@ -564,7 +563,7 @@ StatementReturns parse_else() {
     AST_NODE* else_root = new AST_NODE(next_token, NODE_TYPE::ELSE);
 
     Error lex_err = munch();
-    if (skip_if_invalid_or_lexerr(lex_err, skip_else, LBRACE_COUNT_ZERO)) {
+    if (skip_if_lexerr(lex_err, skip_else, LBRACE_COUNT_ZERO)) {
         free_tree(else_root);
         return {};
     }
@@ -582,7 +581,7 @@ StatementReturns parse_else() {
     // From this point on we are inside a block
 
     lex_err = munch();
-    if (skip_if_invalid_or_lexerr(lex_err, skip_else, LBRACE_COUNT_ONE)) {
+    if (skip_if_lexerr(lex_err, skip_else, LBRACE_COUNT_ONE)) {
         free_tree(else_root);
         return {};
     }
@@ -615,7 +614,7 @@ StatementReturns parse_if() {
     Error lex_err{}, expr_err{};
 
     lex_err = munch();
-    if (skip_if_invalid_or_lexerr(lex_err, skip_if, LBRACE_COUNT_ZERO)) {
+    if (skip_if_lexerr(lex_err, skip_if, LBRACE_COUNT_ZERO)) {
         free_tree(if_root);
         return {};
     }
@@ -627,7 +626,7 @@ StatementReturns parse_if() {
     }
 
     lex_err = munch();
-    if (skip_if_invalid_or_lexerr(lex_err, skip_if, LBRACE_COUNT_ZERO)) {
+    if (skip_if_lexerr(lex_err, skip_if, LBRACE_COUNT_ZERO)) {
         free_tree(if_root);
         return {};
     }
@@ -668,7 +667,7 @@ StatementReturns parse_if() {
     }
 
     lex_err = munch();
-    if (skip_if_invalid_or_lexerr(lex_err, skip_if, LBRACE_COUNT_ZERO)) {
+    if (skip_if_lexerr(lex_err, skip_if, LBRACE_COUNT_ZERO)) {
         free_tree(if_root);
         return {};
     }
@@ -695,7 +694,7 @@ StatementReturns parse_if() {
 
     else {
         lex_err = munch();
-        if (skip_if_invalid_or_lexerr(lex_err, skip_if, LBRACE_COUNT_ONE)) {
+        if (skip_if_lexerr(lex_err, skip_if, LBRACE_COUNT_ONE)) {
             free_tree(if_root);
             return {};
         }
@@ -735,7 +734,7 @@ StatementReturns parse_while() {
     Error lex_err{}, expr_err{};
 
     lex_err = munch();
-    if (skip_if_invalid_or_lexerr(lex_err, skip_while, lbrace_count)) {
+    if (skip_if_lexerr(lex_err, skip_while, lbrace_count)) {
         free_tree(while_root);
         return {};
     }
@@ -747,7 +746,7 @@ StatementReturns parse_while() {
     }
 
     lex_err = munch();
-    if (skip_if_invalid_or_lexerr(lex_err, skip_while, lbrace_count)) {
+    if (skip_if_lexerr(lex_err, skip_while, lbrace_count)) {
         free_tree(while_root);
         return {};
     }
@@ -791,7 +790,7 @@ StatementReturns parse_while() {
     }
 
     lex_err = munch();
-    if (skip_if_invalid_or_lexerr(lex_err, skip_while, lbrace_count)) {
+    if (skip_if_lexerr(lex_err, skip_while, lbrace_count)) {
         free_tree(while_root);
         return {};
     }
@@ -799,7 +798,7 @@ StatementReturns parse_while() {
     // Explicitly empty while 
     if (next_token.is_semicolon()) {
         lex_err = munch();
-        if (skip_if_invalid_or_lexerr(lex_err, skip_while, lbrace_count)) {
+        if (skip_if_lexerr(lex_err, skip_while, lbrace_count)) {
             free_tree(while_root);
             return {};
         }
@@ -821,7 +820,7 @@ StatementReturns parse_while() {
     ++lbrace_count;
 
     lex_err = munch();
-    if (skip_if_invalid_or_lexerr(lex_err, skip_while, lbrace_count)) {
+    if (skip_if_lexerr(lex_err, skip_while, lbrace_count)) {
         free_tree(while_root);
         return {};
     }
@@ -894,7 +893,7 @@ AST_NODE* AP(Error& err) {
 
         // Consume the or token
         Error tmp_error = munch();
-        if (invalid_lookahead() || handle_lex_error(tmp_error)) {
+        if (handle_lex_error(tmp_error)) {
             err = tmp_error; 
             free_tree(here);
             return nullptr;
@@ -940,7 +939,7 @@ AST_NODE* BP(Error& err) {
 
         // Consume and token
         Error tmp_error = munch();
-        if (invalid_lookahead() || handle_lex_error(tmp_error)) {
+        if (handle_lex_error(tmp_error)) {
             err = tmp_error; 
             free_tree(here);
             return nullptr;
@@ -966,7 +965,7 @@ AST_NODE* C(Error& err) {
 
         // Consume not token
         Error tmp_error = munch();
-        if (invalid_lookahead() || handle_lex_error(tmp_error)) {
+        if (handle_lex_error(tmp_error)) {
             err = tmp_error; 
             free_tree(here);
             return nullptr;
@@ -1023,7 +1022,7 @@ AST_NODE* DP(Error& err) {
 
         // Consume the operator
         Error tmp_error = munch();
-        if (invalid_lookahead() || handle_lex_error(tmp_error)) {
+        if (handle_lex_error(tmp_error)) {
             err = tmp_error;
             return nullptr;
         }
@@ -1052,7 +1051,7 @@ AST_NODE* E(Error& err) {
 
             // Consume operator
             Error tmp_err = munch();
-            if (invalid_lookahead() || handle_lex_error(tmp_err)) {
+            if (handle_lex_error(tmp_err)) {
                 err = tmp_err;
                 free_tree(left);
             	return nullptr;
@@ -1086,7 +1085,7 @@ AST_NODE* T(Error& err) {
             Token op = next_token;
 
             Error tmp_err = munch();
-            if (invalid_lookahead() || handle_lex_error(tmp_err)) {
+            if (handle_lex_error(tmp_err)) {
                 err = tmp_err;
                 free_tree(left);
             	return nullptr;
@@ -1115,7 +1114,7 @@ AST_NODE* N(Error& err) {
         here = new AST_NODE(next_token, get_node_type(next_token), OPERATOR);
 
         Error tmp_error = munch();
-        if (invalid_lookahead() || handle_lex_error(tmp_error)) {
+        if (handle_lex_error(tmp_error)) {
             err = tmp_error;
             free_tree(here);
         	return nullptr;
@@ -1169,7 +1168,7 @@ AST_NODE* FP(Error& err) {
 
         // Consume operator exp
         Error tmp_error = munch();
-        if (invalid_lookahead() || handle_lex_error(tmp_error)) {
+        if (handle_lex_error(tmp_error)) {
             err = tmp_error;
             free_tree(here);
         	return nullptr;
@@ -1228,7 +1227,7 @@ AST_NODE* integer_terminal(Error& err) {
     AST_NODE* here = new AST_NODE(next_token, NODE_TYPE::INT, TYPE::INT);
 
     Error tmp_error = munch();
-    if (invalid_lookahead() || handle_lex_error(tmp_error)) {
+    if (handle_lex_error(tmp_error)) {
         err = tmp_error;
         free_tree(here);
         return nullptr;
@@ -1242,7 +1241,7 @@ AST_NODE* paren_expression(Error& err, AST_NODE*& left) {
 
     // Eat left parenthesis
     Error tmp_error = munch();
-    if (invalid_lookahead() || handle_lex_error(tmp_error)) {
+    if (handle_lex_error(tmp_error)) {
         err = tmp_error;
         free_tree(here);
         return nullptr;
@@ -1260,7 +1259,7 @@ AST_NODE* paren_expression(Error& err, AST_NODE*& left) {
     // Otherwise eat the )
     else {
         Error tmp_error = munch();
-        if (invalid_lookahead() || handle_lex_error(tmp_error)) {
+        if (handle_lex_error(tmp_error)) {
             err = tmp_error;
             free_tree(here);
             return nullptr;
@@ -1284,7 +1283,7 @@ AST_NODE* string_terminal(Error& err) {
     here->entry = entry;
 
     Error tmp_error = munch();
-    if (invalid_lookahead() || handle_lex_error(tmp_error)) {
+    if (handle_lex_error(tmp_error)) {
         err = tmp_error;
         free_tree(here);
         return nullptr;
@@ -1297,7 +1296,7 @@ AST_NODE* boolean_terminal(Error& err) {
     AST_NODE* here = new AST_NODE(next_token, NODE_TYPE::BOOL, TYPE::BOOL); 
 
     Error tmp_error = munch();
-    if (invalid_lookahead() || handle_lex_error(tmp_error)) {
+    if (handle_lex_error(tmp_error)) {
         err = tmp_error;
         free_tree(here);
         return nullptr;
@@ -1321,7 +1320,7 @@ AST_NODE* variable_terminal(Error& err) {
     here->install_symbol(syminfo);
 
     Error tmp_error = munch();
-    if (invalid_lookahead() || handle_lex_error(tmp_error)){
+    if (handle_lex_error(tmp_error)){
         err = tmp_error;
         free_tree(here);
         return nullptr;

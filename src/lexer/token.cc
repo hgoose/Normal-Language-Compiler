@@ -1,6 +1,7 @@
 #include "token.h"
 #include "token_structures.h"
 #include "ast_node.h"
+#include "lex_utils.h"
 
 #include <iostream>
 #include <string>
@@ -16,13 +17,13 @@ void print_token(const Token& t) {
     if (t.is_null()) return;
 
     // Guaranteed values of interest
-    if (t.id < 0 || static_cast<size_t>(t.id) >= TOKEN_STRUCTURES::token_names.size()) {
+    if (unknown_token_name(t.id)) {
         cerr << "Tried to access a token id that does not exist\n\n";
         return;
     }
 
     // Custom output depending on token type
-    cout << TOKEN_STRUCTURES::token_names[t.id] << ": " << t.lexeme 
+    cout << t.get_name() << ": " << t.lexeme 
         << " at " << t.line_no << ":" << t.col_no << '\n';
 }
 
@@ -70,6 +71,10 @@ void Token::append_lexeme(std::string s) {
 
 void Token::append_lexeme(char c) {
     lexeme += c;
+}
+
+std::string Token::get_name() const {
+    return get_token_name(id);
 }
 
 void Token::set_eof() {
@@ -200,4 +205,3 @@ bool Token::set_id_from_predicate(TokenValue token_value, TokenMethod predicate)
     }
     return false;
 }
-

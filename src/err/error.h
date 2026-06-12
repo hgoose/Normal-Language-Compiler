@@ -50,20 +50,23 @@ struct Error
       : error(error), line(line), col(col) 
   {}
 
-  bool is(ErrorValue);
-  bool is_not(ErrorValue);
-  bool is_eof();
-  bool is_not_eof();
-  bool is_bof();
-  bool is_ok();
-  bool is_not_ok();
-  bool is_unexpected_eof();
+  bool is(ErrorValue) const;
+  bool is_not(ErrorValue) const;
+  bool is_eof() const;
+  bool is_not_eof() const;
+  bool is_bof() const;
+  bool is_ok() const;
+  bool is_not_ok() const;
+  bool is_critical() const;
+  bool is_not_critical() const;
+  bool is_unexpected_eof() const;
+  bool is_file_error() const;
+  bool is_syntax_error() const;
+  bool is_unknown() const;
 };
 
-bool invalid_lookahead();
 bool handle_lex_error(const Error&);
 
-const char* error_string(ErrorValue);
 void print_error(const Error&);
 
 void get_next_token_and_print_error();

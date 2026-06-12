@@ -26,7 +26,7 @@ void free_statement_return_list(StatementReturns& returns);
 void free_tree(AST_NODE*&);
 void parser_cleanup();
 
-bool skip_if_invalid_or_lexerr(const Error&, MoveProcedure=onepast_semi_or_block, int=LBRACE_COUNT_ZERO);
+bool skip_if_lexerr(const Error&, MoveProcedure=onepast_semi_or_block, int=LBRACE_COUNT_ZERO);
 bool unexpected_token(TokenValue, ErrorValue, MoveProcedure=onepast_semi_or_block, int=LBRACE_COUNT_ZERO);
 bool unexpected_token(const Token&, TokenValue, ErrorValue, MoveProcedure=onepast_semi_or_block, int=LBRACE_COUNT_ZERO);
 bool wrong_next_token(TokenValue, ErrorValue, MoveProcedure=onepast_semi_or_block, int=LBRACE_COUNT_ZERO);

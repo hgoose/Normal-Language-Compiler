@@ -228,7 +228,7 @@ TYPE assign_types(AST_NODE* root) {
 void ast_preorder(AST_NODE* root) {
     if (!root) return;
 
-    std::cout << (root->token.id != -1 ? TOKEN_STRUCTURES::token_names[root->token.id] : "Empty") << ", ";
+    std::cout << (root->token.id != -1 ? root->token.get_name() : "Empty") << ", ";
     std::for_each(root->children.begin(), root->children.end(), [](auto& it) -> void {
         ast_preorder(it);
     });
@@ -238,7 +238,7 @@ void ast_inorder(AST_NODE* root) {
     if (!root) return;
 
     std::for_each(root->children.begin(), root->children.end(), [&root](auto& it) -> void {
-            std::cout << (root->token.id != -1 ? TOKEN_STRUCTURES::token_names[root->token.id] : "Empty") << ", ";
+            std::cout << (root->token.id != -1 ? root->token.get_name() : "Empty") << ", ";
         ast_inorder(it);
     });
 

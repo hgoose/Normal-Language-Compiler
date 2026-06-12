@@ -35,7 +35,6 @@ const CharToTokenMap char_to_token {
         {']', TOKEN_RBRACKET},
         {'&', TOKEN_AND},
         {'|', TOKEN_OR},
-        {'@', TOKEN_AT},
         {';', TOKEN_SEMICOLON},
         {',', TOKEN_COMMA}
 };

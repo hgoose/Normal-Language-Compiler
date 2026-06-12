@@ -4,7 +4,6 @@
 #include "types.h"
 
 #include <string>
-#include <vector>
 
 /*******     Token  id  values   ******/
 #define TOKEN_NULL               0
@@ -32,10 +31,8 @@
 #define TOKEN_AND	             22
 #define TOKEN_OR	             23
 #define TOKEN_DOT	             24
-#define TOKEN_AT	             25
 #define TOKEN_INTEGER		     26
 #define TOKEN_STRING	         27
-#define TOKEN_COLON	             28
 #define TOKEN_SEMICOLON	         29
 #define TOKEN_COMMA	             30
 #define TOKEN_REAL               31
@@ -67,6 +64,8 @@ struct Token
     void set_lexeme(std::string);
     void append_lexeme(std::string);
     void append_lexeme(char);
+
+    std::string get_name() const;
 
     void set_eof();
     void set_null();

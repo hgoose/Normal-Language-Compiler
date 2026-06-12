@@ -47,4 +47,6 @@ typedef Error(*LexMethod)(Token&, char&);
 
 template<typename T> using LexMethodMap = std::unordered_map<T, LexMethod>;
 
+typedef std::unordered_map<ErrorValue, std::string> ErrorMap;
+
 #endif

@@ -19,8 +19,6 @@ static int buff_size = 0;
 static vector<size_t> line_start;
 static vector<size_t> line_sizes;
 
-// All int return values are error codes
-
 BufState buffer_save_state() {
     return BufState(
         src_line_no,
@@ -41,7 +39,6 @@ void buffer_load_state(const BufState& state) {
     line_sizes = state.line_sizes;
 }
 
-// Initializes buffer
 ErrorValue buffer_init(const char* filename) {
 
     // Reset states
@@ -107,7 +104,9 @@ ErrorValue buffer_init(const char* filename) {
 
                 // New line, reset current line size
             }
-        } else {
+        } 
+
+        else {
             // Still on same line, increment line size
             ++curr_line_size;
         }

@@ -8,6 +8,7 @@ namespace TOKEN_STRUCTURES {
     extern const TokenMap<std::string> operator_names;
     extern const TokenMap<NODE_TYPE> node_types;
     extern const IdentMap<bool> booleans;
+    extern const TokenMap<std::string> token_name_map;
     extern const TokenNames token_names;
     extern const Types types;
     extern const TokenSet terminals; 

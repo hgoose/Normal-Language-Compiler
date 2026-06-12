@@ -26,4 +26,7 @@ std::string consume_digits_after_current(char&);
 Error handle_exponent(Token&, char&);
 Error build_float_after_dot(Token&, char&);
 
+bool unknown_token_name(TokenValue token_value);
+std::string get_token_name(TokenValue);
+
 #endif

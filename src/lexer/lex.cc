@@ -45,19 +45,11 @@ static ReturnCode check_replace_escape(char& c, std::string& hex) {
     return NLC_OK;
 }
 
-
 // Initializes lexer
 Error lex_init(const char* src_code) {
     // Call buffer init and get the error code
     ReturnCode rc = buffer_init(src_code); 
-
-    // Create and return the error object, set properties first
-    Error err;
-    err.error = rc;
-    err.line = src_line_no;
-    err.col = src_col_no;
-
-    return err;
+    return Error{rc, src_line_no, src_col_no};
 }
 
 // Gets the next token
@@ -106,8 +98,6 @@ Error get_token(Token& t) {
 
     if (char_in_simple_lex_set(curr_char)) {
         t.set_id(char_to_token.at(curr_char));
-
-        return Error{};
     }
 
     else if (curr_char == '+') {
@@ -117,7 +107,7 @@ Error get_token(Token& t) {
             t.set_id(TOKEN_PLUS);
         }
 
-        return Error{};
+        t.set_lexeme("+");
     } 
 
     else if (curr_char == '-') {
@@ -127,26 +117,24 @@ Error get_token(Token& t) {
             t.set_id(TOKEN_MINUS);
         }
 
-        return Error{};
+        t.set_lexeme("-");
     } 
 
     // Possible identifier
     else if (valid_identifier_start(curr_char)) {
-        return lex_char_alpha(t, curr_char);
+        err = lex_char_alpha(t, curr_char);
     } 
 
     else if (is_digit(curr_char)) {
-        return lex_char_numeric(t, curr_char);
+        err = lex_char_numeric(t, curr_char);
     }
 
     LexMethod lex_method = map_char_to_lex_method(curr_char);
     if (lex_method) {
-        lex_method(t, curr_char);
+        err = lex_method(t, curr_char);
     }
 
     last_token = t;
-
-    // Return our NLC_OK Error
     return err;
 }
 

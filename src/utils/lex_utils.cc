@@ -5,6 +5,7 @@
 #include "token.h"
 #include "types.h"
 #include "lex_structures.h"
+#include "token_structures.h"
 
 #include <string>
 
@@ -142,4 +143,14 @@ Error build_float_after_dot(Token& t, char& curr_char) {
     }
 
     return handle_exponent(t, curr_char);
+}
+
+bool unknown_token_name(TokenValue token_value) {
+    return TOKEN_STRUCTURES::token_name_map.find(token_value) 
+        == TOKEN_STRUCTURES::token_name_map.end();
+}
+
+std::string get_token_name(TokenValue token_value) {
+    return unknown_token_name(token_value) 
+        ? "Unknown token" : TOKEN_STRUCTURES::token_name_map.at(token_value);
 }

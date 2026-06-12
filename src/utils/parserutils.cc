@@ -94,8 +94,8 @@ void skip_else(int lbrace_count) {
 
 // If the next token is invalid or a lexer error occurred,
 // skip to start of next statement or eof.
-bool skip_if_invalid_or_lexerr(const Error& err, MoveProcedure mv_proc, int lbrace_count){
-    if (invalid_lookahead() || handle_lex_error(err)) {
+bool skip_if_lexerr(const Error& err, MoveProcedure mv_proc, int lbrace_count){
+    if (handle_lex_error(err)) {
         mv_proc(lbrace_count);
         return true;
     } 
