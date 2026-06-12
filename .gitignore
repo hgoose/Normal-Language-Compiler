@@ -4,3 +4,4 @@ obj/
 tests/
 gdbscripts
 .cache/
+bin/
