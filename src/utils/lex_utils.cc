@@ -4,12 +4,31 @@
 #include "error.h"
 #include "token.h"
 #include "types.h"
+#include "lex_structures.h"
 
 #include <string>
 
-Error get_end_of_block_comment(Token& t, char& curr_char) {
+Error skip_whitespace(char& curr_char) {
+    Error err{};
+    while (char_is_whitespace(curr_char) && err.is_ok()) {
+        Error err = create_error(buffer_get_next_char(curr_char));
+    }
+
+    return err;
+}
+
+Error skip_current_and_whitespace(char& curr_char) {
+    Error err = create_error(buffer_get_next_char(curr_char));
+    if (err.is_not_ok()) {
+        return err;
+    }
+
+    return skip_whitespace(curr_char);
+}
+
+Error get_end_of_block_comment(char& curr_char) {
     Error buf_error = create_error(buffer_get_next_char(curr_char));
-    while (curr_char != '-') {
+    while (curr_char != '*') {
         if (buf_error.is_eof()) {
             return Error{NLC_UNEXPECTED_EOF, src_line_no, src_col_no};
         }
@@ -17,16 +36,13 @@ Error get_end_of_block_comment(Token& t, char& curr_char) {
         buf_error = create_error(buffer_get_next_char(curr_char));
     }
 
-    std::string next_two{};
-    buf_error = create_error(buffer_consume_k(2, next_two));
-
+    buf_error = create_error(buffer_get_next_char(curr_char));
     if (buf_error.is_eof()) {
         return Error{NLC_UNEXPECTED_EOF, src_line_no, src_col_no};
     }
 
-    if (next_two != ">>") {
-        buffer_unconsume_k(2);
-        return Error{NLC_NO_MATCH};
+    if (curr_char != '/') {
+        get_end_of_block_comment(curr_char);
     } 
 
     return Error{};
@@ -35,13 +51,15 @@ Error get_end_of_block_comment(Token& t, char& curr_char) {
 Error token_either_this_or_that(Token& t, TokenValue if_char_is, TokenValue if_char_is_not, char& curr_char, char expected_char) {
     Error err = create_error(buffer_get_next_char(curr_char));
 
-    if (curr_char == expected_char) {
-        t.set_id(if_char_is);
+    if (err.is_eof() || curr_char != expected_char) {
+        buffer_back_char();
+        t.set_id(if_char_is_not);
         return Error{};
+
     }
 
-    buffer_back_char();
-    t.set_id(if_char_is_not);
+    t.append_lexeme(curr_char);
+    t.set_id(if_char_is);
 
     return Error{};
 }

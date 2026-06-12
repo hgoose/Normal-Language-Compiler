@@ -13,7 +13,10 @@ inline bool char_is_exponent(char c) { return c == 'e' || c == 'E'; }
 inline bool char_is_radix_point(char c) { return c == '.'; } 
 inline bool char_is_sign(char c) { return c == '+' || c == '-'; }
 
-Error get_end_of_block_comment(Token&, char&);
+Error skip_whitespace(char&);
+Error skip_current_and_whitespace(char&);
+
+Error get_end_of_block_comment(char&);
 Error token_either_this_or_that(Token&, TokenValue, TokenValue, char&, char);
 
 bool char_is_exponent(char c);

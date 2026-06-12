@@ -4,6 +4,7 @@
 #include "types.h"
 
 namespace TOKEN_STRUCTURES {
+    extern const ReservedWords reserved_words;
     extern const TokenMap<std::string> operator_names;
     extern const TokenMap<NODE_TYPE> node_types;
     extern const IdentMap<bool> booleans;

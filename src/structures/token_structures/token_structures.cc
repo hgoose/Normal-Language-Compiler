@@ -1,10 +1,14 @@
 #include "token_structures.h"
-#include <ast_structures.h>
+#include "ast_structures.h"
 #include "types.h"
 #include "token.h"
 
 namespace TOKEN_STRUCTURES {
-    const TokenMap<std::string> operator_names = {
+    const ReservedWords reserved_words {
+        "print", "read", "int", "while", "if", "else", "true", "false"
+    };
+
+    const TokenMap<std::string> operator_names {
         {TOKEN_PLUS, "add"},
         {TOKEN_MINUS, "sub"},
         {TOKEN_MULT, "mul"},
@@ -20,7 +24,8 @@ namespace TOKEN_STRUCTURES {
         {TOKEN_EQUAL, "equal"},
         {TOKEN_NOT_EQUAL, "neq"},
         {TOKEN_AND, "and"},
-        {TOKEN_OR, "or"}
+        {TOKEN_OR, "or"},
+        {TOKEN_NOT, "not"}
     };
 
     const TokenMap<NODE_TYPE> node_types {
@@ -106,14 +111,14 @@ namespace TOKEN_STRUCTURES {
     };
 
     const TokenSet before_uplus_or_uneg {
-            TOKEN_NULL, TOKEN_PLUS, TOKEN_UNEG,
-            TOKEN_UPLUS, TOKEN_MINUS, TOKEN_MULT,
-            TOKEN_DIV, TOKEN_EXP, TOKEN_MOD,
-            TOKEN_LESS, TOKEN_LESS_EQ, TOKEN_GREATER,
-            TOKEN_GREATER_EQ, TOKEN_EQUAL, TOKEN_NOT_EQUAL,
-            TOKEN_ASSIGN, TOKEN_NOT, TOKEN_AND,
-            TOKEN_OR, TOKEN_LPAREN, TOKEN_COMMA,
-            TOKEN_DOT, TOKEN_AT  
+        TOKEN_NULL, TOKEN_PLUS, TOKEN_UNEG,
+        TOKEN_UPLUS, TOKEN_MINUS, TOKEN_MULT,
+        TOKEN_DIV, TOKEN_EXP, TOKEN_MOD,
+        TOKEN_LESS, TOKEN_LESS_EQ, TOKEN_GREATER,
+        TOKEN_GREATER_EQ, TOKEN_EQUAL, TOKEN_NOT_EQUAL,
+        TOKEN_ASSIGN, TOKEN_NOT, TOKEN_AND,
+        TOKEN_OR, TOKEN_LPAREN, TOKEN_COMMA,
+        TOKEN_DOT, TOKEN_AT  
     };
 
     const TokenSet operators {

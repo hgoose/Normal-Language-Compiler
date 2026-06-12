@@ -18,16 +18,15 @@ const WhitespaceSet whitespace {
 };
 
 const CharSet simple_lex_set {
-    '*', '/', '^', '!', '(',
-    ')', '{', '}', '[', ']',
+    '*', '^', '(', ')', 
+    '{', '}', '[', ']', 
     '&', '|', '@', ';', ','
 };
 
+// Logically tied to simple_lex_set
 const CharToTokenMap char_to_token {
         {'*', TOKEN_MULT},
-        {'/', TOKEN_DIV},
         {'^', TOKEN_EXP},
-        {'!', TOKEN_NOT},
         {'(', TOKEN_LPAREN},
         {')', TOKEN_RPAREN},
         {'{', TOKEN_RBRACE},
@@ -45,8 +44,8 @@ const LexMethodMap<char> char_to_lex_method {
     {'<', lex_char_less},
     {'>', lex_char_greater},
     {'=', lex_char_equal},
-    {'~', lex_char_not},
-    {'#', lex_char_pound},
+    {'!', lex_char_not},
+    {'/', lex_char_slash},
     {'"', lex_char_quote},
     {'.', lex_char_dot}
 };

@@ -112,6 +112,22 @@ struct AST_NODE {
         }
     }
 
+    AST_NODE& operator=(const AST_NODE& other) {
+        token = other.token;
+        data_type = other.data_type;
+        node_type = other.node_type;
+        entry = other.entry;
+        syminfo = other.syminfo;
+        is_operator = other.is_operator;
+        symbol_type = other.symbol_type;
+        boolean = other.boolean;
+        is_boolean = other.is_boolean;
+
+        deep_copy_children(other);
+
+        return *this;
+    }
+
     void add_child(AST_NODE* child) {
         children.push_back(child);
     }

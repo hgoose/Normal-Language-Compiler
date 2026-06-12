@@ -171,63 +171,15 @@ void lex_goto_last_save(const LexState& state) {
 }
 
 Error lex_char_less(Token& t, char& curr_char) {
-    Error buf_error = create_error(buffer_get_next_char(curr_char));
-
-    if (curr_char == '=') {
-        t.append_lexeme(curr_char);
-        t.set_id(TOKEN_LESS_EQ);
-        return Error{};
-    } 
-
-    else if (curr_char != '<') {
-        t.set_id(TOKEN_LESS);
-        buffer_back_char();
-        return Error{};
-    }
-
-    // From this point on we have <<
-
-    buf_error = create_error(buffer_get_next_char(curr_char)); 
-
-    // Not a block comment
-    if (curr_char != '-') {
-        buffer_back_char();
-        t.set_null();
-        return Error{};
-    } 
-
-    Error err = get_end_of_block_comment(t, curr_char);
-
-    if (err.is_not(NLC_NO_MATCH)) {
-        return get_token(t); 
-    }
-
-    else if (err.is(NLC_UNEXPECTED_EOF)) {
-        return err;
-    }
-
-    return Error{};
+    return token_either_this_or_that(
+        t, TOKEN_LESS_EQ, TOKEN_LESS, curr_char, '='
+    );
 }
 
 Error lex_char_greater(Token& t, char& curr_char) {
-    Error err = create_error(buffer_get_next_char(curr_char));
-
-    if (err.is_eof() || char_is_whitespace(curr_char)) {
-        t.set_id(TOKEN_GREATER);
-        return Error{};
-    } 
-
-    if (curr_char == '=') {
-        t.append_lexeme(curr_char);
-        t.set_id(TOKEN_GREATER_EQ);
-
-        return Error{};
-    } 
-
-    buffer_back_char();
-    t.set_id(TOKEN_GREATER); 
-
-    return Error{};
+    return token_either_this_or_that(
+        t, TOKEN_GREATER_EQ, TOKEN_GREATER, curr_char, '='
+    );
 }
 
 Error lex_char_equal(Token& t, char& curr_char) {
@@ -238,11 +190,29 @@ Error lex_char_equal(Token& t, char& curr_char) {
 
 Error lex_char_not(Token& t, char& curr_char) {
     return token_either_this_or_that(
-        t, TOKEN_NOT_EQUAL, TOKEN_NULL, curr_char, '='
+        t, TOKEN_NOT_EQUAL, TOKEN_NOT, curr_char, '='
     );
 }
 
-Error lex_char_pound(Token& t, char& curr_char) {
+Error lex_char_slash(Token& t, char& curr_char) {
+    Error err = create_error(buffer_get_next_char(curr_char));
+
+    // Block comment
+    if (curr_char == '*') {
+        Error block_comment_error = get_end_of_block_comment(curr_char);
+
+        if (block_comment_error.is_not_ok()) {
+            return block_comment_error;
+        }
+    }
+
+    if (err.is_eof() || curr_char != '/') {
+        buffer_back_char();
+        t.set_id(TOKEN_DIV);
+
+        return Error{};
+    }
+
     for (;;) {
         Error err = create_error(buffer_get_next_char(curr_char));
 

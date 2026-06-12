@@ -8,12 +8,8 @@
 #include "ast_structures.h"
 
 bool is_reserved(const Token& t) {
-    std::string lexeme = t.lexeme;
-    std::transform(lexeme.begin(), lexeme.end(), lexeme.begin(), 
-            [](unsigned char c) {return std::tolower(c);
-    });
-
-    return reserved_words.find(lexeme) != reserved_words.end();
+    return TOKEN_STRUCTURES::reserved_words.find(t.lexeme) 
+        != TOKEN_STRUCTURES::reserved_words.end();
 }
 
 void AST_NODE::add_all_statements(StatementReturns returns) {

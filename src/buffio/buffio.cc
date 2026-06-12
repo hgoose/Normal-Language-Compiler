@@ -150,7 +150,9 @@ ErrorValue buffer_next_char() {
     if (current_char == '\n') {
         ++src_line_no; 
         src_col_no = 1;
-    } else {
+    } 
+
+    else {
         if (curr_pos != 0) ++src_col_no;
     }
 

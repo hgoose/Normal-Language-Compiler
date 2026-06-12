@@ -23,7 +23,7 @@ Error lex_char_less(Token&, char&);
 Error lex_char_greater(Token&, char&);
 Error lex_char_equal(Token&, char&);
 Error lex_char_not(Token&, char&);
-Error lex_char_pound(Token&, char&);
+Error lex_char_slash(Token&, char&);
 Error lex_char_alpha(Token&, char&);
 Error lex_char_quote(Token&, char&);
 Error lex_char_dot(Token&, char&);
