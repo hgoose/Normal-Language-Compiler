@@ -563,14 +563,13 @@ StatementReturns parse_assign() {
 // the identifier else, it returns nullptr.
 StatementReturns parse_else() {
     Scope::enter_level();
-    Scope::enter_level();
     if (!next_token.is_ident_else()) return {};
 
     AST_NODE* else_root = new AST_NODE(next_token, NODE_TYPE::ELSE, Scope::level());
 
     Error lex_err = munch();
     if (skip_if_lexerr(lex_err, skip_else, LBRACE_COUNT_ZERO)) {
-        free_trees_dec_scope(else_root);
+        free_trees_exit_scope(else_root);
         return {};
     }
 
@@ -589,14 +588,14 @@ StatementReturns parse_else() {
 
     lex_err = munch();
     if (skip_if_lexerr(lex_err, skip_else, LBRACE_COUNT_ONE)) {
-        free_trees_dec_scope(else_root);
+        free_trees_exit_scope(else_root);
         return {};
     }
 
     Error err{};
     StatementReturns statements = get_all_statements_in_block(err);
     if (err.is_not_ok()) {
-        free_trees_dec_scope(else_root);
+        free_trees_exit_scope(else_root);
         return {};
     }
 
@@ -614,25 +613,25 @@ StatementReturns parse_if() {
 
     lex_err = munch();
     if (skip_if_lexerr(lex_err, skip_if, LBRACE_COUNT_ZERO)) {
-        free_trees_dec_scope(if_root);
+        free_trees_exit_scope(if_root);
         return {};
     }
 
     // Next token after if keyword must be an lparen
     if (unexpected_token(TOKEN_LPAREN, NLC_SYNTAX_ERROR, skip_if, LBRACE_COUNT_ZERO)) {
-        free_trees_dec_scope(if_root);
+        free_trees_exit_scope(if_root);
         return {};
     }
 
     lex_err = munch();
     if (skip_if_lexerr(lex_err, skip_if, LBRACE_COUNT_ZERO)) {
-        free_trees_dec_scope(if_root);
+        free_trees_exit_scope(if_root);
         return {};
     }
 
     // If the next token after lparen is an rparen, we are missing an expression
     if (wrong_next_token(TOKEN_RPAREN, NLC_EXPECTED_EXPRESSION, skip_if, LBRACE_COUNT_ZERO)) {
-        free_trees_dec_scope(if_root);
+        free_trees_exit_scope(if_root);
         return {};
     }
 
@@ -642,7 +641,7 @@ StatementReturns parse_if() {
 
     if (!ast_expr) {
         skip_if(LBRACE_COUNT_ZERO);
-        free_trees_dec_scope(if_root);
+        free_trees_exit_scope(if_root);
         return {};
     }
 
@@ -651,7 +650,7 @@ StatementReturns parse_if() {
         set_print_token_error(Error{}, ast_expr->token, NLC_NON_LOGICAL_CONDITION);
         skip_if(LBRACE_COUNT_ZERO);
 
-        free_trees_dec_scope(ast_expr, if_root);
+        free_trees_exit_scope(ast_expr, if_root);
         return {};
     }
 
@@ -660,13 +659,13 @@ StatementReturns parse_if() {
 
     // Token following logical expression must be a right parenthesis
     if (unexpected_token(TOKEN_RPAREN, NLC_SYNTAX_ERROR, skip_if, LBRACE_COUNT_ZERO)) {
-        free_trees_dec_scope(if_root);
+        free_trees_exit_scope(if_root);
         return {};
     }
 
     lex_err = munch();
     if (skip_if_lexerr(lex_err, skip_if, LBRACE_COUNT_ZERO)) {
-        free_trees_dec_scope(if_root);
+        free_trees_exit_scope(if_root);
         return {};
     }
 
@@ -694,14 +693,14 @@ StatementReturns parse_if() {
     else {
         lex_err = munch();
         if (skip_if_lexerr(lex_err, skip_if, LBRACE_COUNT_ONE)) {
-            free_trees_dec_scope(if_root);
+            free_trees_exit_scope(if_root);
             return {};
         }
 
         Error err{};
         StatementReturns statements = get_all_statements_in_block(err);
         if (err.is_not_ok()) {
-            free_trees_dec_scope(if_root);
+            free_trees_exit_scope(if_root);
             return {};
         }
 
@@ -728,25 +727,25 @@ StatementReturns parse_while() {
 
     lex_err = munch();
     if (skip_if_lexerr(lex_err, skip_while, lbrace_count)) {
-        free_trees_dec_scope(while_root);
+        free_trees_exit_scope(while_root);
         return {};
     }
 
     // Missing (
     if (unexpected_token(TOKEN_LPAREN, NLC_SYNTAX_ERROR, skip_while, lbrace_count)) {
-        free_trees_dec_scope(while_root);
+        free_trees_exit_scope(while_root);
         return {};
     }
 
     lex_err = munch();
     if (skip_if_lexerr(lex_err, skip_while, lbrace_count)) {
-        free_trees_dec_scope(while_root);
+        free_trees_exit_scope(while_root);
         return {};
     }
 
     // Missing condition
     if (wrong_next_token(TOKEN_RPAREN, NLC_EXPECTED_EXPRESSION, skip_while, lbrace_count)) {
-        free_trees_dec_scope(while_root);
+        free_trees_exit_scope(while_root);
         return {};
     }
 
@@ -760,7 +759,7 @@ StatementReturns parse_while() {
     // Invalid expression
     if (!ast_expr) {
         skip_while(lbrace_count);
-        free_trees_dec_scope(while_root);
+        free_trees_exit_scope(while_root);
         return {};
     }
 
@@ -769,7 +768,7 @@ StatementReturns parse_while() {
         set_print_token_error(Error{}, ast_expr->token, NLC_NON_LOGICAL_CONDITION);
         skip_while(lbrace_count);
 
-        free_trees_dec_scope(ast_expr, while_root);
+        free_trees_exit_scope(ast_expr, while_root);
         return {};
     }
 
@@ -777,13 +776,13 @@ StatementReturns parse_while() {
 
     // Token after condition was not a right parenthesis
     if (unexpected_token(TOKEN_RPAREN, NLC_SYNTAX_ERROR, skip_while, lbrace_count)) {
-        free_trees_dec_scope(while_root);
+        free_trees_exit_scope(while_root);
         return {};
     }
 
     lex_err = munch();
     if (skip_if_lexerr(lex_err, skip_while, lbrace_count)) {
-        free_trees_dec_scope(while_root);
+        free_trees_exit_scope(while_root);
         return {};
     }
 
@@ -791,7 +790,7 @@ StatementReturns parse_while() {
     if (next_token.is_semicolon()) {
         lex_err = munch();
         if (skip_if_lexerr(lex_err, skip_while, lbrace_count)) {
-            free_trees_dec_scope(while_root);
+            free_trees_exit_scope(while_root);
             return {};
         }
         return {while_root};
@@ -814,7 +813,7 @@ StatementReturns parse_while() {
 
     lex_err = munch();
     if (skip_if_lexerr(lex_err, skip_while, lbrace_count)) {
-        free_trees_dec_scope(while_root);
+        free_trees_exit_scope(while_root);
         return {};
     }
 
@@ -839,7 +838,7 @@ StatementReturns parse_while() {
         else {
             skip_while(lbrace_count);
 
-            free_trees_dec_scope(while_root);
+            free_trees_exit_scope(while_root);
             return {};
         }
 
@@ -854,7 +853,7 @@ StatementReturns parse_while() {
         else if (next_token.is_eof()) {
             set_print_token_error(Error{}, NLC_UNEXPECTED_EOF);
 
-            free_trees_dec_scope(while_root);
+            free_trees_exit_scope(while_root);
             return {};
         }
     }
@@ -869,29 +868,32 @@ StatementReturns parse_block() {
 
     Error lex_err = munch();
     if (handle_lex_error(lex_err)) {
-        free_tree(block_root);
         skip_block(LBRACE_COUNT_ONE);
+
+        free_trees_exit_scope(block_root);
         return {};
     }
 
     // Empty block
     if (next_token.is_block_end()) {
         get_next_token_and_print_error();
+
+        Scope::exit_level();
         return {}; 
     }
     
     Error err{};
     StatementReturns statements = get_all_statements_in_block(err);
     if (err.is_not_ok()) {
-        free_tree(block_root);
+        free_trees_exit_scope(block_root);
         return {};
     }
 
     block_root->add_all_statements(statements);
-    Scope::exit_level();
 
     // Only block_root is attached to program_tree. All statements
     // encountered here are attached to block_root.
+    Scope::exit_level();
     return {block_root};
 }
 
