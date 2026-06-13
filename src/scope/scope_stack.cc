@@ -51,15 +51,10 @@ void Scope::pop_level() {
     scope_stack.pop_back();
 }
 
-void Scope::exit_level() {
-    // Get symbols on level
-    SymbolBucket current_bucket = get_top_bucket();
-
-    for (auto& member : current_bucket) {
-        if (member->scope_level != level()) continue;
-        SYMTABLE::remove_symbol(member);
+void Scope::tear_down_frame(SymbolBucket& bucket) {
+    for (auto& symbol : bucket) {
+        SYMTABLE::remove_symbol(symbol);
     }
 
     pop_level();
-    down_level();
 }

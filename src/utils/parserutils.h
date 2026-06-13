@@ -49,8 +49,7 @@ void munch_all_semicolons();
 
 template<typename...TREES>
 requires (std::same_as<TREES, AST_NODE*> && ...)
-void free_trees_exit_scope(TREES...trees) {
-    Scope::exit_level();
+void free_trees(TREES...trees) {
     (free_tree(trees),...);
 }
 

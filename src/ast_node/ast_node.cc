@@ -254,3 +254,7 @@ void AST_NODE::deep_copy_children(const AST_NODE& other) {
         children.push_back(new AST_NODE(*front));
     }
 }
+
+void AST_NODE::set_scope_stack_frame(const SymbolBucket& bucket) {
+    scope_stack_frame = bucket;
+}

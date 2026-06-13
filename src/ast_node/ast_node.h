@@ -58,6 +58,8 @@ struct AST_NODE {
 
     Children children;
 
+    SymbolBucket scope_stack_frame{};
+
     AST_NODE() = default;
     AST_NODE(ScopeLevel scope_level);
     AST_NODE(Token token, ScopeLevel scope_level);
@@ -108,6 +110,8 @@ struct AST_NODE {
     void install_symbol(SYMINFO*);
 
     void deep_copy_children(const AST_NODE&);
+
+    void set_scope_stack_frame(const SymbolBucket&);
 };
 
 #endif

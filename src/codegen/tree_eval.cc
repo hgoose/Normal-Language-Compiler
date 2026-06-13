@@ -511,5 +511,7 @@ bool process_block(AST_NODE* root) {
         dispatch_statement(child); 
     }
 
+    Scope::tear_down_frame(root->scope_stack_frame);
+
     return true;
 }

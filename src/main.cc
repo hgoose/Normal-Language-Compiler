@@ -20,7 +20,7 @@ int main(int argc, const char* argv[]) {
 
     // The filename is the first argument after program name
     // const char* filename = argv[1];
-    const char* filename = "/home/datura/nlc/tests/pet_testdata/test";
+    const char* filename = "/home/angel/nlc/tests/pet_testdata/test";
 
     Error err = lex_init(filename);
     print_error(err);
