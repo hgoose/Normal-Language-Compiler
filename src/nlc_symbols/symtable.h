@@ -24,7 +24,7 @@ struct SYMINFO {
     SYMTYPE type{};
     SYMLOCATION location{};
 
-    TYPE data_type;
+    TYPE data_type{};
 
     bool exists{};
 
