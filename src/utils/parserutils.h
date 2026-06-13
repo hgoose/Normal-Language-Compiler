@@ -4,6 +4,8 @@
 #include "types.h"
 #include "scope_stack.h"
 
+#include <concepts>
+
 struct Error;
 struct Token;
 struct AST_NODE;

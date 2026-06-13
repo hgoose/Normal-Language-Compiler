@@ -1,15 +1,16 @@
 #ifndef NLC_ASTNODE_H
 #define NLC_ASTNODE_H
 
-#include <list>
-#include <string>
-
 #include "token.h"
 #include "nlc_strings.h"
 #include "symtable.h"
 #include "ast_structures.h"
 #include "token_structures.h"
 #include "types.h"
+
+#include <list>
+#include <string>
+#include <concepts>
 
 struct AST_NODE;
 
