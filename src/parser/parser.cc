@@ -122,21 +122,7 @@ int parse() {
     x86_pushr64(REGISTER::R12);
     x86_pushr64(REGISTER::R15);
 
-    std::for_each(program_tree->children.begin(), program_tree->children.end(), [](AST_NODE*& statement) -> void {
-        if (!statement) return;
-
-        NODE_TYPE statement_type = statement->node_type;
-
-        // Essentially a continue
-        if (eval_map.find(statement_type) == eval_map.end()) return;
-
-        bool success = eval_map.at(statement_type)(statement);
-
-        if (!success) {
-            free_tree(statement);
-        }
-
-    });
+    process_block(program_tree);
 
     ast_out(program_tree);
 
@@ -354,7 +340,7 @@ StatementReturns parse_decl_int() {
 
     // Put into symbol table 
     SYMINFO* entry = SYMTABLE::add_symbol(
-        new SYMINFO(next_token.identifier, TYPE::INT, SYMTYPE::VAR)
+        new SYMINFO(next_token.identifier, TYPE::INT, SYMTYPE::VAR, Scope::level())
     );
 
     if (!entry) {

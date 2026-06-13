@@ -5,6 +5,8 @@
 
 struct AST_NODE;
 
+void dispatch_statement(AST_NODE*);
+
 void evaluate_expr(AST_NODE*);
 void evaluate_print_expr(AST_NODE*);
 
@@ -14,6 +16,7 @@ bool update_var(AST_NODE*);
 bool process_read(AST_NODE*);
 bool process_if(AST_NODE*);
 bool process_while(AST_NODE*);
+bool process_block(AST_NODE*);
 
 size_t sizeof_print();
 

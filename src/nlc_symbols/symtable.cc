@@ -1,5 +1,6 @@
 #include "symtable.h"
 #include "table_structures.h"
+#include "scope_stack.h"
 
 #include <string>
 #include <cstddef>
@@ -33,6 +34,13 @@ SYMINFO::SYMINFO(const std::string& name, SYMTYPE type, const SYMLOCATION& locat
 {
     exists = true;
 }
+
+SYMINFO::SYMINFO(const std::string& name, TYPE data_type, SYMTYPE type, ScopeLevel scope_level) 
+    : name(name),
+    type(type),
+    data_type(data_type),
+    scope_level(scope_level)
+{}
 
 SYMINFO::SYMINFO(const std::string& name, SYMTYPE type, ScopeLevel scope_level)
     : name(name),
@@ -106,6 +114,7 @@ SYMINFO* SYMTABLE::add_symbol(SYMINFO* syminfo) {
     }
 
     // Doesn't exist, add it
+    Scope::add_to_top_level(syminfo);
     return symbol_table[hx].emplace_front(syminfo);
 }
 
@@ -115,7 +124,7 @@ void SYMTABLE::remove_symbol(SYMINFO* syminfo) {
     SymbolBucket& bucket = symbol_table[hx];
     for (auto start = bucket.begin(); start != bucket.end(); ++start) {
         if ((*start)->is_same_as(syminfo)) {
-            delete *start;
+            // delete *start;
             bucket.erase(start);
         }
     }

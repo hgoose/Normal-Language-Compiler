@@ -34,6 +34,8 @@ struct SYMINFO {
     SYMINFO(const std::string& name, TYPE data_type, SYMTYPE type);
     SYMINFO(const std::string& name, SYMTYPE type);
     SYMINFO(const std::string& name, SYMTYPE type, const SYMLOCATION& location);
+
+    SYMINFO(const std::string& name, TYPE data_type, SYMTYPE type, ScopeLevel scope_level);
     SYMINFO(const std::string& name, SYMTYPE type, ScopeLevel scope_level);
     SYMINFO(const std::string& name, SYMTYPE type, const SYMLOCATION& location, ScopeLevel scope_level);
 

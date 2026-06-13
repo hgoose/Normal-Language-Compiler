@@ -10,6 +10,7 @@
 
 #include <cstdlib>
 #include <algorithm>
+#include <iostream>
 
 static void r_evaluate_expr(AST_NODE* p, int& pushed) {
     if (!p) return;
@@ -499,6 +500,16 @@ bool process_while(AST_NODE* root) {
 
     // +6 is the size of the jnz itself
     x86_jnz_rel32(-(body_size + condition_plus_test_size + 6));
+
+    return true;
+}
+
+bool process_block(AST_NODE* root) {
+    if (!root) return false;
+
+    for (auto& child : root->children) {
+        dispatch_statement(child); 
+    }
 
     return true;
 }
