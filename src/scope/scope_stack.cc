@@ -56,6 +56,7 @@ void Scope::exit_level() {
     SymbolBucket current_bucket = get_top_bucket();
 
     for (auto& member : current_bucket) {
+        if (member->scope_level != level()) continue;
         SYMTABLE::remove_symbol(member);
     }
 

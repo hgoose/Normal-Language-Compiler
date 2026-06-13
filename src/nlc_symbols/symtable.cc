@@ -122,11 +122,11 @@ void SYMTABLE::remove_symbol(SYMINFO* syminfo) {
     size_t hx = hash(syminfo->name); 
 
     SymbolBucket& bucket = symbol_table[hx];
-    for (auto start = bucket.begin(); start != bucket.end(); ++start) {
+    for (auto start = bucket.begin(); start != bucket.end();) {
         if ((*start)->is_same_as(syminfo)) {
-            // delete *start;
-            bucket.erase(start);
-        }
+            delete *start;
+            start = bucket.erase(start);
+        } else ++start;
     }
 }
 

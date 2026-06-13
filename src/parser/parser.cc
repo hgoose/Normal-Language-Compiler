@@ -138,7 +138,6 @@ int parse() {
 
     SYMTABLE::free_symbol_table();
     free_tree(program_tree);
-    Scope::exit_level();
 
     return 0;
 }
