@@ -2,6 +2,7 @@
 #define NLC_PARSERUTILS_H
 
 #include "types.h"
+#include "scope_stack.h"
 
 struct Error;
 struct Token;
@@ -43,5 +44,12 @@ void merge_statement_returns(StatementReturns&, StatementReturns);
 
 Error munch();
 void munch_all_semicolons();
+
+template<typename...TREES>
+requires (std::same_as<TREES, AST_NODE*> && ...)
+void free_trees_dec_scope(TREES...trees) {
+    Scope::down_level();
+    (free_tree(trees),...);
+}
 
 #endif

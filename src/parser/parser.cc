@@ -559,13 +559,14 @@ StatementReturns parse_assign() {
 // If this function is called while the current token is not
 // the identifier else, it returns nullptr.
 StatementReturns parse_else() {
+    Scope::up_level();
     if (!next_token.is_ident_else()) return {};
 
     AST_NODE* else_root = new AST_NODE(next_token, NODE_TYPE::ELSE, Scope::current_scope_level);
 
     Error lex_err = munch();
     if (skip_if_lexerr(lex_err, skip_else, LBRACE_COUNT_ZERO)) {
-        free_tree(else_root);
+        free_trees_dec_scope(else_root);
         return {};
     }
 
@@ -576,6 +577,7 @@ StatementReturns parse_else() {
         StatementReturns statements = get_statement();
         else_root->add_all_statements(statements);
 
+        Scope::down_level();
         return {else_root};
     }
 
@@ -583,48 +585,50 @@ StatementReturns parse_else() {
 
     lex_err = munch();
     if (skip_if_lexerr(lex_err, skip_else, LBRACE_COUNT_ONE)) {
-        free_tree(else_root);
+        free_trees_dec_scope(else_root);
         return {};
     }
 
     Error err{};
     StatementReturns statements = get_all_statements_in_block(err);
     if (err.is_not_ok()) {
-        free_tree(else_root);
+        free_trees_dec_scope(else_root);
         return {};
     }
 
     else_root->add_all_statements(statements);
 
+    Scope::down_level();
     return {else_root};
 }
 
 StatementReturns parse_if() {
+    Scope::up_level();
     AST_NODE* if_root = new AST_NODE(next_token, NODE_TYPE::IF, Scope::current_scope_level); 
 
     Error lex_err{}, expr_err{};
 
     lex_err = munch();
     if (skip_if_lexerr(lex_err, skip_if, LBRACE_COUNT_ZERO)) {
-        free_tree(if_root);
+        free_trees_dec_scope(if_root);
         return {};
     }
 
     // Next token after if keyword must be an lparen
     if (unexpected_token(TOKEN_LPAREN, NLC_SYNTAX_ERROR, skip_if, LBRACE_COUNT_ZERO)) {
-        free_tree(if_root);
+        free_trees_dec_scope(if_root);
         return {};
     }
 
     lex_err = munch();
     if (skip_if_lexerr(lex_err, skip_if, LBRACE_COUNT_ZERO)) {
-        free_tree(if_root);
+        free_trees_dec_scope(if_root);
         return {};
     }
 
     // If the next token after lparen is an rparen, we are missing an expression
     if (wrong_next_token(TOKEN_RPAREN, NLC_EXPECTED_EXPRESSION, skip_if, LBRACE_COUNT_ZERO)) {
-        free_tree(if_root);
+        free_trees_dec_scope(if_root);
         return {};
     }
 
@@ -634,8 +638,7 @@ StatementReturns parse_if() {
 
     if (!ast_expr) {
         skip_if(LBRACE_COUNT_ZERO);
-        free_tree(ast_expr);
-        free_tree(if_root);
+        free_trees_dec_scope(if_root);
         return {};
     }
 
@@ -643,8 +646,8 @@ StatementReturns parse_if() {
     if (!ast_expr->is_type_logical()) {
         set_print_token_error(Error{}, ast_expr->token, NLC_NON_LOGICAL_CONDITION);
         skip_if(LBRACE_COUNT_ZERO);
-        free_tree(ast_expr);
-        free_tree(if_root);
+
+        free_trees_dec_scope(ast_expr, if_root);
         return {};
     }
 
@@ -653,13 +656,13 @@ StatementReturns parse_if() {
 
     // Token following logical expression must be a right parenthesis
     if (unexpected_token(TOKEN_RPAREN, NLC_SYNTAX_ERROR, skip_if, LBRACE_COUNT_ZERO)) {
-        free_tree(if_root);
+        free_trees_dec_scope(if_root);
         return {};
     }
 
     lex_err = munch();
     if (skip_if_lexerr(lex_err, skip_if, LBRACE_COUNT_ZERO)) {
-        free_tree(if_root);
+        free_trees_dec_scope(if_root);
         return {};
     }
 
@@ -671,6 +674,7 @@ StatementReturns parse_if() {
         StatementReturns else_root = parse_else();
         if_root->add_all_statements(else_root);
 
+        Scope::down_level();
         return {if_root};
     }
 
@@ -686,19 +690,21 @@ StatementReturns parse_if() {
     else {
         lex_err = munch();
         if (skip_if_lexerr(lex_err, skip_if, LBRACE_COUNT_ONE)) {
-            free_tree(if_root);
+            free_trees_dec_scope(if_root);
             return {};
         }
 
         Error err{};
         StatementReturns statements = get_all_statements_in_block(err);
         if (err.is_not_ok()) {
-            free_tree(if_root);
+            free_trees_dec_scope(if_root);
             return {};
         }
 
         if_root->add_all_statements(statements);
     }
+
+    Scope::down_level();
 
     // If there exists an else, parse it.
     StatementReturns else_root = parse_else();
@@ -708,6 +714,8 @@ StatementReturns parse_if() {
 }
 
 StatementReturns parse_while() {
+    Scope::up_level();
+
     int lbrace_count{};
 
     AST_NODE* while_root = new AST_NODE(next_token, NODE_TYPE::WHILE, Scope::current_scope_level);
@@ -716,25 +724,25 @@ StatementReturns parse_while() {
 
     lex_err = munch();
     if (skip_if_lexerr(lex_err, skip_while, lbrace_count)) {
-        free_tree(while_root);
+        free_trees_dec_scope(while_root);
         return {};
     }
 
     // Missing (
     if (unexpected_token(TOKEN_LPAREN, NLC_SYNTAX_ERROR, skip_while, lbrace_count)) {
-        free_tree(while_root);
+        free_trees_dec_scope(while_root);
         return {};
     }
 
     lex_err = munch();
     if (skip_if_lexerr(lex_err, skip_while, lbrace_count)) {
-        free_tree(while_root);
+        free_trees_dec_scope(while_root);
         return {};
     }
 
     // Missing condition
     if (wrong_next_token(TOKEN_RPAREN, NLC_EXPECTED_EXPRESSION, skip_while, lbrace_count)) {
-        free_tree(while_root);
+        free_trees_dec_scope(while_root);
         return {};
     }
 
@@ -748,8 +756,7 @@ StatementReturns parse_while() {
     // Invalid expression
     if (!ast_expr) {
         skip_while(lbrace_count);
-        free_tree(ast_expr);
-        free_tree(while_root);
+        free_trees_dec_scope(while_root);
         return {};
     }
 
@@ -757,8 +764,8 @@ StatementReturns parse_while() {
     if (!ast_expr->is_type_logical()) {
         set_print_token_error(Error{}, ast_expr->token, NLC_NON_LOGICAL_CONDITION);
         skip_while(lbrace_count);
-        free_tree(ast_expr);
-        free_tree(while_root);
+
+        free_trees_dec_scope(ast_expr, while_root);
         return {};
     }
 
@@ -766,13 +773,13 @@ StatementReturns parse_while() {
 
     // Token after condition was not a right parenthesis
     if (unexpected_token(TOKEN_RPAREN, NLC_SYNTAX_ERROR, skip_while, lbrace_count)) {
-        free_tree(while_root);
+        free_trees_dec_scope(while_root);
         return {};
     }
 
     lex_err = munch();
     if (skip_if_lexerr(lex_err, skip_while, lbrace_count)) {
-        free_tree(while_root);
+        free_trees_dec_scope(while_root);
         return {};
     }
 
@@ -780,7 +787,7 @@ StatementReturns parse_while() {
     if (next_token.is_semicolon()) {
         lex_err = munch();
         if (skip_if_lexerr(lex_err, skip_while, lbrace_count)) {
-            free_tree(while_root);
+            free_trees_dec_scope(while_root);
             return {};
         }
         return {while_root};
@@ -794,6 +801,7 @@ StatementReturns parse_while() {
         StatementReturns statements = get_statement();
         while_root->add_all_statements(statements);
 
+        Scope::down_level();
         return {while_root};
     }
 
@@ -802,12 +810,15 @@ StatementReturns parse_while() {
 
     lex_err = munch();
     if (skip_if_lexerr(lex_err, skip_while, lbrace_count)) {
-        free_tree(while_root);
+        free_trees_dec_scope(while_root);
         return {};
     }
 
     // Empty block ({})
     if (next_token.is_rbrace()) {
+        get_next_token_and_print_error();
+
+        Scope::down_level();
         return {while_root};
     }
 
@@ -823,7 +834,8 @@ StatementReturns parse_while() {
         // we eat the remainder of the structure.
         else {
             skip_while(lbrace_count);
-            free_tree(while_root);
+
+            free_trees_dec_scope(while_root);
             return {};
         }
 
@@ -837,15 +849,18 @@ StatementReturns parse_while() {
         // Structure was never terminated
         else if (next_token.is_eof()) {
             set_print_token_error(Error{}, NLC_UNEXPECTED_EOF);
-            free_tree(while_root);
+
+            free_trees_dec_scope(while_root);
             return {};
         }
     }
 
+    Scope::down_level();
     return {while_root};
 }
 
 StatementReturns parse_block() {
+    Scope::up_level();
     AST_NODE* block_root = new AST_NODE(next_token, NODE_TYPE::BLOCK, Scope::current_scope_level);
 
     Error lex_err = munch();
@@ -869,6 +884,7 @@ StatementReturns parse_block() {
     }
 
     block_root->add_all_statements(statements);
+    Scope::down_level();
 
     // Only block_root is attached to program_tree. All statements
     // encountered here are attached to block_root.
