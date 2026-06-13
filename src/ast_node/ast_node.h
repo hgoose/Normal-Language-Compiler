@@ -40,12 +40,14 @@ struct AST_NODE {
     // Set if going in symbol table
     SYMTYPE symbol_type{};
 
-    // Data type will be found later for operators,
-    // for var, int, bool, or string nodes set this
+    // Data type will be found later for operators.
+    // For var, int, bool, or string nodes set this
     TYPE data_type{};
 
     bool boolean{};
     bool is_boolean{};
+
+    ScopeLevel statement_scope_level{};
 
     // If consumed token is a string constant
     STR_TABLE_ENTRY entry{};
@@ -56,77 +58,16 @@ struct AST_NODE {
     Children children;
 
     AST_NODE() = default;
-
-    AST_NODE(Token token) : token(token) {}
-
-    AST_NODE(NODE_TYPE node_type) : node_type(node_type) {}
-
-    AST_NODE(Token token, NODE_TYPE node_type) 
-        : token(token),
-          node_type(node_type)
-    {}
-
-    AST_NODE(Token token, NODE_TYPE node_type, bool is_operator) 
-        : token(token),
-          node_type(node_type),
-          is_operator(is_operator)
-    {}
-
-    AST_NODE(Token token, NODE_TYPE node_type, TYPE data_type) 
-        : token(token),
-          node_type(node_type),
-          data_type(data_type)
-    {
-        set_boolean();
-    }
-
-    AST_NODE(Token token, NODE_TYPE node_type, SYMTYPE symbol_type) 
-        : token(token),
-          node_type(node_type),
-          symbol_type(symbol_type)
-    {}
-
-    AST_NODE(Token token, NODE_TYPE node_type, TYPE data_type, SYMTYPE symbol_type) 
-        : token(token),
-        node_type(node_type),
-        data_type(data_type),
-        symbol_type(symbol_type)
-    {
-        set_boolean();
-    }
-
-
-    AST_NODE(const AST_NODE& other, bool copy_children=false) {
-        token = other.token;
-        data_type = other.data_type;
-        node_type = other.node_type;
-        entry = other.entry;
-        syminfo = other.syminfo;
-        is_operator = other.is_operator;
-        symbol_type = other.symbol_type;
-        boolean = other.boolean;
-        is_boolean = other.is_boolean;
-
-        if (copy_children) {
-            deep_copy_children(other);
-        }
-    }
-
-    AST_NODE& operator=(const AST_NODE& other) {
-        token = other.token;
-        data_type = other.data_type;
-        node_type = other.node_type;
-        entry = other.entry;
-        syminfo = other.syminfo;
-        is_operator = other.is_operator;
-        symbol_type = other.symbol_type;
-        boolean = other.boolean;
-        is_boolean = other.is_boolean;
-
-        deep_copy_children(other);
-
-        return *this;
-    }
+    AST_NODE(ScopeLevel scope_level);
+    AST_NODE(Token token, ScopeLevel scope_level);
+    AST_NODE(NODE_TYPE node_type, ScopeLevel scope_level);
+    AST_NODE(Token token, NODE_TYPE node_type, ScopeLevel scope_level);
+    AST_NODE(Token token, NODE_TYPE node_type, bool is_operator, ScopeLevel scope_level);
+    AST_NODE(Token token, NODE_TYPE node_type, TYPE data_type, ScopeLevel scope_level);
+    AST_NODE(Token token, NODE_TYPE node_type, SYMTYPE symbol_type, ScopeLevel scope_level);
+    AST_NODE(Token token, NODE_TYPE node_type, TYPE data_type, SYMTYPE symbol_type, ScopeLevel scope_level);
+    AST_NODE(const AST_NODE& other, bool copy_children=false);
+    AST_NODE& operator=(const AST_NODE& other);
 
     void add_child(AST_NODE* child) {
         children.push_back(child);

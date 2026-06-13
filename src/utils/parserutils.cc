@@ -7,9 +7,8 @@
 #include "ast_node.h"
 #include "error.h"
 #include "ast_utils.h"
+#include "scope_stack.h"
 
-#include <string>
-#include <cstdint>
 #include <algorithm>
 #include <functional>
 
@@ -154,6 +153,29 @@ void free_statement_return_list(StatementReturns& returns) {
     }
 }
 
+StatementReturns get_all_statements_in_block(Error& err) {
+    StatementReturns all_statements{};
+    for (;;) {
+        StatementReturns statements = get_statement();
+        merge_statement_returns(all_statements, statements);
+
+        // At the rbrace that terminates the while loop.
+        // Move one past it.
+        if (next_token.is_rbrace()) {
+            get_next_token_and_print_error();
+            break;
+        } 
+
+        // Structure was never terminated
+        else if (next_token.is_eof()) {
+            set_print_token_error(err, NLC_UNEXPECTED_EOF);
+            return {};
+        }
+    }
+
+    return all_statements;
+}
+
 // Free all nodes created for the AST and parse tree
 void parser_cleanup() {
     lex_cleanup();
@@ -191,7 +213,7 @@ AST_NODE* create_assign(AST_NODE* var_node, AST_NODE* expression) {
     AST_NODE* var_copy = new AST_NODE(*var_node, COPY_CHILDREN);
     AST_NODE* expression_copy = new AST_NODE(*expression, COPY_CHILDREN);
 
-    AST_NODE* assign_root = new AST_NODE(NODE_TYPE::ASSIGN);
+    AST_NODE* assign_root = new AST_NODE(NODE_TYPE::ASSIGN, Scope::current_scope_level);
 
     assign_root->add_children(var_copy, expression_copy);
 

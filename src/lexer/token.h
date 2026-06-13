@@ -95,6 +95,8 @@ struct Token
 
     bool is_semicolon() const;
     bool is_lbrace() const;
+    bool is_block_begin() const;
+    bool is_block_end() const;
     bool is_rbrace() const;
     bool is_comma() const;
 

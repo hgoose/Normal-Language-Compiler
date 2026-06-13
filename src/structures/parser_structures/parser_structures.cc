@@ -14,7 +14,8 @@ const ParseMap parse_map = {
     {"read", parse_read},
     {"int", parse_decl_int},
     {"if", parse_if},
-    {"while", parse_while}
+    {"while", parse_while},
+    {"{", parse_block}
 };
 
 const EvalMap eval_map = {

@@ -15,6 +15,8 @@ extern bool SUPPRESS_PARSER_ERRORS;
 // INITIALIZATION
 Error parser_init(const char* src_code);
 
+StatementReturns get_statement();
+
 // PARSING AND GENERATING ASTS
 int parse();
 
@@ -25,6 +27,7 @@ StatementReturns parse_assign();
 StatementReturns parse_if();
 StatementReturns parse_else();
 StatementReturns parse_while();
+StatementReturns parse_block();
 
 // PRODUCTION RULES
 AST_NODE* A(Error&);

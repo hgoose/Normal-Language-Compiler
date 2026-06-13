@@ -7,7 +7,6 @@
 
 #include <string>
 #include <cstddef>
-#include <list>
 
 struct SYMLOCATION {
     LOCATION_TYPE location_type{};
@@ -29,15 +28,19 @@ struct SYMINFO {
 
     bool exists{};
 
+    int scope_level{};
+
     SYMINFO() = default;
     SYMINFO(const std::string& name, TYPE data_type, SYMTYPE type);
     SYMINFO(const std::string& name, SYMTYPE type, const SYMLOCATION& location);
+
+    void set_scope_level(int);
 };
 
 struct SYMTABLE {
-    static inline constexpr std::size_t SYM_TABLE_SIZE = 1024;
-    static inline constexpr std::size_t PRIME = 67;
-    static inline std::list<SYMINFO> symbol_table[SYM_TABLE_SIZE]{};
+    static inline constexpr std::size_t SYM_TABLE_SIZE{1024};
+    static inline constexpr std::size_t PRIME{67};
+    static inline SymbolBucket symbol_table[SYM_TABLE_SIZE]{};
 
     static SYMINFO* get_symbol(const std::string&, const SYMTYPE&);
     static SYMINFO* add_symbol(const SYMINFO&);

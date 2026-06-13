@@ -6,11 +6,13 @@
 #include <unordered_set>
 #include <string>
 #include <list>
+#include <utility>
 
 struct BufState;
 struct AST_NODE;
 struct Token;
 struct Error;
+struct SYMINFO;
 
 enum class NODE_TYPE : unsigned int;
 
@@ -54,5 +56,10 @@ typedef bool(*CodegenFn)(AST_NODE*);
 typedef std::unordered_map<NODE_TYPE, CodegenFn> NodeToCodegenFnMap;
 
 typedef std::unordered_set<NODE_TYPE> StatementNodes;
+
+typedef int ScopeLevel;
+typedef std::pair<ScopeLevel, std::list<SYMINFO*>> ScopeLevelPair;
+typedef std::list<ScopeLevelPair> ScopeStack;
+typedef std::list<SYMINFO> SymbolBucket;
 
 #endif

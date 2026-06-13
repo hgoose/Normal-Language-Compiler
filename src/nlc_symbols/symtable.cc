@@ -27,6 +27,10 @@ SYMINFO::SYMINFO(const std::string& name, SYMTYPE type, const SYMLOCATION& locat
     exists = true;
 }
 
+void SYMINFO::set_scope_level(int level) {
+    scope_level = level;
+}
+
 SYMINFO* SYMTABLE::get_symbol(const std::string& name, const SYMTYPE& symbol_type) {
     // Get bucket number
     size_t hx = hash(name);

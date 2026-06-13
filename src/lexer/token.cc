@@ -167,6 +167,14 @@ bool Token::is_lbrace() const {
     return is(TOKEN_LBRACE);
 }
 
+bool Token::is_block_begin() const {
+    return is_lbrace();
+}
+
+bool Token::is_block_end() const {
+    return is_rbrace();
+}
+
 bool Token::is_rbrace() const {
     return is(TOKEN_RBRACE);
 }
