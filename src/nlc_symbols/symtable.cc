@@ -55,12 +55,12 @@ void SYMINFO::set_scope_level(int level) {
     scope_level = level;
 }
 
-bool SYMINFO::is_same_as(const SYMINFO& other) {
-    return name == other.name && type == other.type && scope_level == other.scope_level;
+bool SYMINFO::is_same_as(const SYMINFO* other) {
+    return name == other->name && type == other->type && scope_level == other->scope_level;
 }
 
-bool SYMINFO::is_same_as_no_scope(const SYMINFO& other) {
-    return name == other.name && type == other.type; 
+bool SYMINFO::is_same_as_no_scope(const SYMINFO* other) {
+    return name == other->name && type == other->type; 
 }
 
 SYMINFO* SYMTABLE::get_symbol(const std::string& name, const SYMTYPE& symbol_type, ScopeLevel level) {
@@ -70,8 +70,8 @@ SYMINFO* SYMTABLE::get_symbol(const std::string& name, const SYMTYPE& symbol_typ
 
     // Search for symbol in bucket
     for (auto& member : symbol_table[hx]) {
-        if (member.is_same_as(syminfo)) {
-            return &member;
+        if (member->is_same_as(&syminfo)) {
+            return member;
         }
     }
 
@@ -86,8 +86,8 @@ SYMINFO* SYMTABLE::get_symbol(const std::string& name, const SYMTYPE& symbol_typ
 
     // Search for symbol in bucket
     for (auto& member : symbol_table[hx]) {
-        if (member.is_same_as_no_scope(syminfo)) {
-            return &member;
+        if (member->is_same_as_no_scope(&syminfo)) {
+            return member;
         }
     }
 
@@ -95,26 +95,27 @@ SYMINFO* SYMTABLE::get_symbol(const std::string& name, const SYMTYPE& symbol_typ
     return nullptr;
 }
 
-SYMINFO* SYMTABLE::add_symbol(const SYMINFO& syminfo) {
-    size_t hx = hash(syminfo.name);
+SYMINFO* SYMTABLE::add_symbol(SYMINFO* syminfo) {
+    size_t hx = hash(syminfo->name);
 
     // Check if it already exists
     for (auto& member : symbol_table[hx]) {
-        if (member.is_same_as(syminfo)) {
+        if (member->is_same_as(syminfo)) {
             return nullptr;
         }
     }
 
     // Doesn't exist, add it
-    return &symbol_table[hx].emplace_front(syminfo);
+    return symbol_table[hx].emplace_front(syminfo);
 }
 
-void SYMTABLE::remove_symbol(const SYMINFO& syminfo) {
-    size_t hx = hash(syminfo.name); 
+void SYMTABLE::remove_symbol(SYMINFO* syminfo) {
+    size_t hx = hash(syminfo->name); 
 
     SymbolBucket& bucket = symbol_table[hx];
     for (auto start = bucket.begin(); start != bucket.end(); ++start) {
-        if (start->is_same_as(syminfo)) {
+        if ((*start)->is_same_as(syminfo)) {
+            delete *start;
             bucket.erase(start);
         }
     }
@@ -162,3 +163,12 @@ size_t SYMTABLE::hash(const std::string& name) {
     // table size is a power of two
     return hash & (SYM_TABLE_SIZE - 1);
 }
+
+void SYMTABLE::free_symbol_table() {
+    for (std::size_t i{}; i < SYMTABLE::SYM_TABLE_SIZE; ++i) {
+        for (auto& symbol : symbol_table[i]) {
+            delete symbol;
+        }
+    }
+}
+

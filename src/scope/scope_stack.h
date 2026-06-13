@@ -11,7 +11,7 @@ private:
     static SymbolBucket get_top_bucket();
     static ScopeLevelPair make_level();
     static void push_level(const ScopeLevelPair&);
-    static void add_to_top_level(const SYMINFO&);
+    static void add_to_top_level(SYMINFO*);
     static void pop_level();
 public:
     static ScopeLevel level();

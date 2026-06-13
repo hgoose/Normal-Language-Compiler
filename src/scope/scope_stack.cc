@@ -31,7 +31,6 @@ void Scope::push_level(const ScopeLevelPair& pair) {
     scope_stack.push_back(pair);
 }
 
-
 void Scope::enter_level() {
     SymbolBucket current_bucket = get_top_bucket();
     ScopeLevelPair new_level = make_level();
@@ -40,7 +39,7 @@ void Scope::enter_level() {
     push_level(new_level);
 }
 
-void Scope::add_to_top_level(const SYMINFO& syminfo) {
+void Scope::add_to_top_level(SYMINFO* syminfo) {
     if (scope_stack.empty()) return;
 
     scope_stack.back().second.push_back(syminfo);

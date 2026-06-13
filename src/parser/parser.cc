@@ -150,6 +150,7 @@ int parse() {
         return -1;
     }
 
+    SYMTABLE::free_symbol_table();
     free_tree(program_tree);
     Scope::exit_level();
 
@@ -353,7 +354,7 @@ StatementReturns parse_decl_int() {
 
     // Put into symbol table 
     SYMINFO* entry = SYMTABLE::add_symbol(
-        SYMINFO(next_token.identifier, TYPE::INT, SYMTYPE::VAR)
+        new SYMINFO(next_token.identifier, TYPE::INT, SYMTYPE::VAR)
     );
 
     if (!entry) {
