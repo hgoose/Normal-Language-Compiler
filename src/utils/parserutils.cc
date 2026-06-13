@@ -213,7 +213,7 @@ AST_NODE* create_assign(AST_NODE* var_node, AST_NODE* expression) {
     AST_NODE* var_copy = new AST_NODE(*var_node, COPY_CHILDREN);
     AST_NODE* expression_copy = new AST_NODE(*expression, COPY_CHILDREN);
 
-    AST_NODE* assign_root = new AST_NODE(NODE_TYPE::ASSIGN, Scope::current_scope_level);
+    AST_NODE* assign_root = new AST_NODE(NODE_TYPE::ASSIGN, Scope::level());
 
     assign_root->add_children(var_copy, expression_copy);
 

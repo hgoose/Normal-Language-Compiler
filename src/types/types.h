@@ -58,7 +58,7 @@ typedef std::unordered_map<NODE_TYPE, CodegenFn> NodeToCodegenFnMap;
 typedef std::unordered_set<NODE_TYPE> StatementNodes;
 
 typedef int ScopeLevel;
-typedef std::pair<ScopeLevel, std::list<SYMINFO*>> ScopeLevelPair;
+typedef std::pair<ScopeLevel, std::list<SYMINFO>> ScopeLevelPair;
 typedef std::list<ScopeLevelPair> ScopeStack;
 typedef std::list<SYMINFO> SymbolBucket;
 

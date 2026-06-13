@@ -40,7 +40,7 @@ static StatementReturns continue_assign_parse();
 
 // Globals local to this unit
 namespace {
-    AST_NODE* program_tree{new AST_NODE(NODE_TYPE::BLOCK, Scope::Scope::current_scope_level)};
+    AST_NODE* program_tree{new AST_NODE(NODE_TYPE::BLOCK, Scope::Scope::level())};
 }
 
 Error parser_init(const char* src_code) {
@@ -97,6 +97,7 @@ int parse() {
         return -1;
     }
 
+    Scope::enter_level();
     munch();
 
     for (;;) {
@@ -150,6 +151,7 @@ int parse() {
     }
 
     free_tree(program_tree);
+    Scope::exit_level();
 
     return 0;
 }
@@ -157,7 +159,7 @@ int parse() {
 StatementReturns parse_print() {
     Error lex_error{}, expr_error{};
 
-    AST_NODE* print_root = new AST_NODE(next_token, NODE_TYPE::PRINT, Scope::current_scope_level);
+    AST_NODE* print_root = new AST_NODE(next_token, NODE_TYPE::PRINT, Scope::level());
 
     lex_error = munch();
     if (skip_if_lexerr(lex_error)) {
@@ -254,7 +256,7 @@ StatementReturns parse_print() {
 }
 
 StatementReturns parse_read() {
-    AST_NODE* read_root = new AST_NODE(next_token, NODE_TYPE::READ, Scope::current_scope_level);
+    AST_NODE* read_root = new AST_NODE(next_token, NODE_TYPE::READ, Scope::level());
 
     Error lex_err{};
 
@@ -282,7 +284,7 @@ StatementReturns parse_read() {
         return {};
     }
 
-    AST_NODE* var_node = new AST_NODE(next_token, NODE_TYPE::VAR, SYMTYPE::VAR, Scope::current_scope_level);
+    AST_NODE* var_node = new AST_NODE(next_token, NODE_TYPE::VAR, SYMTYPE::VAR, Scope::level());
 
     read_root->add_children(var_node);
 
@@ -325,7 +327,7 @@ StatementReturns parse_decl_int() {
 
     Error lex_err{};
 
-    AST_NODE* declare_root = new AST_NODE(next_token, NODE_TYPE::DECL, Scope::current_scope_level);
+    AST_NODE* declare_root = new AST_NODE(next_token, NODE_TYPE::DECL, Scope::level());
 
     if (next_token.is_type()) {
         lex_err = munch();
@@ -361,7 +363,7 @@ StatementReturns parse_decl_int() {
         return {}; 
     }
 
-    AST_NODE* var = new AST_NODE(next_token, NODE_TYPE::VAR, SYMTYPE::VAR, Scope::current_scope_level);
+    AST_NODE* var = new AST_NODE(next_token, NODE_TYPE::VAR, SYMTYPE::VAR, Scope::level());
     var->install_symbol(entry);
 
     declare_root->add_children(var);
@@ -484,8 +486,8 @@ static StatementReturns sub_parse_assign() {
 
     Error lex_err{}, expr_err{};
 
-    AST_NODE* assign_root = new AST_NODE(NODE_TYPE::ASSIGN, Scope::current_scope_level);
-    AST_NODE* var_node = new AST_NODE(next_token, NODE_TYPE::VAR, SYMTYPE::VAR, Scope::current_scope_level);
+    AST_NODE* assign_root = new AST_NODE(NODE_TYPE::ASSIGN, Scope::level());
+    AST_NODE* var_node = new AST_NODE(next_token, NODE_TYPE::VAR, SYMTYPE::VAR, Scope::level());
 
     assign_root->add_children(var_node);
 
@@ -559,10 +561,11 @@ StatementReturns parse_assign() {
 // If this function is called while the current token is not
 // the identifier else, it returns nullptr.
 StatementReturns parse_else() {
-    Scope::up_level();
+    Scope::enter_level();
+    Scope::enter_level();
     if (!next_token.is_ident_else()) return {};
 
-    AST_NODE* else_root = new AST_NODE(next_token, NODE_TYPE::ELSE, Scope::current_scope_level);
+    AST_NODE* else_root = new AST_NODE(next_token, NODE_TYPE::ELSE, Scope::level());
 
     Error lex_err = munch();
     if (skip_if_lexerr(lex_err, skip_else, LBRACE_COUNT_ZERO)) {
@@ -577,7 +580,7 @@ StatementReturns parse_else() {
         StatementReturns statements = get_statement();
         else_root->add_all_statements(statements);
 
-        Scope::down_level();
+        Scope::exit_level();
         return {else_root};
     }
 
@@ -598,13 +601,13 @@ StatementReturns parse_else() {
 
     else_root->add_all_statements(statements);
 
-    Scope::down_level();
+    Scope::exit_level();
     return {else_root};
 }
 
 StatementReturns parse_if() {
-    Scope::up_level();
-    AST_NODE* if_root = new AST_NODE(next_token, NODE_TYPE::IF, Scope::current_scope_level); 
+    Scope::enter_level();
+    AST_NODE* if_root = new AST_NODE(next_token, NODE_TYPE::IF, Scope::level()); 
 
     Error lex_err{}, expr_err{};
 
@@ -674,7 +677,7 @@ StatementReturns parse_if() {
         StatementReturns else_root = parse_else();
         if_root->add_all_statements(else_root);
 
-        Scope::down_level();
+        Scope::exit_level();
         return {if_root};
     }
 
@@ -704,7 +707,7 @@ StatementReturns parse_if() {
         if_root->add_all_statements(statements);
     }
 
-    Scope::down_level();
+    Scope::exit_level();
 
     // If there exists an else, parse it.
     StatementReturns else_root = parse_else();
@@ -714,11 +717,11 @@ StatementReturns parse_if() {
 }
 
 StatementReturns parse_while() {
-    Scope::up_level();
+    Scope::enter_level();
 
     int lbrace_count{};
 
-    AST_NODE* while_root = new AST_NODE(next_token, NODE_TYPE::WHILE, Scope::current_scope_level);
+    AST_NODE* while_root = new AST_NODE(next_token, NODE_TYPE::WHILE, Scope::level());
 
     Error lex_err{}, expr_err{};
 
@@ -801,7 +804,7 @@ StatementReturns parse_while() {
         StatementReturns statements = get_statement();
         while_root->add_all_statements(statements);
 
-        Scope::down_level();
+        Scope::exit_level();
         return {while_root};
     }
 
@@ -818,7 +821,7 @@ StatementReturns parse_while() {
     if (next_token.is_rbrace()) {
         get_next_token_and_print_error();
 
-        Scope::down_level();
+        Scope::exit_level();
         return {while_root};
     }
 
@@ -855,13 +858,13 @@ StatementReturns parse_while() {
         }
     }
 
-    Scope::down_level();
+    Scope::exit_level();
     return {while_root};
 }
 
 StatementReturns parse_block() {
-    Scope::up_level();
-    AST_NODE* block_root = new AST_NODE(next_token, NODE_TYPE::BLOCK, Scope::current_scope_level);
+    Scope::enter_level();
+    AST_NODE* block_root = new AST_NODE(next_token, NODE_TYPE::BLOCK, Scope::level());
 
     Error lex_err = munch();
     if (handle_lex_error(lex_err)) {
@@ -884,7 +887,7 @@ StatementReturns parse_block() {
     }
 
     block_root->add_all_statements(statements);
-    Scope::down_level();
+    Scope::exit_level();
 
     // Only block_root is attached to program_tree. All statements
     // encountered here are attached to block_root.
@@ -897,7 +900,7 @@ AST_NODE* A(Error& err) {
 
     // FIRST(BA')
     if (next_token.in(First::BAP)) {
-        here = new AST_NODE(Scope::current_scope_level);
+        here = new AST_NODE(Scope::level());
 
         left = B(err);
         right = AP(err);
@@ -916,7 +919,7 @@ AST_NODE* AP(Error& err) {
 
     // FIRST(or BA')
     if (next_token.in(First::orBAP)) {
-        here = new AST_NODE(next_token, NODE_TYPE::OR, OPERATOR, Scope::current_scope_level);
+        here = new AST_NODE(next_token, NODE_TYPE::OR, OPERATOR, Scope::level());
 
         // Consume the or token
         Error tmp_error = munch();
@@ -943,7 +946,7 @@ AST_NODE* B(Error& err) {
 
     // Consider FIRST(CB')
     if (next_token.in(First::CBP)) {
-        here = new AST_NODE(Scope::current_scope_level);
+        here = new AST_NODE(Scope::level());
 
         left = C(err);
         right = BP(err);
@@ -962,7 +965,7 @@ AST_NODE* BP(Error& err) {
 
     // t \in FIRST(and CB')
     if (next_token.in(First::andCBP)) {
-        here = new AST_NODE(next_token, NODE_TYPE::AND, OPERATOR, Scope::current_scope_level);
+        here = new AST_NODE(next_token, NODE_TYPE::AND, OPERATOR, Scope::level());
 
         // Consume and token
         Error tmp_error = munch();
@@ -988,7 +991,7 @@ AST_NODE* C(Error& err) {
 
     // t \in FIRST(~C)
     if (next_token.in(First::notC)) {
-        here = new AST_NODE(next_token, NODE_TYPE::NOT, OPERATOR, Scope::current_scope_level);
+        here = new AST_NODE(next_token, NODE_TYPE::NOT, OPERATOR, Scope::level());
 
         // Consume not token
         Error tmp_error = munch();
@@ -1003,7 +1006,7 @@ AST_NODE* C(Error& err) {
 
     // t \in FIRST(D)
     else if (next_token.in(First::D)) {
-        here = new AST_NODE(Scope::current_scope_level);
+        here = new AST_NODE(Scope::level());
 
         left = D(err);
     } 
@@ -1023,7 +1026,7 @@ AST_NODE* D(Error& err) {
 
     // t \in FIRST(ED')
     if (next_token.in(First::EDP)) {
-        here = new AST_NODE(Scope::current_scope_level);
+        here = new AST_NODE(Scope::level());
 
         left = E(err);
         right = DP(err);
@@ -1045,7 +1048,7 @@ AST_NODE* DP(Error& err) {
         First::leqE, First::greaterE, First::geqE
     )) {
         // Take E and consume the token
-        here = new AST_NODE(next_token, get_node_type(next_token), OPERATOR, Scope::current_scope_level);
+        here = new AST_NODE(next_token, get_node_type(next_token), OPERATOR, Scope::level());
 
         // Consume the operator
         Error tmp_error = munch();
@@ -1084,7 +1087,7 @@ AST_NODE* E(Error& err) {
             	return nullptr;
             }
 
-            AST_NODE* here = new AST_NODE(op, get_node_type(op), OPERATOR, Scope::current_scope_level);
+            AST_NODE* here = new AST_NODE(op, get_node_type(op), OPERATOR, Scope::level());
             AST_NODE* rhs = T(err);
 
             here->add_children(left, rhs);
@@ -1118,7 +1121,7 @@ AST_NODE* T(Error& err) {
             	return nullptr;
             }
 
-            AST_NODE* node = new AST_NODE(op, get_node_type(op), OPERATOR, Scope::current_scope_level);
+            AST_NODE* node = new AST_NODE(op, get_node_type(op), OPERATOR, Scope::level());
             AST_NODE* rhs = N(err);
 
             node->add_children(left, rhs);
@@ -1138,7 +1141,7 @@ AST_NODE* N(Error& err) {
 
     // t \in FIRST(\neg F) or t \in FIRST(\oplus F)
     if (next_token.in_union(First::uplusN, First::unegN)) {
-        here = new AST_NODE(next_token, get_node_type(next_token), OPERATOR, Scope::current_scope_level);
+        here = new AST_NODE(next_token, get_node_type(next_token), OPERATOR, Scope::level());
 
         Error tmp_error = munch();
         if (handle_lex_error(tmp_error)) {
@@ -1152,7 +1155,7 @@ AST_NODE* N(Error& err) {
 
     // t \in FIRST(F)
     else if (next_token.in(First::F)) {
-        here = new AST_NODE(Scope::current_scope_level);
+        here = new AST_NODE(Scope::level());
 
         left = F(err);
     } 
@@ -1172,7 +1175,7 @@ AST_NODE* F(Error& err) {
 
     // t \in FIRST(SF')
     if (next_token.in(First::SFP)) {
-        here = new AST_NODE(Scope::current_scope_level);
+        here = new AST_NODE(Scope::level());
 
         left = S(err);
         right = FP(err);
@@ -1191,7 +1194,7 @@ AST_NODE* FP(Error& err) {
 
     // t \in FIRST(^SF')
     if (next_token.in(First::expSFP)) {
-        here = new AST_NODE(next_token, get_node_type(next_token), OPERATOR, Scope::current_scope_level);
+        here = new AST_NODE(next_token, get_node_type(next_token), OPERATOR, Scope::level());
 
         // Consume operator exp
         Error tmp_error = munch();
@@ -1251,7 +1254,7 @@ AST_NODE* S(Error& err) {
 }
 
 AST_NODE* integer_terminal(Error& err) {
-    AST_NODE* here = new AST_NODE(next_token, NODE_TYPE::INT, TYPE::INT, Scope::current_scope_level);
+    AST_NODE* here = new AST_NODE(next_token, NODE_TYPE::INT, TYPE::INT, Scope::level());
 
     Error tmp_error = munch();
     if (handle_lex_error(tmp_error)) {
@@ -1264,7 +1267,7 @@ AST_NODE* integer_terminal(Error& err) {
 }
 
 AST_NODE* paren_expression(Error& err, AST_NODE*& left) {
-    AST_NODE* here = new AST_NODE(Scope::current_scope_level);
+    AST_NODE* here = new AST_NODE(Scope::level());
 
     // Eat left parenthesis
     Error tmp_error = munch();
@@ -1297,7 +1300,7 @@ AST_NODE* paren_expression(Error& err, AST_NODE*& left) {
 }
 
 AST_NODE* string_terminal(Error& err) {
-    AST_NODE* here = new AST_NODE(next_token, NODE_TYPE::STR, TYPE::STRING, Scope::current_scope_level);
+    AST_NODE* here = new AST_NODE(next_token, NODE_TYPE::STR, TYPE::STRING, Scope::level());
 
     STR_TABLE_ENTRY entry = STR_TABLE::add_string(next_token.str);
 
@@ -1320,7 +1323,7 @@ AST_NODE* string_terminal(Error& err) {
 }
 
 AST_NODE* boolean_terminal(Error& err) {
-    AST_NODE* here = new AST_NODE(next_token, NODE_TYPE::BOOL, TYPE::BOOL, Scope::current_scope_level); 
+    AST_NODE* here = new AST_NODE(next_token, NODE_TYPE::BOOL, TYPE::BOOL, Scope::level()); 
 
     Error tmp_error = munch();
     if (handle_lex_error(tmp_error)) {
@@ -1333,7 +1336,7 @@ AST_NODE* boolean_terminal(Error& err) {
 }
 
 AST_NODE* variable_terminal(Error& err) {
-    AST_NODE* here = new AST_NODE(next_token, NODE_TYPE::VAR, TYPE::null, Scope::current_scope_level);
+    AST_NODE* here = new AST_NODE(next_token, NODE_TYPE::VAR, TYPE::null, Scope::level());
 
     // Search the symbol table
     SYMINFO* syminfo = SYMTABLE::get_symbol(next_token.identifier, SYMTYPE::VAR);
