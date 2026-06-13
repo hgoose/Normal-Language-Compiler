@@ -74,6 +74,7 @@ struct AST_NODE {
     }
 
     template<typename... ARGS>
+    requires (std::same_as<ARGS, AST_NODE*> && ...)
     void add_children(ARGS... args) {
         ((children.push_back(args)), ...);
     }
