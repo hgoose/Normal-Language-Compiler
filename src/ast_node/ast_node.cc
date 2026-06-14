@@ -240,6 +240,10 @@ void AST_NODE::set_boolean() {
     is_boolean = true;
 }
 
+void AST_NODE::set_token(Token t) {
+    token = t;
+}
+
 void AST_NODE::install_symbol(SYMINFO* info) {
     syminfo = info; 
     data_type = info->data_type;

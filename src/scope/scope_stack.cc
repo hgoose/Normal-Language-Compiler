@@ -27,13 +27,23 @@ ScopeLevelPair Scope::make_level() {
     return std::make_pair(level()+1, get_top_bucket());
 }
 
+ScopeLevelPair Scope::make_empty_level() {
+    return std::make_pair(level()+1, SymbolBucket{});
+}
+
 void Scope::push_level(const ScopeLevelPair& pair) {
     scope_stack.push_back(pair);
 }
 
 void Scope::enter_level() {
-    SymbolBucket current_bucket = get_top_bucket();
     ScopeLevelPair new_level = make_level();
+
+    up_level();
+    push_level(new_level);
+}
+
+void Scope::enter_function() {
+    ScopeLevelPair new_level = make_empty_level();
 
     up_level();
     push_level(new_level);

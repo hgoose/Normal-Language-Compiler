@@ -15,6 +15,7 @@ struct Error;
 struct SYMINFO;
 
 enum class NODE_TYPE : unsigned int;
+enum class TYPE : unsigned int;
 
 typedef int ReturnCode;
 
@@ -61,5 +62,7 @@ typedef int ScopeLevel;
 typedef std::pair<ScopeLevel, std::list<SYMINFO*>> ScopeLevelPair;
 typedef std::list<ScopeLevelPair> ScopeStack;
 typedef std::list<SYMINFO*> SymbolBucket;
+
+template<typename T> using TypeMap = std::unordered_map<T, TYPE>;
 
 #endif

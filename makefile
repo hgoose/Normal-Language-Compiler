@@ -18,6 +18,7 @@ CXXFLAGS = -std=c++23 -g \
 			-Isrc/state/bufstate \
 			-Isrc/state/lexstate \
 			-Isrc/scope \
+			-Isrc/functions \
 
 TARGET   = bin/nlc
 OBJDIR   = obj
@@ -49,7 +50,8 @@ SRC = \
 	src/structures/error_structures/error_structures.cc \
 	src/state/bufstate/bufstate.cc \
 	src/state/lexstate/lexstate.cc \
-	src/scope/scope_stack.cc
+	src/scope/scope_stack.cc \
+	src/functions/functions.cc
 
 OBJ = $(SRC:%=$(OBJDIR)/%.o)
 

@@ -103,13 +103,24 @@ Error get_token(Token& t) {
     } 
 
     else if (curr_char == '-') {
-        t = last_token;
-        // Either unary negation or minus
-        if (!t.set_id_from_predicate(TOKEN_UNEG, &Token::legal_before_uplus_or_uneg)) {
-            t.set_id(TOKEN_MINUS);
+        error = create_error(buffer_get_next_char(curr_char));
+
+        if (error.is_eof() || curr_char != '>') {
+            buffer_back_char();
+
+            t = last_token;
+            // Either unary negation or minus
+            if (!t.set_id_from_predicate(TOKEN_UNEG, &Token::legal_before_uplus_or_uneg)) {
+                t.set_id(TOKEN_MINUS);
+            }
+
+            t.set_lexeme("-");
         }
 
-        t.set_lexeme("-");
+        else if (curr_char == '>') {
+            t.set_id(TOKEN_ARROW);
+            t.append_lexeme('>');
+        }
     } 
 
     // Possible identifier
@@ -121,9 +132,11 @@ Error get_token(Token& t) {
         err = lex_char_numeric(t, curr_char);
     }
 
-    LexMethod lex_method = map_char_to_lex_method(curr_char);
-    if (lex_method) {
-        err = lex_method(t, curr_char);
+    else {
+        LexMethod lex_method = map_char_to_lex_method(curr_char);
+        if (lex_method) {
+            err = lex_method(t, curr_char);
+        }
     }
 
     last_token = t;

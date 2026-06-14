@@ -28,6 +28,7 @@ StatementReturns parse_if();
 StatementReturns parse_else();
 StatementReturns parse_while();
 StatementReturns parse_block();
+StatementReturns parse_fn();
 
 // PRODUCTION RULES
 AST_NODE* A(Error&);

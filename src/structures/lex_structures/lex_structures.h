@@ -3,8 +3,6 @@
 
 #include "types.h"
 
-#include <string>
-
 #define ESC_NEWLINE              10
 #define ESC_TAB                  9
 #define ESC_CARRIAGE_RETURN      13

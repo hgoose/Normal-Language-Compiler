@@ -1,6 +1,6 @@
 #include "ast_structures.h"
 
-extern const StatementNodes statement_nodes {
+const StatementNodes statement_nodes {
     NODE_TYPE::PRINT,
     NODE_TYPE::DECL,
     NODE_TYPE::ASSIGN,
@@ -8,10 +8,11 @@ extern const StatementNodes statement_nodes {
     NODE_TYPE::BLOCK,
     NODE_TYPE::IF,
     NODE_TYPE::WHILE,
-    NODE_TYPE::ELSE
+    NODE_TYPE::ELSE,
+    NODE_TYPE::FUNCTION,
 };
 
-extern const NodeTypeMap<std::string> node_type_to_string_map {
+const NodeTypeMap<std::string> node_type_to_string_map {
     {NODE_TYPE::null, "null"},
     {NODE_TYPE::NOT, "not"},
     {NODE_TYPE::AND, "and"},
@@ -41,5 +42,7 @@ extern const NodeTypeMap<std::string> node_type_to_string_map {
     {NODE_TYPE::BOOL, "bool"},
     {NODE_TYPE::IF, "if"},
     {NODE_TYPE::ELSE, "else"},
-    {NODE_TYPE::WHILE, "while"}
+    {NODE_TYPE::WHILE, "while"},
+    {NODE_TYPE::FUNCTION, "function"},
+    {NODE_TYPE::PARAMETER_LIST, "parameter list"},
 };

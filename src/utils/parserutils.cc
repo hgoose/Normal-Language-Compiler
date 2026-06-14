@@ -91,6 +91,10 @@ void skip_else(int lbrace_count) {
     onepast_semi_or_block(lbrace_count);
 }
 
+void skip_fn(int lbrace_count) {
+    skip_block(lbrace_count);
+}
+
 // If the next token is invalid or a lexer error occurred,
 // skip to start of next statement or eof.
 bool skip_if_lexerr(const Error& err, MoveProcedure mv_proc, int lbrace_count){
@@ -238,4 +242,92 @@ void munch_all_semicolons() {
     while (next_token.is_semicolon()) {
         munch();
     }
+}
+
+AST_NODE* get_parameter() {
+    if (next_token.is_not_type()){
+        set_print_token_error(Error{}, NLC_EXPECTED_PARAMETER_TYPE);
+        skip_fn(LBRACE_COUNT_ZERO);
+
+        return nullptr;
+    }
+
+    AST_NODE* var = new AST_NODE(
+        Token{}, NODE_TYPE::VAR, 
+        next_token.get_type(), Scope::level()
+    );
+
+    Error lex_err = munch();
+    if (skip_if_lexerr(lex_err, skip_fn)) {
+        free_trees(var);
+        return {};
+    }
+
+    if (next_token.is_not_ident() || next_token.is_ident_reserved()) {
+        set_print_token_error(Error{}, NLC_INVALID_IDENTIFIER);
+        skip_fn(LBRACE_COUNT_ZERO);
+        free_trees(var);
+
+        return nullptr;
+    }
+
+    var->set_token(next_token);
+
+    lex_err = munch();
+    if (skip_if_lexerr(lex_err, skip_fn)) {
+        free_trees(var);
+        return nullptr;
+    }
+
+    return var;
+}
+
+AST_NODE* get_parameter_list() {
+    AST_NODE* parameter_list = new AST_NODE(
+        Token{}, NODE_TYPE::PARAMETER_LIST,
+        Scope::level()
+    );
+
+    Error lex_err{};
+
+    // Empty parameter list
+    if (next_token.is_rparen()) {
+        get_next_token_and_print_error();
+        return parameter_list;
+    }
+
+    for (;;) {
+        AST_NODE* var = get_parameter();
+
+        if (!var) {
+            skip_fn(LBRACE_COUNT_ZERO);
+            free_trees(parameter_list);
+            return nullptr;
+        }
+
+        parameter_list->add_children(var);
+        
+        if (!next_token.is_comma()) {
+            break;
+        }
+
+        lex_err = munch();
+        if (skip_if_lexerr(lex_err, skip_fn)) {
+            free_trees(parameter_list);
+            return nullptr;
+        }
+    }
+
+    if (unexpected_token(TOKEN_RPAREN, NLC_SYNTAX_ERROR, skip_fn)) {
+        free_trees(parameter_list); 
+        return nullptr;
+    }
+
+    lex_err = munch();
+    if (skip_if_lexerr(lex_err, skip_fn)) {
+        free_trees(parameter_list);
+        return nullptr;
+    }
+
+    return parameter_list;
 }

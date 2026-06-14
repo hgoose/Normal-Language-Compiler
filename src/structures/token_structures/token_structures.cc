@@ -4,8 +4,20 @@
 #include "token.h"
 
 namespace TOKEN_STRUCTURES {
+    const Types types {
+        "int", "void", "string", "bool"
+    };
+
+    const TypeMap<std::string> type_map {
+        {"int", TYPE::INT},
+        {"bool", TYPE::BOOL},
+        {"string", TYPE::STRING},
+        {"void", TYPE::null}, 
+    };
+
     const ReservedWords reserved_words {
-        "print", "read", "int", "while", "if", "else", "true", "false"
+        "print", "read", "int", "while", "if", "else", "true", "false",
+        "string", "void", "bool"
     };
 
     const TokenMap<std::string> operator_names {
@@ -92,7 +104,8 @@ namespace TOKEN_STRUCTURES {
         {TOKEN_REAL, "TOKEN_REAL"},
         {TOKEN_MOD, "TOKEN_MOD" },
         {TOKEN_UNEG, "TOKEN_UNEG" },
-        {TOKEN_UPLUS, "TOKEN_UPLUS"}
+        {TOKEN_UPLUS, "TOKEN_UPLUS"}, 
+        {TOKEN_ARROW, "TOKEN_ARROW"}
     };
 
     const TokenNames token_names {
@@ -106,11 +119,7 @@ namespace TOKEN_STRUCTURES {
         "TOKEN_RBRACKET", "TOKEN_AND", "TOKEN_OR",
         "TOKEN_DOT", "TOKEN_INTEGER", "TOKEN_STRING", 
         "TOKEN_SEMICOLON", "TOKEN_COMMA", "TOKEN_REAL", 
-        "TOKEN_MOD", "TOKEN_UNEG", "TOKEN_UPLUS" 
-    };
-
-    const Types types {
-        "int"
+        "TOKEN_MOD", "TOKEN_UNEG", "TOKEN_UPLUS", "TOKEN_ARROW" 
     };
 
     const TokenSet terminals {
@@ -123,7 +132,7 @@ namespace TOKEN_STRUCTURES {
         TOKEN_LBRACKET, TOKEN_RBRACKET, TOKEN_AND,
         TOKEN_OR, TOKEN_DOT, TOKEN_INTEGER, TOKEN_STRING, 
         TOKEN_SEMICOLON, TOKEN_COMMA, TOKEN_REAL,
-        TOKEN_MOD, TOKEN_UNEG, TOKEN_UPLUS
+        TOKEN_MOD, TOKEN_UNEG, TOKEN_UPLUS, TOKEN_ARROW
     };
 
     const TokenSet data_terminals {
@@ -140,7 +149,8 @@ namespace TOKEN_STRUCTURES {
         TOKEN_NOT, TOKEN_AND, TOKEN_OR, 
         TOKEN_LPAREN, TOKEN_RPAREN, TOKEN_LBRACE, 
         TOKEN_RBRACE, TOKEN_LBRACKET, TOKEN_RBRACKET, 
-        TOKEN_DOT, TOKEN_SEMICOLON, TOKEN_COMMA, TOKEN_NULL
+        TOKEN_DOT, TOKEN_SEMICOLON, TOKEN_COMMA, TOKEN_NULL,
+        TOKEN_ARROW
     };
 
     const TokenSet before_uplus_or_uneg {

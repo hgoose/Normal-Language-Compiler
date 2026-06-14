@@ -20,6 +20,7 @@ void skip_block(int);
 void skip_if(int);
 void skip_while(int);
 void skip_else(int);
+void skip_fn(int);
 
 void onepast_semi_or_block(int);
 void onepast_next_token(int);
@@ -52,5 +53,8 @@ requires (std::same_as<TREES, AST_NODE*> && ...)
 void free_trees(TREES...trees) {
     (free_tree(trees),...);
 }
+
+AST_NODE* get_parameter_list();
+AST_NODE* get_parameter();
 
 #endif

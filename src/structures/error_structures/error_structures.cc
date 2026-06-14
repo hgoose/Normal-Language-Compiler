@@ -25,6 +25,8 @@ const ErrorMap error_map {
     {NLC_EXPECTED_VAR, "expected variable, none provided"},
     {NLC_UNACCEPTABLE_TYPE_MISMATCH, "type mismatch cannot be justified"},
     {NLC_NON_LOGICAL_CONDITION, "the provided expression cannot be interpreted as logical"},
+    {NLC_EXPECTED_IDENTIFIER, "expected identifier"},
+    {NLC_EXPECTED_PARAMETER_TYPE, "expected parameter type"},
 };
 
 bool error_unknown(ErrorValue error_value) {

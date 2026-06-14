@@ -21,6 +21,7 @@ namespace TOKEN_STRUCTURES {
     extern const TokenSet binary_relational_operators;
     extern const TokenSet binary_logical_operators;
     extern const TokenSet unary_logical_operators;
+    extern const TypeMap<std::string> type_map;
 };
 
 #endif

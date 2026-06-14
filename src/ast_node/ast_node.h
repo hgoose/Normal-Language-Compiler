@@ -106,6 +106,7 @@ struct AST_NODE {
     bool is_nop();
 
     void set_boolean();
+    void set_token(Token);
 
     void install_symbol(SYMINFO*);
 

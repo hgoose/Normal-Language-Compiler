@@ -39,6 +39,7 @@
 #define TOKEN_MOD                32
 #define TOKEN_UNEG               33
 #define TOKEN_UPLUS              34
+#define TOKEN_ARROW              35
 
 struct Token
 {
@@ -91,6 +92,7 @@ struct Token
     void set_mod_if_mod();
 
     bool is_type() const;
+    bool is_not_type() const;
     bool is_type_int() const;
 
     bool is_semicolon() const;
@@ -99,6 +101,9 @@ struct Token
     bool is_block_end() const;
     bool is_rbrace() const;
     bool is_comma() const;
+    bool is_lparen() const;
+    bool is_rparen() const;
+    bool is_arrow() const;
 
     bool is_eof() const;
 
@@ -121,6 +126,7 @@ struct Token
 
     bool set_id_from_predicate(TokenValue, TokenMethod);
 
+    TYPE get_type() const;
 };
 
 void print_token(const Token& t);

@@ -883,6 +883,71 @@ StatementReturns parse_block() {
     return {block_root};
 }
 
+StatementReturns parse_fn() {
+    Scope::enter_function();
+    AST_NODE* fn_root = new AST_NODE(next_token, NODE_TYPE::FUNCTION, Scope::level());
+
+    Error lex_err = munch();
+    if (skip_if_lexerr(lex_err, skip_fn)) {
+        free_trees(fn_root);
+        return {};
+    }
+
+    if (unexpected_token(TOKEN_IDENT, NLC_EXPECTED_IDENTIFIER, skip_fn)) {
+        free_trees(fn_root);
+        return {};
+    }
+
+    // MAKE NODE FOR FUNCTION NAME AND ADD TO FN_ROOT
+
+    lex_err = munch();
+    if (skip_if_lexerr(lex_err, skip_fn)) {
+        free_trees(fn_root);
+        return {};
+    }
+
+    if (unexpected_token(TOKEN_LPAREN, NLC_SYNTAX_ERROR, skip_fn)) {
+        free_trees(fn_root);
+        return {};
+    }
+
+    lex_err = munch();
+    if (skip_if_lexerr(lex_err, skip_fn)) {
+        free_trees(fn_root);
+        return {};
+    }
+
+    AST_NODE* parameter_list = get_parameter_list();
+
+    if (!parameter_list) {
+        free_trees(fn_root);
+        return {};
+    }
+
+    fn_root->add_children(parameter_list);
+
+    if (unexpected_token(TOKEN_ARROW, NLC_SYNTAX_ERROR, skip_fn)) {
+        free_trees(fn_root);
+        return {};
+    }
+
+    lex_err = munch();
+    if (skip_if_lexerr(lex_err, skip_fn)) {
+        free_trees(fn_root);
+        return {};
+    }
+
+    if (next_token.is_not_type()) {
+        skip_fn(LBRACE_COUNT_ZERO);
+        free_trees(fn_root);
+        return {};
+    }
+
+    // MAKE NODE FOR RETURN VALUE AND ADD TO FN_ROOT
+
+    return {};
+}
+
 // A -> BA'
 AST_NODE* A(Error& err) {
     AST_NODE* here{}, *left{}, *right{};
