@@ -71,6 +71,10 @@ bool SYMINFO::is_same_as_no_scope(const SYMINFO* other) {
     return name == other->name && type == other->type; 
 }
 
+bool SYMINFO::is_same_as_scope_at_most(const SYMINFO* other) {
+    return name == other->name && type == other->type && scope_level <= other->scope_level; 
+}
+
 SYMINFO* SYMTABLE::get_symbol(const std::string& name, const SYMTYPE& symbol_type, ScopeLevel level) {
     // Get bucket number
     size_t hx = hash(name);
@@ -78,7 +82,7 @@ SYMINFO* SYMTABLE::get_symbol(const std::string& name, const SYMTYPE& symbol_typ
 
     // Search for symbol in bucket
     for (auto& member : symbol_table[hx]) {
-        if (member->is_same_as(&syminfo)) {
+        if (member->is_same_as_scope_at_most(&syminfo)) {
             return member;
         }
     }

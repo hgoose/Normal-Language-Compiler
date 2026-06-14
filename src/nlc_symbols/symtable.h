@@ -42,6 +42,7 @@ struct SYMINFO {
     void set_scope_level(int);
     bool is_same_as(const SYMINFO* other);
     bool is_same_as_no_scope(const SYMINFO* other);
+    bool is_same_as_scope_at_most(const SYMINFO* other);
 };
 
 struct SYMTABLE {
