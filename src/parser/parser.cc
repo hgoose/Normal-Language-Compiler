@@ -923,7 +923,6 @@ StatementReturns parse_block() {
     // Empty block
     if (next_token.is_block_end()) {
         get_next_token_and_print_error();
-        skip_block(LBRACE_COUNT_ONE);
 
         Scope::down_level();
         return {}; 
@@ -1522,7 +1521,7 @@ AST_NODE* variable_terminal(Error& err) {
     AST_NODE* here = new AST_NODE(next_token, NODE_TYPE::VAR, TYPE::null, Scope::level());
 
     // Search the symbol table
-    SYMINFO* syminfo = SYMTABLE::get_symbol(next_token.identifier, SYMTYPE::VAR);
+    SYMINFO* syminfo = SYMTABLE::get_symbol(next_token.identifier, SYMTYPE::VAR, Scope::level());
 
     if (!syminfo) {
         set_print_token_error(Error{}, NLC_UNKNOWN_VARIABLE);
@@ -1530,7 +1529,8 @@ AST_NODE* variable_terminal(Error& err) {
         return nullptr;
     }
 
-    here->install_symbol(syminfo);
+    SYMINFO* syminfo_copy = new SYMINFO(*syminfo);
+    here->install_symbol(syminfo_copy);
 
     Error tmp_error = munch();
     if (handle_lex_error(tmp_error)){

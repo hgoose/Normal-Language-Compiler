@@ -61,8 +61,9 @@ void Scope::pop_level() {
     scope_stack.pop_back();
 }
 
-void Scope::tear_down_frame(SymbolBucket& bucket) {
+void Scope::tear_down_frame(SymbolBucket& bucket, ScopeLevel scope_level) {
     for (auto& symbol : bucket) {
+        if (symbol->scope_level != scope_level) continue;
         SYMTABLE::remove_symbol(symbol);
     }
 

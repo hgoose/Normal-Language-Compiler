@@ -121,6 +121,8 @@ struct AST_NODE {
     void set_scope_stack_frame(const SymbolBucket&);
 
     std::string get_type() const;
+
+    bool symbol_freed() const;
 };
 
 #endif

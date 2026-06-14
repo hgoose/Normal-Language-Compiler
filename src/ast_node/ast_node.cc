@@ -286,3 +286,8 @@ void AST_NODE::set_scope_stack_frame(const SymbolBucket& bucket) {
 std::string AST_NODE::get_type() const {
     return inv_type_map.at(data_type);
 }
+
+bool AST_NODE::symbol_freed() const {
+    if (!SYMTABLE::get_symbol(syminfo->name, syminfo->type, syminfo->scope_level)) return true;
+    return false;
+}

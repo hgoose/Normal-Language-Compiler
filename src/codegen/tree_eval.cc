@@ -270,13 +270,25 @@ void evaluate_print_expr(AST_NODE* root) {
 bool evaluate_print(AST_NODE* root) {
     if (!root) return false;
 
-    std::for_each(root->children.begin(), root->children.end(), [](AST_NODE* it) -> void {
-        if (!it) return;
+    bool exit{};
+    std::for_each(root->children.begin(), root->children.end(), [&exit](AST_NODE* child) -> void {
+        if (!child || exit) return;
 
-        if (it->entry.vi) {
-            x86_call_void_sca(print_string, it->entry);             
-        } else {
-            evaluate_print_expr(it);
+        if (child->is_var() && child->symbol_freed()) {
+            print_error(
+                Error{NLC_INVALID_IDENTIFIER,
+                child->token.line_no,
+                child->token.col_no}
+            ); 
+            exit = true;
+        }
+
+        else if (child->entry.vi) {
+            x86_call_void_sca(print_string, child->entry);             
+        } 
+
+        else {
+            evaluate_print_expr(child);
         }
     });
 
@@ -512,7 +524,7 @@ bool process_block(AST_NODE* root) {
         dispatch_statement(child); 
     }
 
-    Scope::tear_down_frame(root->scope_stack_frame);
+    Scope::tear_down_frame(root->scope_stack_frame, root->statement_scope_level);
 
     return true;
 }

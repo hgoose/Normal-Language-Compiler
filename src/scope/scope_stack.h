@@ -19,7 +19,7 @@ public:
     static void up_level();
     static void enter_level();
     static void enter_function();
-    static void tear_down_frame(SymbolBucket&);
+    static void tear_down_frame(SymbolBucket&, ScopeLevel scope_level);
     static void add_to_top_level(SYMINFO*);
 };
 
