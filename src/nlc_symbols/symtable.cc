@@ -103,7 +103,7 @@ SYMINFO* SYMTABLE::get_symbol(const std::string& name, const SYMTYPE& symbol_typ
     return nullptr;
 }
 
-SYMINFO* SYMTABLE::add_symbol(SYMINFO* syminfo, AST_NODE* holder) {
+SYMINFO* SYMTABLE::add_symbol(SYMINFO* syminfo) {
     size_t hx = hash(syminfo->name);
 
     // Check if it already exists
@@ -114,7 +114,7 @@ SYMINFO* SYMTABLE::add_symbol(SYMINFO* syminfo, AST_NODE* holder) {
     }
 
     // Doesn't exist, add it
-    Scope::add_to_top_level(syminfo, holder);
+    Scope::add_to_top_level(syminfo);
     return symbol_table[hx].emplace_front(syminfo);
 }
 

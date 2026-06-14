@@ -58,7 +58,7 @@ struct AST_NODE {
 
     Children children;
 
-    AdvancedSymbolBucket scope_stack_frame{};
+    SymbolBucket scope_stack_frame{};
 
     AST_NODE() = default;
     AST_NODE(ScopeLevel scope_level);
@@ -118,7 +118,7 @@ struct AST_NODE {
 
     void deep_copy_children(const AST_NODE&);
 
-    void set_scope_stack_frame(const AdvancedSymbolBucket&);
+    void set_scope_stack_frame(const SymbolBucket&);
 
     std::string get_type() const;
 };

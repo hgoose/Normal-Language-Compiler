@@ -338,11 +338,9 @@ StatementReturns parse_decl_int() {
         return {};
     }
 
-    AST_NODE* var = new AST_NODE(next_token, NODE_TYPE::VAR, SYMTYPE::VAR, Scope::level());
-
     // Put into symbol table 
     SYMINFO* syminfo_entry = new SYMINFO(next_token.identifier, TYPE::INT, SYMTYPE::VAR, Scope::level());
-    SYMINFO* entry = SYMTABLE::add_symbol(syminfo_entry, var);
+    SYMINFO* entry = SYMTABLE::add_symbol(syminfo_entry);
 
     if (!entry) {
         set_print_token_error(Error{}, NLC_SYMBOL_ALREADY_EXISTS);
@@ -355,6 +353,7 @@ StatementReturns parse_decl_int() {
         return {}; 
     }
 
+    AST_NODE* var = new AST_NODE(next_token, NODE_TYPE::VAR, SYMTYPE::VAR, Scope::level());
     var->install_symbol(entry);
 
     declare_root->add_children(var);
@@ -969,7 +968,7 @@ StatementReturns parse_fn() {
     std::string fn_name = next_token.identifier;
     AST_NODE* fn_name_node = new AST_NODE(next_token, NODE_TYPE::FUNCTION_IDENT, Scope::level());
     SYMINFO* fn_symbol = new SYMINFO(fn_name, SYMTYPE::FN, Scope::level());
-    SYMINFO* entry = SYMTABLE::add_symbol(fn_symbol, fn_name_node);
+    SYMINFO* entry = SYMTABLE::add_symbol(fn_symbol);
 
     if (!entry) {
         set_print_token_error(Error{}, NLC_SYMBOL_ALREADY_EXISTS);
