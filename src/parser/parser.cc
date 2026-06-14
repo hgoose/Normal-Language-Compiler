@@ -551,7 +551,6 @@ StatementReturns parse_assign() {
 // If this function is called while the current token is not
 // the identifier else, it returns nullptr.
 StatementReturns parse_else() {
-    Scope::enter_level();
     if (!next_token.is_ident_else()) return {};
 
     AST_NODE* else_root = new AST_NODE(next_token, NODE_TYPE::ELSE, Scope::level());
@@ -560,11 +559,11 @@ StatementReturns parse_else() {
     if (skip_if_lexerr(lex_err, skip_else, LBRACE_COUNT_ZERO)) {
         free_trees(else_root);
 
-        Scope::down_level();
         return {};
     }
 
     bool block = next_token.is_lbrace(); 
+    Scope::enter_level();
 
     // Grab the single statement and return
     if (!block) {
@@ -603,7 +602,6 @@ StatementReturns parse_else() {
 }
 
 StatementReturns parse_if() {
-    Scope::enter_level();
     AST_NODE* if_root = new AST_NODE(next_token, NODE_TYPE::IF, Scope::level()); 
 
     Error lex_err{}, expr_err{};
@@ -612,7 +610,6 @@ StatementReturns parse_if() {
     if (skip_if_lexerr(lex_err, skip_if, LBRACE_COUNT_ZERO)) {
         free_trees(if_root);
 
-        Scope::down_level();
         return {};
     }
 
@@ -620,7 +617,6 @@ StatementReturns parse_if() {
     if (unexpected_token(TOKEN_LPAREN, NLC_SYNTAX_ERROR, skip_if, LBRACE_COUNT_ZERO)) {
         free_trees(if_root);
 
-        Scope::down_level();
         return {};
     }
 
@@ -628,7 +624,6 @@ StatementReturns parse_if() {
     if (skip_if_lexerr(lex_err, skip_if, LBRACE_COUNT_ZERO)) {
         free_trees(if_root);
 
-        Scope::down_level();
         return {};
     }
 
@@ -636,7 +631,6 @@ StatementReturns parse_if() {
     if (wrong_next_token(TOKEN_RPAREN, NLC_EXPECTED_EXPRESSION, skip_if, LBRACE_COUNT_ZERO)) {
         free_trees(if_root);
 
-        Scope::down_level();
         return {};
     }
 
@@ -648,7 +642,6 @@ StatementReturns parse_if() {
         skip_if(LBRACE_COUNT_ZERO);
         free_trees(if_root);
 
-        Scope::down_level();
         return {};
     }
 
@@ -658,7 +651,6 @@ StatementReturns parse_if() {
         skip_if(LBRACE_COUNT_ZERO);
         free_trees(ast_expr, if_root);
 
-        Scope::down_level();
         return {};
     }
 
@@ -669,7 +661,6 @@ StatementReturns parse_if() {
     if (unexpected_token(TOKEN_RPAREN, NLC_SYNTAX_ERROR, skip_if, LBRACE_COUNT_ZERO)) {
         free_trees(if_root);
 
-        Scope::down_level();
         return {};
     }
 
@@ -677,7 +668,6 @@ StatementReturns parse_if() {
     if (skip_if_lexerr(lex_err, skip_if, LBRACE_COUNT_ZERO)) {
         free_trees(if_root);
 
-        Scope::down_level();
         return {};
     }
 
@@ -690,13 +680,13 @@ StatementReturns parse_if() {
         if_root->add_all_statements(else_root);
         if_root->set_scope_stack_frame(Scope::get_top_bucket());
 
-        Scope::down_level();
         return {if_root};
     }
 
     // Otherwise we have at least one statement or a block. 
     // In that case, we first check if we have block.
     bool block = next_token.is_lbrace(); 
+    Scope::enter_level();
 
     if (!block) {
         StatementReturns statements = get_statement();
@@ -736,8 +726,6 @@ StatementReturns parse_if() {
 }
 
 StatementReturns parse_while() {
-    Scope::enter_level();
-
     int lbrace_count{};
     Error lex_err{}, expr_err{};
 
@@ -746,32 +734,24 @@ StatementReturns parse_while() {
     lex_err = munch();
     if (skip_if_lexerr(lex_err, skip_while, lbrace_count)) {
         free_trees(while_root);
-
-        Scope::down_level();
         return {};
     }
 
     // Missing (
     if (unexpected_token(TOKEN_LPAREN, NLC_SYNTAX_ERROR, skip_while, lbrace_count)) {
         free_trees(while_root);
-
-        Scope::down_level();
         return {};
     }
 
     lex_err = munch();
     if (skip_if_lexerr(lex_err, skip_while, lbrace_count)) {
         free_trees(while_root);
-
-        Scope::down_level();
         return {};
     }
 
     // Missing condition
     if (wrong_next_token(TOKEN_RPAREN, NLC_EXPECTED_EXPRESSION, skip_while, lbrace_count)) {
         free_trees(while_root);
-
-        Scope::down_level();
         return {};
     }
 
@@ -786,8 +766,6 @@ StatementReturns parse_while() {
     if (!ast_expr) {
         skip_while(lbrace_count);
         free_trees(while_root);
-
-        Scope::down_level();
         return {};
     }
 
@@ -796,8 +774,6 @@ StatementReturns parse_while() {
         set_print_token_error(Error{}, ast_expr->token, NLC_NON_LOGICAL_CONDITION);
         skip_while(lbrace_count);
         free_trees(ast_expr, while_root);
-
-        Scope::down_level();
         return {};
     }
 
@@ -806,16 +782,12 @@ StatementReturns parse_while() {
     // Token after condition was not a right parenthesis
     if (unexpected_token(TOKEN_RPAREN, NLC_SYNTAX_ERROR, skip_while, lbrace_count)) {
         free_trees(while_root);
-
-        Scope::down_level();
         return {};
     }
 
     lex_err = munch();
     if (skip_if_lexerr(lex_err, skip_while, lbrace_count)) {
         free_trees(while_root);
-
-        Scope::down_level();
         return {};
     }
 
@@ -824,8 +796,6 @@ StatementReturns parse_while() {
         lex_err = munch();
         if (skip_if_lexerr(lex_err, skip_while, lbrace_count)) {
             free_trees(while_root);
-
-            Scope::down_level();
             return {};
         }
 
@@ -836,6 +806,7 @@ StatementReturns parse_while() {
 
     // Check if we have a block ({...})
     bool block = next_token.is_lbrace();
+    Scope::enter_level();
 
     // If we have no block, we have a single statement
     if (!block) {
