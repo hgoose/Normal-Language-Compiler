@@ -16,7 +16,9 @@ const ParseMap parse_map = {
     {"if", parse_if},
     {"while", parse_while},
     {"{", parse_block}, 
-    {"fn", parse_fn}
+    {"fn", parse_fn},
+    {"proc", parse_fn},
+    {"procedure", parse_fn}
 };
 
 const EvalMap eval_map = {
@@ -25,5 +27,6 @@ const EvalMap eval_map = {
     {NODE_TYPE::ASSIGN, update_var},
     {NODE_TYPE::READ, process_read},
     {NODE_TYPE::IF, process_if},
-    {NODE_TYPE::WHILE, process_while}
+    {NODE_TYPE::WHILE, process_while},
+    {NODE_TYPE::FUNCTION, process_fn},
 };

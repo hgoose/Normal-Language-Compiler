@@ -105,7 +105,7 @@ bool skip_if_lexerr(const Error& err, MoveProcedure mv_proc, int lbrace_count){
     return false;
 }
 
-// Anything other than the expected token is an error.
+// Anything other than the expected token is an unexpected.
 // Return true to indicate that the next_token is unexpected.
 bool unexpected_token(TokenValue expected_token, ErrorValue error_to_submit, MoveProcedure mv_proc, int lbrace_count){
     if (next_token.id != expected_token) {
@@ -282,9 +282,9 @@ AST_NODE* get_parameter() {
     return var;
 }
 
-AST_NODE* get_parameter_list() {
+AST_NODE* get_parameter_pack() {
     AST_NODE* parameter_list = new AST_NODE(
-        Token{}, NODE_TYPE::PARAMETER_LIST,
+        Token{}, NODE_TYPE::PARAMETER_PACK,
         Scope::level()
     );
 

@@ -515,3 +515,7 @@ bool process_block(AST_NODE* root) {
 
     return true;
 }
+
+bool process_fn(AST_NODE*) {
+    
+}

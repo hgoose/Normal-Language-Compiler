@@ -323,11 +323,12 @@ StatementReturns parse_decl_int() {
         }
     }
 
-    // Variable name must be an identifier token
-    if (unexpected_token(TOKEN_IDENT, NLC_INVALID_IDENTIFIER)) {
+    if (next_token.is_not_ident() || next_token.is_ident_reserved()) {
+        set_print_token_error(Error{}, NLC_INVALID_IDENTIFIER);
+        onepast_semi_or_block(LBRACE_COUNT_ZERO);
         free_tree(declare_root);
         return {};
-    }
+    } 
 
     // Variable name is reserved
     if (is_reserved(next_token)) {
@@ -390,7 +391,6 @@ StatementReturns parse_decl_int() {
         // Semicolon immediately after a comma implies 
         // missing identifier.
         if (wrong_next_token(TOKEN_SEMICOLON, NLC_INVALID_IDENTIFIER)) {
-            get_next_token_and_print_error();
             free_statement_return_list(declares);
             return {};
         }
@@ -398,7 +398,8 @@ StatementReturns parse_decl_int() {
         // Next token after a comma must be an identifier 
         // that is not reserved
         if (next_token.is_not_ident() || next_token.is_ident_reserved()) {
-            set_print_token_error(Error{}, NLC_SYNTAX_ERROR);
+            set_print_token_error(Error{}, NLC_INVALID_IDENTIFIER);
+            onepast_semi_or_block(LBRACE_COUNT_ZERO);
             free_statement_return_list(declares);
             return {};
         }
@@ -437,7 +438,6 @@ static bool continue_assign_parse(StatementReturns& assigns) {
         // Semicolon immediately after a comma implies 
         // missing identifier.
         if (wrong_next_token(TOKEN_SEMICOLON, NLC_INVALID_IDENTIFIER)) {
-            get_next_token_and_print_error();
             free_statement_return_list(assigns);
             return false;
         }
@@ -445,7 +445,8 @@ static bool continue_assign_parse(StatementReturns& assigns) {
         // Next token after a comma must be an identifier 
         // that is not reserved
         if (next_token.is_not_ident() || next_token.is_ident_reserved()) {
-            set_print_token_error(Error{}, NLC_SYNTAX_ERROR);
+            set_print_token_error(Error{}, NLC_INVALID_IDENTIFIER);
+            onepast_semi_or_block(LBRACE_COUNT_ZERO);
             free_statement_return_list(assigns);
             return false;
         }
@@ -893,12 +894,18 @@ StatementReturns parse_fn() {
         return {};
     }
 
-    if (unexpected_token(TOKEN_IDENT, NLC_EXPECTED_IDENTIFIER, skip_fn)) {
+    if (next_token.is_not_ident() || next_token.is_ident_reserved()) {
+        set_print_token_error(Error{}, NLC_INVALID_IDENTIFIER);
+        skip_fn(LBRACE_COUNT_ZERO);
         free_trees(fn_root);
         return {};
     }
 
-    // MAKE NODE FOR FUNCTION NAME AND ADD TO FN_ROOT
+    fn_root->add_children(new AST_NODE(
+        next_token, 
+        NODE_TYPE::FUNCTION_IDENT,
+        Scope::level())
+    );
 
     lex_err = munch();
     if (skip_if_lexerr(lex_err, skip_fn)) {
@@ -917,14 +924,14 @@ StatementReturns parse_fn() {
         return {};
     }
 
-    AST_NODE* parameter_list = get_parameter_list();
+    AST_NODE* parameter_pack = get_parameter_pack();
 
-    if (!parameter_list) {
+    if (!parameter_pack) {
         free_trees(fn_root);
         return {};
     }
 
-    fn_root->add_children(parameter_list);
+    fn_root->add_children(parameter_pack);
 
     if (unexpected_token(TOKEN_ARROW, NLC_SYNTAX_ERROR, skip_fn)) {
         free_trees(fn_root);
@@ -943,9 +950,56 @@ StatementReturns parse_fn() {
         return {};
     }
 
-    // MAKE NODE FOR RETURN VALUE AND ADD TO FN_ROOT
+    fn_root->add_children(new AST_NODE(
+        next_token, 
+        NODE_TYPE::RETURN_VALUE,
+        next_token.get_type(),
+        Scope::level()
+    ));
 
-    return {};
+    lex_err = munch();
+    if (skip_if_lexerr(lex_err, skip_fn)) {
+        free_trees(fn_root);
+        return {};
+    }
+    
+    // Function with no definition. I.e a declaration.
+    if (next_token.is_semicolon()) {
+        get_next_token_and_print_error();
+        return {fn_root};
+    }
+
+    if (unexpected_token(TOKEN_LBRACE, NLC_EXPECTED_FN_BODY, skip_fn)) {
+        free_trees(fn_root);
+        return {};
+    }
+
+    lex_err = munch();
+    if (skip_if_lexerr(lex_err, skip_fn)) {
+        free_trees(fn_root);
+        return {};
+    }
+
+    // Empty function
+    if (next_token.is_rbrace()) {
+        get_next_token_and_print_error();
+        return {fn_root};
+    }
+
+    AST_NODE* fn_body = new AST_NODE(
+        Token{}, 
+        NODE_TYPE::BLOCK,
+        Scope::level()
+    );
+
+    fn_root->add_children(fn_body);
+
+    // Otherwise get all statements in body
+    Error body_errors{};
+    StatementReturns body = get_all_statements_in_block(body_errors);
+    fn_body->add_all_statements(body);
+
+    return {fn_root};
 }
 
 // A -> BA'

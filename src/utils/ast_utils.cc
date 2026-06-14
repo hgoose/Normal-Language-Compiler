@@ -270,7 +270,7 @@ void r_ast_out(AST_NODE* node, int depth) {
         std::cout << node->token.lexeme << "\n";
     } 
 
-    else if (node->is_boolean == true) {
+    else if (node->is_bool()) {
         std::cout << std::boolalpha << node->boolean << '\n'; 
     } 
 
@@ -278,8 +278,20 @@ void r_ast_out(AST_NODE* node, int depth) {
         std::cout << node->str_node_type() << '\n';
     } 
 
-    else if (node->token.is(TOKEN_IDENT) && !is_reserved(node->token)) {
-        std::cout << "Var: " << node->token.identifier << '\n';
+    else if (node->is_fn_name()) {
+        std::cout << "Name: " << node->token.identifier << '\n';
+    }
+
+    else if (node->is_parameter_pack()) {
+        std::cout << "Parameter pack" << '\n';
+    }
+
+    else if (node->is_return_value()) {
+        std::cout << "Return value: " << node->get_type() << '\n';
+    }
+
+    else if (node->is_var()) {
+        std::cout << "Var: " << node->token.identifier << ": " << node->get_type() << '\n';
     }
 
     // Operator node

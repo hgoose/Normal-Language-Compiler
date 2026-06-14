@@ -17,6 +17,7 @@ bool process_read(AST_NODE*);
 bool process_if(AST_NODE*);
 bool process_while(AST_NODE*);
 bool process_block(AST_NODE*);
+bool process_fn(AST_NODE*);
 
 size_t sizeof_print();
 

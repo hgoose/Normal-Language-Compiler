@@ -13,7 +13,8 @@ enum class NODE_TYPE : unsigned int {
     ASSIGN, PRINT, READ, 
     BLOCK, INT, VAR, STR, 
     BOOL, IF, ELSE, WHILE,
-    FUNCTION, PARAMETER_LIST
+    FUNCTION, PARAMETER_PACK,
+    FUNCTION_IDENT, RETURN_VALUE
 };
 
 enum class TYPE : unsigned int {
@@ -22,5 +23,6 @@ enum class TYPE : unsigned int {
 
 extern const StatementNodes statement_nodes;
 extern const NodeTypeMap<std::string> node_type_to_string_map;
+extern const InvTypeMap<std::string> inv_type_map;
 
 #endif

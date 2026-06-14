@@ -27,6 +27,7 @@ const ErrorMap error_map {
     {NLC_NON_LOGICAL_CONDITION, "the provided expression cannot be interpreted as logical"},
     {NLC_EXPECTED_IDENTIFIER, "expected identifier"},
     {NLC_EXPECTED_PARAMETER_TYPE, "expected parameter type"},
+    {NLC_EXPECTED_FN_BODY, "expected function definition"},
 };
 
 bool error_unknown(ErrorValue error_value) {

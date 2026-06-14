@@ -155,81 +155,101 @@ void AST_NODE::clear() {
     entry = STR_TABLE_ENTRY{};
 }
 
-std::string AST_NODE::str_node_type() {
+std::string AST_NODE::str_node_type() const {
     return node_type_to_string_map.at(node_type);
 }
 
-bool AST_NODE::is_statement() {
+bool AST_NODE::is_statement() const {
     return statement_nodes.find(node_type)
         != statement_nodes.end();
 }
 
-bool AST_NODE::operator_is_arithmetic() {
+bool AST_NODE::operator_is_arithmetic() const {
     return operator_is_binary_arithmetic() || operator_is_unary_arithmetic();
 }
 
-bool AST_NODE::operator_is_binary_arithmetic() {
+bool AST_NODE::operator_is_binary_arithmetic() const {
     return TOKEN_STRUCTURES::binary_arithmetic_operators.find(token.id) 
         != TOKEN_STRUCTURES::binary_arithmetic_operators.end();
 }
 
-bool AST_NODE::operator_is_unary_arithmetic() {
+bool AST_NODE::operator_is_unary_arithmetic() const {
     return TOKEN_STRUCTURES::unary_arithmetic_operators.find(token.id) 
         != TOKEN_STRUCTURES::unary_arithmetic_operators.end();
 }
 
-bool AST_NODE::operator_is_relational() {
+bool AST_NODE::operator_is_relational() const {
     return operator_is_binary_relational();
 }
 
-bool AST_NODE::operator_is_binary_relational() {
+bool AST_NODE::operator_is_binary_relational() const {
     return TOKEN_STRUCTURES::binary_relational_operators.find(token.id) 
         != TOKEN_STRUCTURES::binary_relational_operators.end();
 }
 
-bool AST_NODE::operator_is_logical() {
+bool AST_NODE::operator_is_logical() const {
     return operator_is_binary_logical() || operator_is_unary_logical();
 }
 
-bool AST_NODE::operator_is_binary_logical() {
+bool AST_NODE::operator_is_binary_logical() const {
     return TOKEN_STRUCTURES::binary_logical_operators.find(token.id) 
         != TOKEN_STRUCTURES::binary_logical_operators.end();
 }
 
-bool AST_NODE::operator_is_unary_logical() {
+bool AST_NODE::operator_is_unary_logical() const {
     return TOKEN_STRUCTURES::unary_logical_operators.find(token.id) 
         != TOKEN_STRUCTURES::unary_logical_operators.end();
 }
 
-bool AST_NODE::operator_is_binary() {
+bool AST_NODE::operator_is_binary() const {
     return operator_is_binary_arithmetic() ||
         operator_is_binary_relational() ||
         operator_is_binary_logical();
 }
 
-bool AST_NODE::operator_is_unary() {
+bool AST_NODE::operator_is_unary() const {
     return operator_is_unary_arithmetic() ||
         operator_is_unary_logical();
 }
 
-bool AST_NODE::is_terminal() {
+bool AST_NODE::is_terminal() const {
     return TOKEN_STRUCTURES::terminals.find(token.id) 
         != TOKEN_STRUCTURES::terminals.end();
 }
 
-bool AST_NODE::is_type_integral() {
+bool AST_NODE::is_var() const {
+    return node_type == NODE_TYPE::VAR;
+}
+
+bool AST_NODE::is_fn_name() const {
+    return node_type == NODE_TYPE::FUNCTION_IDENT;
+}
+
+bool AST_NODE::is_parameter_pack() const {
+    return node_type == NODE_TYPE::PARAMETER_PACK;
+}
+
+bool AST_NODE::is_return_value() const {
+    return node_type == NODE_TYPE::RETURN_VALUE;
+}
+
+bool AST_NODE::is_bool() const {
+    return is_boolean;
+}
+
+bool AST_NODE::is_type_integral() const {
     return data_type == TYPE::INT;
 }
 
-bool AST_NODE::is_type_logical() {
+bool AST_NODE::is_type_logical() const {
     return data_type == TYPE::BOOL;
 }
 
-bool AST_NODE::is_op() {
+bool AST_NODE::is_op() const {
     return is_operator;
 }
 
-bool AST_NODE::is_nop() {
+bool AST_NODE::is_nop() const {
     return !is_op();
 }
 
@@ -261,4 +281,8 @@ void AST_NODE::deep_copy_children(const AST_NODE& other) {
 
 void AST_NODE::set_scope_stack_frame(const SymbolBucket& bucket) {
     scope_stack_frame = bucket;
+}
+
+std::string AST_NODE::get_type() const {
+    return inv_type_map.at(data_type);
 }

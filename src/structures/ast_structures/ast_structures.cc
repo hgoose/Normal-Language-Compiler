@@ -44,5 +44,14 @@ const NodeTypeMap<std::string> node_type_to_string_map {
     {NODE_TYPE::ELSE, "else"},
     {NODE_TYPE::WHILE, "while"},
     {NODE_TYPE::FUNCTION, "function"},
-    {NODE_TYPE::PARAMETER_LIST, "parameter list"},
+    {NODE_TYPE::FUNCTION_IDENT, "function identifier"},
+    {NODE_TYPE::PARAMETER_PACK, "parameter pack"},
+    {NODE_TYPE::RETURN_VALUE, "return value"},
+};
+
+const InvTypeMap<std::string> inv_type_map {
+    {TYPE::INT, "int"},
+    {TYPE::BOOL, "bool"},
+    {TYPE::STRING, "string"},
+    {TYPE::null, "void"}, 
 };

@@ -64,5 +64,6 @@ typedef std::list<ScopeLevelPair> ScopeStack;
 typedef std::list<SYMINFO*> SymbolBucket;
 
 template<typename T> using TypeMap = std::unordered_map<T, TYPE>;
+template<typename T> using InvTypeMap = std::unordered_map<TYPE,T>;
 
 #endif

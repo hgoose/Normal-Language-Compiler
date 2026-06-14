@@ -33,6 +33,7 @@
 #define  NLC_NO_DIGITS                  -27
 #define  NLC_EXPECTED_IDENTIFIER        -28
 #define  NLC_EXPECTED_PARAMETER_TYPE    -29
+#define  NLC_EXPECTED_FN_BODY           -30
 
 struct Token;
 

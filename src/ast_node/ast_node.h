@@ -85,25 +85,31 @@ struct AST_NODE {
     void add_all_statements(StatementReturns);
 
     void clear();
-    std::string str_node_type();
-    bool is_statement();
-    bool operator_is_arithmetic();
-    bool operator_is_binary_arithmetic();
-    bool operator_is_unary_arithmetic();
-    bool operator_is_relational();
-    bool operator_is_binary_relational();
-    bool operator_is_logical();
-    bool operator_is_binary_logical();
-    bool operator_is_unary_logical();
-    bool operator_is_binary();
-    bool operator_is_unary();
-    bool is_terminal();
+    std::string str_node_type() const;
+    bool is_statement() const;
+    bool operator_is_arithmetic() const;
+    bool operator_is_binary_arithmetic() const;
+    bool operator_is_unary_arithmetic() const;
+    bool operator_is_relational() const;
+    bool operator_is_binary_relational() const;
+    bool operator_is_logical() const;
+    bool operator_is_binary_logical() const;
+    bool operator_is_unary_logical() const;
+    bool operator_is_binary() const;
+    bool operator_is_unary() const;
 
-    bool is_type_integral(); 
-    bool is_type_logical();
+    bool is_terminal() const;
+    bool is_var() const;
+    bool is_fn_name() const;
+    bool is_bool() const;
+    bool is_parameter_pack() const;
+    bool is_return_value() const;
 
-    bool is_op();
-    bool is_nop();
+    bool is_type_integral() const; 
+    bool is_type_logical() const;
+
+    bool is_op() const;
+    bool is_nop() const;
 
     void set_boolean();
     void set_token(Token);
@@ -113,6 +119,8 @@ struct AST_NODE {
     void deep_copy_children(const AST_NODE&);
 
     void set_scope_stack_frame(const SymbolBucket&);
+
+    std::string get_type() const;
 };
 
 #endif
