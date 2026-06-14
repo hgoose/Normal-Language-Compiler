@@ -92,7 +92,7 @@ void skip_else(int lbrace_count) {
 }
 
 void skip_fn(int lbrace_count) {
-    skip_block(lbrace_count);
+    onepast_semi_or_block(lbrace_count);
 }
 
 // If the next token is invalid or a lexer error occurred,

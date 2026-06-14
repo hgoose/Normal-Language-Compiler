@@ -13,13 +13,18 @@ struct AST_NODE;
 struct Token;
 struct Error;
 struct SYMINFO;
+struct SymbolMemory;
 
 enum class NODE_TYPE : unsigned int;
 enum class TYPE : unsigned int;
 
+typedef unsigned char Byte;
+typedef std::unordered_map<std::string, Byte> Labels;
+
 typedef int ReturnCode;
 
 typedef std::list<AST_NODE*> StatementReturns;
+typedef std::list<AST_NODE*> NodeList;
 
 typedef int TokenValue;
 typedef int ErrorValue;
@@ -59,7 +64,8 @@ typedef std::unordered_map<NODE_TYPE, CodegenFn> NodeToCodegenFnMap;
 typedef std::unordered_set<NODE_TYPE> StatementNodes;
 
 typedef int ScopeLevel;
-typedef std::pair<ScopeLevel, std::list<SYMINFO*>> ScopeLevelPair;
+typedef std::list<SymbolMemory*> AdvancedSymbolBucket;
+typedef std::pair<ScopeLevel, AdvancedSymbolBucket> ScopeLevelPair;
 typedef std::list<ScopeLevelPair> ScopeStack;
 typedef std::list<SYMINFO*> SymbolBucket;
 

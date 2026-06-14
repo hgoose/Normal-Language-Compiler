@@ -279,7 +279,7 @@ void AST_NODE::deep_copy_children(const AST_NODE& other) {
     }
 }
 
-void AST_NODE::set_scope_stack_frame(const SymbolBucket& bucket) {
+void AST_NODE::set_scope_stack_frame(const AdvancedSymbolBucket& bucket) {
     scope_stack_frame = bucket;
 }
 

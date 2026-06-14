@@ -2,7 +2,7 @@
 #define NLC_SYMTABLE_STRUCTURES_H
 
 enum class SYMTYPE : unsigned int {
-    null, VAR
+    null, VAR, FN
 };
 
 enum class LOCATION_TYPE : unsigned int {

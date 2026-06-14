@@ -15,6 +15,7 @@ CXXFLAGS = -std=c++23 -g \
 			-Isrc/structures/table_structures/symtable_structures  \
 			-Isrc/structures/lex_structures  \
 			-Isrc/structures/error_structures  \
+			-Isrc/structures/function_structures  \
 			-Isrc/state/bufstate \
 			-Isrc/state/lexstate \
 			-Isrc/scope \
@@ -48,6 +49,7 @@ SRC = \
 	src/structures/codegen_structures/codegen_structures.cc \
 	src/structures/lex_structures/lex_structures.cc \
 	src/structures/error_structures/error_structures.cc \
+	src/structures/function_structures/function_structures.cc \
 	src/state/bufstate/bufstate.cc \
 	src/state/lexstate/lexstate.cc \
 	src/scope/scope_stack.cc \

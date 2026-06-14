@@ -19,7 +19,7 @@ const ErrorMap error_map {
     {NLC_INVALID_OPERAND_TYPE, "invalid operand type"},
     {NLC_INT_TABLE_OVERFLOW, "integer table overrun"},
     {NLC_VARIABLE_NAME_RESERVED, "attempted to create a variable using a reserved name"},
-    {NLC_SYMBOL_ALREADY_EXISTS, "variable already exists"},
+    {NLC_SYMBOL_ALREADY_EXISTS, "symbol already exists"},
     {NLC_INVALID_IDENTIFIER, "invalid identifier"},
     {NLC_UNKNOWN_VARIABLE, "variable has not been declared"},
     {NLC_EXPECTED_VAR, "expected variable, none provided"},

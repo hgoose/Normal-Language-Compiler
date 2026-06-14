@@ -7,24 +7,25 @@
 #include "nlc_integers.h"
 #include "codegen.h"
 #include "codegen_structures.h"
+#include "types.h"
 
 // Two meg should suffice
 static constexpr size_t PROG_SIZE{2*1024*1024};
 
 // Entry into the programs address space
-static unsigned char* prog;
+static Byte* prog;
 
 // Offset into the address space
 static size_t p_offset;
 
 size_t byte_count{};
 
-void load_byte(unsigned char byte) {
+void load_byte(Byte byte) {
     prog[p_offset++] = byte;
     ++byte_count;
 }
 
-void load_byte_at(size_t pos, unsigned char byte) {
+void load_byte_at(size_t pos, Byte byte) {
     prog[pos] = byte;
     ++byte_count;
 }

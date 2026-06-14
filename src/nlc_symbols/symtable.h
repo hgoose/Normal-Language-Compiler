@@ -49,7 +49,7 @@ struct SYMTABLE {
 
     static SYMINFO* get_symbol(const std::string&, const SYMTYPE&, ScopeLevel);
     static SYMINFO* get_symbol(const std::string&, const SYMTYPE&);
-    static SYMINFO* add_symbol(SYMINFO*);
+    static SYMINFO* add_symbol(SYMINFO*, AST_NODE*);
     static void remove_symbol(SYMINFO*);
     static void free_symbol_table();
 

@@ -338,19 +338,23 @@ StatementReturns parse_decl_int() {
         return {};
     }
 
+    AST_NODE* var = new AST_NODE(next_token, NODE_TYPE::VAR, SYMTYPE::VAR, Scope::level());
+
     // Put into symbol table 
-    SYMINFO* entry = SYMTABLE::add_symbol(
-        new SYMINFO(next_token.identifier, TYPE::INT, SYMTYPE::VAR, Scope::level())
-    );
+    SYMINFO* syminfo_entry = new SYMINFO(next_token.identifier, TYPE::INT, SYMTYPE::VAR, Scope::level());
+    SYMINFO* entry = SYMTABLE::add_symbol(syminfo_entry, var);
 
     if (!entry) {
         set_print_token_error(Error{}, NLC_SYMBOL_ALREADY_EXISTS);
         onepast_semi_or_block(LBRACE_COUNT_ZERO);
         free_tree(declare_root);
+
+        // If the add was good, SYMINFO memory is 
+        // managed by the symbol table and scope stack.
+        delete syminfo_entry;
         return {}; 
     }
 
-    AST_NODE* var = new AST_NODE(next_token, NODE_TYPE::VAR, SYMTYPE::VAR, Scope::level());
     var->install_symbol(entry);
 
     declare_root->add_children(var);
@@ -556,6 +560,8 @@ StatementReturns parse_else() {
     Error lex_err = munch();
     if (skip_if_lexerr(lex_err, skip_else, LBRACE_COUNT_ZERO)) {
         free_trees(else_root);
+
+        Scope::down_level();
         return {};
     }
 
@@ -565,6 +571,7 @@ StatementReturns parse_else() {
     if (!block) {
         StatementReturns statements = get_statement();
         else_root->add_all_statements(statements);
+        else_root->set_scope_stack_frame(Scope::get_top_bucket());
 
         Scope::down_level();
         return {else_root};
@@ -575,6 +582,8 @@ StatementReturns parse_else() {
     lex_err = munch();
     if (skip_if_lexerr(lex_err, skip_else, LBRACE_COUNT_ONE)) {
         free_trees(else_root);
+
+        Scope::down_level();
         return {};
     }
 
@@ -582,10 +591,13 @@ StatementReturns parse_else() {
     StatementReturns statements = get_all_statements_in_block(err);
     if (err.is_not_ok()) {
         free_trees(else_root);
+
+        Scope::down_level();
         return {};
     }
 
     else_root->add_all_statements(statements);
+    else_root->set_scope_stack_frame(Scope::get_top_bucket());
 
     Scope::down_level();
     return {else_root};
@@ -600,24 +612,32 @@ StatementReturns parse_if() {
     lex_err = munch();
     if (skip_if_lexerr(lex_err, skip_if, LBRACE_COUNT_ZERO)) {
         free_trees(if_root);
+
+        Scope::down_level();
         return {};
     }
 
     // Next token after if keyword must be an lparen
     if (unexpected_token(TOKEN_LPAREN, NLC_SYNTAX_ERROR, skip_if, LBRACE_COUNT_ZERO)) {
         free_trees(if_root);
+
+        Scope::down_level();
         return {};
     }
 
     lex_err = munch();
     if (skip_if_lexerr(lex_err, skip_if, LBRACE_COUNT_ZERO)) {
         free_trees(if_root);
+
+        Scope::down_level();
         return {};
     }
 
     // If the next token after lparen is an rparen, we are missing an expression
     if (wrong_next_token(TOKEN_RPAREN, NLC_EXPECTED_EXPRESSION, skip_if, LBRACE_COUNT_ZERO)) {
         free_trees(if_root);
+
+        Scope::down_level();
         return {};
     }
 
@@ -628,6 +648,8 @@ StatementReturns parse_if() {
     if (!ast_expr) {
         skip_if(LBRACE_COUNT_ZERO);
         free_trees(if_root);
+
+        Scope::down_level();
         return {};
     }
 
@@ -635,8 +657,9 @@ StatementReturns parse_if() {
     if (!ast_expr->is_type_logical()) {
         set_print_token_error(Error{}, ast_expr->token, NLC_NON_LOGICAL_CONDITION);
         skip_if(LBRACE_COUNT_ZERO);
-
         free_trees(ast_expr, if_root);
+
+        Scope::down_level();
         return {};
     }
 
@@ -646,12 +669,16 @@ StatementReturns parse_if() {
     // Token following logical expression must be a right parenthesis
     if (unexpected_token(TOKEN_RPAREN, NLC_SYNTAX_ERROR, skip_if, LBRACE_COUNT_ZERO)) {
         free_trees(if_root);
+
+        Scope::down_level();
         return {};
     }
 
     lex_err = munch();
     if (skip_if_lexerr(lex_err, skip_if, LBRACE_COUNT_ZERO)) {
         free_trees(if_root);
+
+        Scope::down_level();
         return {};
     }
 
@@ -662,6 +689,7 @@ StatementReturns parse_if() {
         // Parse else if it exists
         StatementReturns else_root = parse_else();
         if_root->add_all_statements(else_root);
+        if_root->set_scope_stack_frame(Scope::get_top_bucket());
 
         Scope::down_level();
         return {if_root};
@@ -674,12 +702,15 @@ StatementReturns parse_if() {
     if (!block) {
         StatementReturns statements = get_statement();
         if_root->add_all_statements(statements);
+        if_root->set_scope_stack_frame(Scope::get_top_bucket());
     } 
 
     else {
         lex_err = munch();
         if (skip_if_lexerr(lex_err, skip_if, LBRACE_COUNT_ONE)) {
             free_trees(if_root);
+
+            Scope::down_level();
             return {};
         }
 
@@ -687,10 +718,13 @@ StatementReturns parse_if() {
         StatementReturns statements = get_all_statements_in_block(err);
         if (err.is_not_ok()) {
             free_trees(if_root);
+
+            Scope::down_level();
             return {};
         }
 
         if_root->add_all_statements(statements);
+        if_root->set_scope_stack_frame(Scope::get_top_bucket());
     }
 
     Scope::down_level();
@@ -706,32 +740,39 @@ StatementReturns parse_while() {
     Scope::enter_level();
 
     int lbrace_count{};
+    Error lex_err{}, expr_err{};
 
     AST_NODE* while_root = new AST_NODE(next_token, NODE_TYPE::WHILE, Scope::level());
-
-    Error lex_err{}, expr_err{};
 
     lex_err = munch();
     if (skip_if_lexerr(lex_err, skip_while, lbrace_count)) {
         free_trees(while_root);
+
+        Scope::down_level();
         return {};
     }
 
     // Missing (
     if (unexpected_token(TOKEN_LPAREN, NLC_SYNTAX_ERROR, skip_while, lbrace_count)) {
         free_trees(while_root);
+
+        Scope::down_level();
         return {};
     }
 
     lex_err = munch();
     if (skip_if_lexerr(lex_err, skip_while, lbrace_count)) {
         free_trees(while_root);
+
+        Scope::down_level();
         return {};
     }
 
     // Missing condition
     if (wrong_next_token(TOKEN_RPAREN, NLC_EXPECTED_EXPRESSION, skip_while, lbrace_count)) {
         free_trees(while_root);
+
+        Scope::down_level();
         return {};
     }
 
@@ -746,6 +787,8 @@ StatementReturns parse_while() {
     if (!ast_expr) {
         skip_while(lbrace_count);
         free_trees(while_root);
+
+        Scope::down_level();
         return {};
     }
 
@@ -753,8 +796,9 @@ StatementReturns parse_while() {
     if (!ast_expr->is_type_logical()) {
         set_print_token_error(Error{}, ast_expr->token, NLC_NON_LOGICAL_CONDITION);
         skip_while(lbrace_count);
-
         free_trees(ast_expr, while_root);
+
+        Scope::down_level();
         return {};
     }
 
@@ -763,12 +807,16 @@ StatementReturns parse_while() {
     // Token after condition was not a right parenthesis
     if (unexpected_token(TOKEN_RPAREN, NLC_SYNTAX_ERROR, skip_while, lbrace_count)) {
         free_trees(while_root);
+
+        Scope::down_level();
         return {};
     }
 
     lex_err = munch();
     if (skip_if_lexerr(lex_err, skip_while, lbrace_count)) {
         free_trees(while_root);
+
+        Scope::down_level();
         return {};
     }
 
@@ -777,8 +825,13 @@ StatementReturns parse_while() {
         lex_err = munch();
         if (skip_if_lexerr(lex_err, skip_while, lbrace_count)) {
             free_trees(while_root);
+
+            Scope::down_level();
             return {};
         }
+
+        // Useless stack frame attachment.
+        while_root->set_scope_stack_frame(Scope::get_top_bucket());
         return {while_root};
     }
 
@@ -789,6 +842,7 @@ StatementReturns parse_while() {
     if (!block) {
         StatementReturns statements = get_statement();
         while_root->add_all_statements(statements);
+        while_root->set_scope_stack_frame(Scope::get_top_bucket());
 
         Scope::down_level();
         return {while_root};
@@ -800,6 +854,8 @@ StatementReturns parse_while() {
     lex_err = munch();
     if (skip_if_lexerr(lex_err, skip_while, lbrace_count)) {
         free_trees(while_root);
+
+        Scope::down_level();
         return {};
     }
 
@@ -807,6 +863,8 @@ StatementReturns parse_while() {
     if (next_token.is_rbrace()) {
         get_next_token_and_print_error();
 
+        // Another useless stack frame assignment
+        while_root->set_scope_stack_frame(Scope::get_top_bucket());
         Scope::down_level();
         return {while_root};
     }
@@ -823,8 +881,9 @@ StatementReturns parse_while() {
         // we eat the remainder of the structure.
         else {
             skip_while(lbrace_count);
-
             free_trees(while_root);
+
+            Scope::down_level();
             return {};
         }
 
@@ -838,12 +897,14 @@ StatementReturns parse_while() {
         // Structure was never terminated
         else if (next_token.is_eof()) {
             set_print_token_error(Error{}, NLC_UNEXPECTED_EOF);
-
             free_trees(while_root);
+
+            Scope::down_level();
             return {};
         }
     }
 
+    while_root->set_scope_stack_frame(Scope::get_top_bucket());
     Scope::down_level();
     return {while_root};
 }
@@ -853,16 +914,17 @@ StatementReturns parse_block() {
     AST_NODE* block_root = new AST_NODE(next_token, NODE_TYPE::BLOCK, Scope::level());
 
     Error lex_err = munch();
-    if (handle_lex_error(lex_err)) {
-        skip_block(LBRACE_COUNT_ONE);
-
+    if (skip_if_lexerr(lex_err, skip_block, LBRACE_COUNT_ONE)) {
         free_trees(block_root);
+
+        Scope::down_level();
         return {};
     }
 
     // Empty block
     if (next_token.is_block_end()) {
         get_next_token_and_print_error();
+        skip_block(LBRACE_COUNT_ONE);
 
         Scope::down_level();
         return {}; 
@@ -871,7 +933,10 @@ StatementReturns parse_block() {
     Error err{};
     StatementReturns statements = get_all_statements_in_block(err);
     if (err.is_not_ok()) {
+        skip_block(LBRACE_COUNT_ONE);
         free_trees(block_root);
+
+        Scope::down_level();
         return {};
     }
 
@@ -901,11 +966,21 @@ StatementReturns parse_fn() {
         return {};
     }
 
-    fn_root->add_children(new AST_NODE(
-        next_token, 
-        NODE_TYPE::FUNCTION_IDENT,
-        Scope::level())
-    );
+    std::string fn_name = next_token.identifier;
+    AST_NODE* fn_name_node = new AST_NODE(next_token, NODE_TYPE::FUNCTION_IDENT, Scope::level());
+    SYMINFO* fn_symbol = new SYMINFO(fn_name, SYMTYPE::FN, Scope::level());
+    SYMINFO* entry = SYMTABLE::add_symbol(fn_symbol, fn_name_node);
+
+    if (!entry) {
+        set_print_token_error(Error{}, NLC_SYMBOL_ALREADY_EXISTS);
+        skip_fn(LBRACE_COUNT_ZERO);
+        free_trees(fn_root, fn_name_node);
+        delete fn_symbol;
+        return {};
+    }
+
+    fn_name_node->install_symbol(fn_symbol);
+    fn_root->add_children(fn_name_node);
 
     lex_err = munch();
     if (skip_if_lexerr(lex_err, skip_fn)) {
@@ -999,6 +1074,7 @@ StatementReturns parse_fn() {
     StatementReturns body = get_all_statements_in_block(body_errors);
     fn_body->add_all_statements(body);
 
+    Scope::down_level();
     return {fn_root};
 }
 
@@ -1447,7 +1523,7 @@ AST_NODE* variable_terminal(Error& err) {
     AST_NODE* here = new AST_NODE(next_token, NODE_TYPE::VAR, TYPE::null, Scope::level());
 
     // Search the symbol table
-    SYMINFO* syminfo = SYMTABLE::get_symbol(next_token.identifier, SYMTYPE::VAR, Scope::level());
+    SYMINFO* syminfo = SYMTABLE::get_symbol(next_token.identifier, SYMTYPE::VAR);
 
     if (!syminfo) {
         set_print_token_error(Error{}, NLC_UNKNOWN_VARIABLE);

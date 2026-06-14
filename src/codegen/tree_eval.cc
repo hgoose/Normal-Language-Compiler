@@ -7,6 +7,7 @@
 #include "ast_utils.h"
 #include "parserutils.h"
 #include "codegen_structures.h"
+#include "function_structures.h"
 
 #include <cstdlib>
 #include <algorithm>
@@ -516,6 +517,25 @@ bool process_block(AST_NODE* root) {
     return true;
 }
 
-bool process_fn(AST_NODE*) {
-    
+bool process_fn(AST_NODE* root) {
+    AST_NODE* name, *ppack, *rv, *block;
+
+    auto child = root->children.begin();
+    auto end = root->children.end();
+
+    if (child++ != end) name = *child;
+    if (child++ != end) ppack = *child;
+    if (child++ != end) rv = *child;
+    if (child++ != end) block = *child;
+
+    std::string function_name = name->token.identifier;
+    Byte label_byte = get_current_position();
+
+    label_create(function_name, label_byte);
+
+    for (auto& child : block->children) {
+        dispatch_statement(child);
+    }
+
+    return true; 
 }
