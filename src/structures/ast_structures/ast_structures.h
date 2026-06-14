@@ -14,7 +14,8 @@ enum class NODE_TYPE : unsigned int {
     BLOCK, INT, VAR, STR, 
     BOOL, IF, ELSE, WHILE,
     FUNCTION, PARAMETER_PACK,
-    FUNCTION_IDENT, RETURN_VALUE
+    FUNCTION_IDENT, RETURN_VALUE, CALL,
+    ARGUMENT_PACK
 };
 
 enum class TYPE : unsigned int {

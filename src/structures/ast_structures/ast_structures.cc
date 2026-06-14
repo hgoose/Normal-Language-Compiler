@@ -10,6 +10,7 @@ const StatementNodes statement_nodes {
     NODE_TYPE::WHILE,
     NODE_TYPE::ELSE,
     NODE_TYPE::FUNCTION,
+    NODE_TYPE::CALL
 };
 
 const NodeTypeMap<std::string> node_type_to_string_map {
@@ -47,6 +48,8 @@ const NodeTypeMap<std::string> node_type_to_string_map {
     {NODE_TYPE::FUNCTION_IDENT, "function identifier"},
     {NODE_TYPE::PARAMETER_PACK, "parameter pack"},
     {NODE_TYPE::RETURN_VALUE, "return value"},
+    {NODE_TYPE::CALL, "call"},
+    {NODE_TYPE::ARGUMENT_PACK, "argument pack"},
 };
 
 const InvTypeMap<std::string> inv_type_map {

@@ -28,6 +28,7 @@ const ErrorMap error_map {
     {NLC_EXPECTED_IDENTIFIER, "expected identifier"},
     {NLC_EXPECTED_PARAMETER_TYPE, "expected parameter type"},
     {NLC_EXPECTED_FN_BODY, "expected function definition"},
+    {NLC_INVALID_ARGUMENT, "invalid argument"},
 };
 
 bool error_unknown(ErrorValue error_value) {

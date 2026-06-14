@@ -5,7 +5,6 @@
         \item Otherwise, syntax error.
     \end{enumerate}
 */
-
 #include "parser.h"
 #include "parser_structures.h"
 #include "parserutils.h"
@@ -558,7 +557,6 @@ StatementReturns parse_else() {
     Error lex_err = munch();
     if (skip_if_lexerr(lex_err, skip_else, LBRACE_COUNT_ZERO)) {
         free_trees(else_root);
-
         return {};
     }
 
@@ -609,28 +607,24 @@ StatementReturns parse_if() {
     lex_err = munch();
     if (skip_if_lexerr(lex_err, skip_if, LBRACE_COUNT_ZERO)) {
         free_trees(if_root);
-
         return {};
     }
 
     // Next token after if keyword must be an lparen
     if (unexpected_token(TOKEN_LPAREN, NLC_SYNTAX_ERROR, skip_if, LBRACE_COUNT_ZERO)) {
         free_trees(if_root);
-
         return {};
     }
 
     lex_err = munch();
     if (skip_if_lexerr(lex_err, skip_if, LBRACE_COUNT_ZERO)) {
         free_trees(if_root);
-
         return {};
     }
 
     // If the next token after lparen is an rparen, we are missing an expression
     if (wrong_next_token(TOKEN_RPAREN, NLC_EXPECTED_EXPRESSION, skip_if, LBRACE_COUNT_ZERO)) {
         free_trees(if_root);
-
         return {};
     }
 
@@ -641,7 +635,6 @@ StatementReturns parse_if() {
     if (!ast_expr) {
         skip_if(LBRACE_COUNT_ZERO);
         free_trees(if_root);
-
         return {};
     }
 
@@ -660,14 +653,12 @@ StatementReturns parse_if() {
     // Token following logical expression must be a right parenthesis
     if (unexpected_token(TOKEN_RPAREN, NLC_SYNTAX_ERROR, skip_if, LBRACE_COUNT_ZERO)) {
         free_trees(if_root);
-
         return {};
     }
 
     lex_err = munch();
     if (skip_if_lexerr(lex_err, skip_if, LBRACE_COUNT_ZERO)) {
         free_trees(if_root);
-
         return {};
     }
 
@@ -919,7 +910,6 @@ StatementReturns parse_block() {
 }
 
 StatementReturns parse_fn() {
-    Scope::enter_function();
     AST_NODE* fn_root = new AST_NODE(next_token, NODE_TYPE::FUNCTION, Scope::level());
 
     Error lex_err = munch();
@@ -951,20 +941,27 @@ StatementReturns parse_fn() {
     fn_name_node->install_symbol(fn_symbol);
     fn_root->add_children(fn_name_node);
 
+    Scope::enter_function();
     lex_err = munch();
     if (skip_if_lexerr(lex_err, skip_fn)) {
         free_trees(fn_root);
+
+        Scope::down_level();
         return {};
     }
 
     if (unexpected_token(TOKEN_LPAREN, NLC_SYNTAX_ERROR, skip_fn)) {
         free_trees(fn_root);
+
+        Scope::down_level();
         return {};
     }
 
     lex_err = munch();
     if (skip_if_lexerr(lex_err, skip_fn)) {
         free_trees(fn_root);
+
+        Scope::down_level();
         return {};
     }
 
@@ -972,6 +969,8 @@ StatementReturns parse_fn() {
 
     if (!parameter_pack) {
         free_trees(fn_root);
+
+        Scope::down_level();
         return {};
     }
 
@@ -979,18 +978,24 @@ StatementReturns parse_fn() {
 
     if (unexpected_token(TOKEN_ARROW, NLC_SYNTAX_ERROR, skip_fn)) {
         free_trees(fn_root);
+
+        Scope::down_level();
         return {};
     }
 
     lex_err = munch();
     if (skip_if_lexerr(lex_err, skip_fn)) {
         free_trees(fn_root);
+
+        Scope::down_level();
         return {};
     }
 
     if (next_token.is_not_type()) {
         skip_fn(LBRACE_COUNT_ZERO);
         free_trees(fn_root);
+
+        Scope::down_level();
         return {};
     }
 
@@ -1004,29 +1009,39 @@ StatementReturns parse_fn() {
     lex_err = munch();
     if (skip_if_lexerr(lex_err, skip_fn)) {
         free_trees(fn_root);
+
+        Scope::down_level();
         return {};
     }
     
     // Function with no definition. I.e a declaration.
     if (next_token.is_semicolon()) {
         get_next_token_and_print_error();
+
+        Scope::down_level();
         return {fn_root};
     }
 
     if (unexpected_token(TOKEN_LBRACE, NLC_EXPECTED_FN_BODY, skip_fn)) {
         free_trees(fn_root);
+
+        Scope::down_level();
         return {};
     }
 
     lex_err = munch();
     if (skip_if_lexerr(lex_err, skip_fn)) {
         free_trees(fn_root);
+
+        Scope::down_level();
         return {};
     }
 
     // Empty function
     if (next_token.is_rbrace()) {
         get_next_token_and_print_error();
+
+        Scope::down_level();
         return {fn_root};
     }
 
@@ -1045,6 +1060,79 @@ StatementReturns parse_fn() {
 
     Scope::down_level();
     return {fn_root};
+}
+
+StatementReturns parse_call() {
+    AST_NODE* call_root = new AST_NODE(
+        next_token,
+        NODE_TYPE::CALL,
+        Scope::level()
+    );
+
+    Error lex_err = munch();
+    if (skip_if_lexerr(lex_err)) {
+        free_trees(call_root);
+        return {};
+    }
+
+    if (next_token.is_not_ident() || next_token.is_ident_reserved()) {
+        set_print_token_error(Error{}, NLC_INVALID_IDENTIFIER);
+        onepast_semi_or_block(LBRACE_COUNT_ZERO);
+        free_trees(call_root);
+        return {};
+    }
+
+    std::string fn_name = next_token.identifier;
+    AST_NODE* fn_name_node = new AST_NODE(
+        next_token,
+        NODE_TYPE::FUNCTION_IDENT,
+        Scope::level()
+    );
+
+    call_root->add_children(fn_name_node);
+
+    SYMINFO* syminfo = SYMTABLE::get_symbol(
+        fn_name,
+        SYMTYPE::FN,
+        Scope::level()
+    );
+
+    if (!syminfo) {
+        set_print_token_error(Error{}, NLC_INVALID_IDENTIFIER);
+        onepast_semi_or_block(LBRACE_COUNT_ZERO);
+        free_trees(call_root, fn_name_node);
+        return {};
+    }
+
+    fn_name_node->install_symbol(syminfo);
+
+    lex_err = munch();
+    if (skip_if_lexerr(lex_err)) {
+        free_trees(call_root);
+        return {};
+    }
+
+    if (unexpected_token(TOKEN_LPAREN, NLC_SYNTAX_ERROR)) {
+        free_trees(call_root);
+        return {};
+    }
+
+    lex_err = munch();
+    if (skip_if_lexerr(lex_err)) {
+        free_trees(call_root);
+        return {};
+    }
+
+    AST_NODE* argument_pack = get_argument_pack();
+    if (!argument_pack) {
+        free_trees(call_root);
+        return {};
+    }
+
+    call_root->add_children(argument_pack);
+
+
+    return {call_root};
 }
 
 // A -> BA'
@@ -1500,8 +1588,7 @@ AST_NODE* variable_terminal(Error& err) {
         return nullptr;
     }
 
-    SYMINFO* syminfo_copy = new SYMINFO(*syminfo);
-    here->install_symbol(syminfo_copy);
+    here->install_symbol(syminfo);
 
     Error tmp_error = munch();
     if (handle_lex_error(tmp_error)){

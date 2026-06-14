@@ -286,6 +286,10 @@ void r_ast_out(AST_NODE* node, int depth) {
         std::cout << "Parameter pack" << '\n';
     }
 
+    else if (node->is_argument_pack()) {
+        std::cout << "Argument pack" << '\n';
+    }
+
     else if (node->is_return_value()) {
         std::cout << "Return value: " << node->get_type() << '\n';
     }

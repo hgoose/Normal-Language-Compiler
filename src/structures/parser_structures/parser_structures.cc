@@ -1,14 +1,8 @@
-#include "parser_structures.h"
 #include "ast_structures.h"
+#include "types.h"
 #include "parser.h"
-
-bool evaluate_print(AST_NODE*);
-bool init_var(AST_NODE*);
-bool update_var(AST_NODE*);
-bool process_read(AST_NODE*);
-bool process_if(AST_NODE*);
-bool process_while(AST_NODE*);
-bool process_fn(AST_NODE*);
+#include "tree_eval.h"
+#include "parser_structures.h"
 
 const ParseMap parse_map = {
     {"print", parse_print},
@@ -19,7 +13,8 @@ const ParseMap parse_map = {
     {"{", parse_block}, 
     {"fn", parse_fn},
     {"proc", parse_fn},
-    {"procedure", parse_fn}
+    {"procedure", parse_fn},
+    {"call", parse_call}
 };
 
 const EvalMap eval_map = {

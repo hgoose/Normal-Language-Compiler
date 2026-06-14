@@ -349,7 +349,7 @@ bool update_var(AST_NODE* root) {
         ast_expr = *child;
     }
 
-    SYMINFO* symbol = SYMTABLE::get_symbol(var->token.identifier, var->symbol_type);
+    SYMINFO* symbol = SYMTABLE::get_symbol(var->token.identifier, var->symbol_type, root->statement_scope_level);
 
     // No symbol found
     if (!symbol) {
@@ -386,7 +386,7 @@ bool process_read(AST_NODE* root) {
         var = *child;
     }
 
-    SYMINFO* symbol = SYMTABLE::get_symbol(var->token.identifier, var->symbol_type);
+    SYMINFO* symbol = SYMTABLE::get_symbol(var->token.identifier, var->symbol_type, root->statement_scope_level);
 
     if (!symbol) {
         set_print_token_error(Error{}, var->token, NLC_UNKNOWN_VARIABLE);
@@ -544,6 +544,8 @@ bool process_fn(AST_NODE* root) {
     Byte label_byte = get_current_position();
 
     label_create(function_name, label_byte);
+
+    // SYMINFO* syminfo = SYMTABLE::get_symbol(name->syminfo.name, name->syminfo.)
 
     for (auto& child : block->children) {
         dispatch_statement(child);

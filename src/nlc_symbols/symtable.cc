@@ -2,6 +2,8 @@
 #include "table_structures.h"
 #include "scope_stack.h"
 
+#include "types.h"
+
 #include <string>
 #include <cstddef>
 
@@ -75,6 +77,10 @@ bool SYMINFO::is_same_as_scope_at_most(const SYMINFO* other) {
     return name == other->name && type == other->type && scope_level <= other->scope_level; 
 }
 
+void SYMINFO::set_label(Byte byte) {
+    location.label = byte;    
+}
+
 SYMINFO* SYMTABLE::get_symbol(const std::string& name, const SYMTYPE& symbol_type, ScopeLevel level) {
     // Get bucket number
     size_t hx = hash(name);
@@ -83,6 +89,21 @@ SYMINFO* SYMTABLE::get_symbol(const std::string& name, const SYMTYPE& symbol_typ
     // Search for symbol in bucket
     for (auto& member : symbol_table[hx]) {
         if (member->is_same_as_scope_at_most(&syminfo)) {
+            return member;
+        }
+    }
+
+    // No symbol found
+    return nullptr;
+}
+
+SYMINFO* SYMTABLE::get_symbol(const SYMINFO* other) {
+    // Get bucket number
+    size_t hx = hash(other->name);
+
+    // Search for symbol in bucket
+    for (auto& member : symbol_table[hx]) {
+        if (member->is_same_as_scope_at_most(other)) {
             return member;
         }
     }

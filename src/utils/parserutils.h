@@ -57,4 +57,7 @@ void free_trees(TREES...trees) {
 AST_NODE* get_parameter();
 AST_NODE* get_parameter_pack();
 
+AST_NODE* get_argument();
+AST_NODE* get_argument_pack();
+
 #endif

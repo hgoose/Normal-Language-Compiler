@@ -14,6 +14,7 @@ struct SYMLOCATION {
     size_t address{};
     size_t stack_offset{};
     std::string reg_label{};
+    Byte label{};
 
     SYMLOCATION() = default;
     SYMLOCATION(LOCATION_TYPE, size_t, size_t, const std::string&);
@@ -43,6 +44,7 @@ struct SYMINFO {
     bool is_same_as(const SYMINFO* other);
     bool is_same_as_no_scope(const SYMINFO* other);
     bool is_same_as_scope_at_most(const SYMINFO* other);
+    void set_label(Byte);
 };
 
 struct SYMTABLE {
@@ -50,6 +52,7 @@ struct SYMTABLE {
 
     static SYMINFO* get_symbol(const std::string&, const SYMTYPE&, ScopeLevel);
     static SYMINFO* get_symbol(const std::string&, const SYMTYPE&);
+    static SYMINFO* get_symbol(const SYMINFO*);
     static SYMINFO* add_symbol(SYMINFO*);
     static void remove_symbol(SYMINFO*);
     static void free_symbol_table();

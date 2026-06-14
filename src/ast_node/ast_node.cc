@@ -229,6 +229,10 @@ bool AST_NODE::is_parameter_pack() const {
     return node_type == NODE_TYPE::PARAMETER_PACK;
 }
 
+bool AST_NODE::is_argument_pack() const {
+    return node_type == NODE_TYPE::ARGUMENT_PACK;
+}
+
 bool AST_NODE::is_return_value() const {
     return node_type == NODE_TYPE::RETURN_VALUE;
 }

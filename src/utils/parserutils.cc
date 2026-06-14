@@ -331,3 +331,53 @@ AST_NODE* get_parameter_pack() {
 
     return parameter_list;
 }
+
+AST_NODE* get_argument() {
+    Error ast_err{};
+    return pttoast(A(ast_err));
+}
+
+AST_NODE* get_argument_pack() {
+    AST_NODE* arg_pack = new AST_NODE(
+        Token{},
+        NODE_TYPE::ARGUMENT_PACK,
+        Scope::level()
+    );
+
+    Error lex_err{};
+
+    if (next_token.is_rparen()) {
+        get_next_token_and_print_error();
+        return arg_pack;
+    }
+
+    for (;;) {
+        AST_NODE* arg = get_argument();
+
+        if (!arg) {
+            onepast_semi_or_block(LBRACE_COUNT_ZERO);
+            free_trees(arg_pack);
+            return nullptr;
+        }
+
+        arg_pack->add_children(arg);
+
+        if (!next_token.is_comma()) break;
+
+        lex_err = munch();
+        if (skip_if_lexerr(lex_err)) {
+            free_trees(arg_pack);
+            return nullptr;
+        }
+    }
+
+    if (unexpected_token(TOKEN_RPAREN, NLC_SYNTAX_ERROR)) {
+        onepast_semi_or_block(LBRACE_COUNT_ZERO);
+        free_trees(arg_pack);
+        return nullptr;
+    }
+
+    get_next_token_and_print_error();
+
+    return arg_pack;
+}

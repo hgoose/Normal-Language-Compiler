@@ -103,6 +103,7 @@ struct AST_NODE {
     bool is_fn_name() const;
     bool is_bool() const;
     bool is_parameter_pack() const;
+    bool is_argument_pack() const;
     bool is_return_value() const;
 
     bool is_type_integral() const; 
