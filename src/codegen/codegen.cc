@@ -2,6 +2,7 @@
 #include <sys/mman.h>
 #include <cstdlib>
 #include <iostream>
+#include <cstdint>
 
 #include "nlc_strings.h"
 #include "nlc_integers.h"
@@ -10,6 +11,7 @@
 #include "types.h"
 #include "scope_stack.h"
 #include "tree_eval.h"
+#include "types.h"
 
 // Two meg should suffice
 static constexpr size_t PROG_SIZE{2*1024*1024};
@@ -27,9 +29,8 @@ void load_byte(Byte byte) {
     ++byte_count;
 }
 
-void load_byte_at(size_t pos, Byte byte) {
+void load_byte_at(Offset pos, Byte byte) {
     prog[pos] = byte;
-    ++byte_count;
 }
 
 void dump() {
@@ -55,19 +56,19 @@ int read_int() {
     return a;
 }
 
-void load_imm8(int x) {
+void load_imm8(std::int32_t x) {
     load_byte(x & 0xff);
 }
 
 // Loads a 32-bit integer into the program to be used as an operand
-void load_imm32(int x) {
+void load_imm32(std::int32_t x) {
     for (int i=0; i<4; ++i) {
         load_byte(x & 0xff);
         x>>=0x8;
     } 
 }
 
-void load_imm32_at(size_t pos, long long x) {
+void load_imm32_at(Offset pos, std::int32_t x) {
     for (int i=0; i<4; ++i) {
         load_byte_at(pos++, x & 0xff);
         x>>=0x8;
@@ -75,7 +76,7 @@ void load_imm32_at(size_t pos, long long x) {
 }
 
 // Loads a 64-bit integer into the program
-void load_imm64(long long x) {
+void load_imm64(std::int64_t x) {
     for (int i=0; i<8; ++i) {
         load_byte(x & 0xff);
         x>>=0x8;
@@ -101,7 +102,7 @@ int pspace_init() {
 }
 
 // FF /6 PUSH r/m32, push a value onto the stack
-void x86_push_imm32(int x) {
+void x86_push_imm32(std::int32_t x) {
     ++pushed;
 
     load_byte(0x68);
@@ -180,7 +181,7 @@ void x86_mov_rr64(REGISTER dest, REGISTER src) {
 }
 
 // B8+rd id MOV r32, imm32
-void x86_mov_rimm32(REGISTER dest, int src) {
+void x86_mov_rimm32(REGISTER dest, std::int32_t src) {
     if (dest >= REGISTER::R8) {
         load_byte(gen_rex_r(WIDE_OFF, dest));
     }
@@ -192,7 +193,7 @@ void x86_mov_rimm32(REGISTER dest, int src) {
 // REX.W + B8+ rd io MOV r64, imm64
 // NOTE: If dest is R8-R15, REX.B = 1, zero otherwise. In any case, 
 // REX.R = REX.X = 0, and REX.W = 1
-void x86_mov_rimm64(REGISTER dest, long long src) {
+void x86_mov_rimm64(REGISTER dest, std::int64_t src) {
     load_byte(gen_rex_r(WIDE_ON, dest));
     load_byte(0xB8 + (dest & 0x7));
     load_imm64(src);
@@ -244,7 +245,7 @@ void x86_mov_rm32_nodisp(REGISTER dest, REGISTER src) {
 //
 // Note: Specifically when dest is a memory location 
 // inside a register (no displacement), so mod = 01
-void x86_mov_mr64_disp8(REGISTER dest, REGISTER src, int disp) {
+void x86_mov_mr64_disp8(REGISTER dest, REGISTER src, std::int8_t disp) {
     load_byte(gen_rex_rr(WIDE_ON, dest, src));
     load_byte(0x89);
     load_byte(gen_modrm_norr_disp8(dest, src));
@@ -252,7 +253,7 @@ void x86_mov_mr64_disp8(REGISTER dest, REGISTER src, int disp) {
 }
 
 // REX.W + 8B /r
-void x86_mov_rm64_disp8(REGISTER dest, REGISTER src, int disp) {
+void x86_mov_rm64_disp8(REGISTER dest, REGISTER src, std::int8_t disp) {
     load_byte(gen_rex_rr(WIDE_ON, src, dest));
     load_byte(0x8B);
     load_byte(gen_modrm_norr_disp8(src, dest));
@@ -270,7 +271,7 @@ void x86_sub_rr32(REGISTER dest, REGISTER src) {
 }
 
 // REX.W + 81 /5 id SUB r/m64, imm32
-void x86_sub_r64_imm32(REGISTER dest, long long x) {
+void x86_sub_r64_imm32(REGISTER dest, std::int32_t x) {
     load_byte(gen_rex_r(WIDE_ON, dest));
     load_byte(0x81);
     load_byte(gen_modrm_rr(dest, (REGISTER)5));
@@ -278,7 +279,7 @@ void x86_sub_r64_imm32(REGISTER dest, long long x) {
 }
 
 // REX.W + 81 /0 id ADD r/m64, imm32
-void x86_add_r64_imm32(REGISTER dest, int32_t x) {
+void x86_add_r64_imm32(REGISTER dest, std::int32_t x) {
     load_byte(gen_rex_r(WIDE_ON, dest));
     load_byte(0x81);
     load_byte(gen_modrm_rr(dest, (REGISTER)0));
@@ -423,15 +424,15 @@ void x86_call(REGISTER reg) {
 }
 
 // E8 cd CALL rel32
-void x86_call_rel32(int32_t rel32) {
+void x86_call_rel32(std::int32_t rel32) {
     load_byte(0xE8);
     load_imm32(rel32);
 }
 
-void x86_call_abs_offset(size_t offset){
+void x86_call_abs_offset(Offset offset){
     int64_t rel32 = 
-        static_cast<int64_t>(offset) - 
-        static_cast<int64_t>(get_current_position() + 5);
+        static_cast<std::int32_t>(offset) - 
+        static_cast<std::int32_t>(get_current_position() + 5);
 
     x86_call_rel32(static_cast<int32_t>(rel32));
 }
@@ -484,7 +485,7 @@ void x86_call_void_sca(void(*f)(const char*), STR_TABLE_ENTRY& st_entry) {
 // mov  r10, INT_TABLE::emit_int
 // call r10
 // mov  r10,eax
-void x86_get_int_for_assign(size_t offset) {
+void x86_get_int_for_assign(Offset offset) {
     x86_mov_rimm64_sizet(REGISTER::RDI, offset);
     x86_mov_rimm64_ptr(REGISTER::R10, (std::uintptr_t)(int*(*)(size_t))INT_TABLE::emit_int);
     x86_call(REGISTER::R10);
@@ -493,7 +494,7 @@ void x86_get_int_for_assign(size_t offset) {
 }
 
 // Use R11
-void x86_get_int_for_expr(size_t offset) {
+void x86_get_int_for_expr(Offset offset) {
     x86_mov_rimm64_sizet(REGISTER::RDI, offset);
     x86_mov_rimm64_ptr(REGISTER::R11, (std::uintptr_t)(int*(*)(size_t))INT_TABLE::emit_int);
     x86_call(REGISTER::R11);
@@ -576,75 +577,75 @@ void x86_al_flip() {
 }
 
 // A8 ib TEST AL, imm8
-void x86_test_al_imm8(int x) {
+void x86_test_al_imm8(std::int8_t x) {
     load_byte(0xA8);
     load_imm8(x);
 }
 
 // 74 cb JZ rel8
-void x86_jz_rel8(int disp) {
+void x86_jz_rel8(std::int8_t disp) {
     load_byte(0x74);
     load_imm8(disp);
 }
 
 // 0F 84 cd JZ rel32
-size_t x86_jz_rel32_missing() {
+Offset x86_jz_rel32_missing() {
     load_byte(0x0F);
     load_byte(0x84);
-    size_t tmp = p_offset;
+    Offset tmp = p_offset;
     load_imm32(0);
 
     return tmp;
 }
 
 // 0F 85 cd JNZ rel32
-size_t x86_jnz_rel32_missing() {
+Offset x86_jnz_rel32_missing() {
     load_byte(0x0F);
     load_byte(0x85);
-    size_t tmp = p_offset;
+    Offset tmp = p_offset;
     load_imm32(0);
 
     return tmp;
 }
 
 // E9 cd JMP rel32
-size_t x86_jmp_rel32_missing() {
+Offset x86_jmp_rel32_missing() {
     load_byte(0xE9);
-    size_t tmp = p_offset;
+    Offset tmp = p_offset;
     load_imm32(0);
 
     return tmp;
 }
 
 // 75 cb JNZ rel8
-void x86_jnz_rel8(int disp) {
+void x86_jnz_rel8(std::int8_t disp) {
     load_byte(0x75);
     load_imm8(disp);
 }
 
 // 0F 85 cd JNZ rel32
-void x86_jnz_rel32(int disp) {
+void x86_jnz_rel32(std::int32_t disp) {
     load_byte(0x0F);
     load_byte(0x85);
     load_imm32(disp);
 }
 
 // F6 /0 ib TEST r/m8, imm8
-void x86_test_rm8_imm8(REGISTER_8BIT rm, int x) {
+void x86_test_rm8_imm8(REGISTER_8BIT rm, std::int8_t x) {
     load_byte(0xF6);
     load_byte(gen_modrm_rr(rm, (REGISTER_8BIT)0));
     load_imm8(x);
 }
 
-size_t move_program_pointer(size_t dx) {
-    for (size_t i{}; i < dx; ++i) {
+Offset move_program_pointer(Offset dx) {
+    for (Offset i{}; i < dx; ++i) {
         ++p_offset;
     } 
 
     return p_offset;
 }
 
-size_t get_current_position() {
+Offset get_current_position() {
     return p_offset;
 }
 
@@ -656,7 +657,7 @@ void emit_function_prologue(const SymbolBucket& scope_stack_frame) {
     x86_mov_rr64(REGISTER::RBP, REGISTER::RSP);
     x86_sub_r64_imm32(
         REGISTER::RSP, 
-        Scope::get_size_of_stack_frame(scope_stack_frame)
+        static_cast<std::int32_t>(Scope::get_size_of_stack_frame(scope_stack_frame))
     );
 }
 

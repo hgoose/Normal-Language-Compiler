@@ -10,13 +10,13 @@
 
 struct SYMLOCATION {
     LOCATION_TYPE location_type{};
-    size_t int_table_offset{};
+    Offset int_table_offset{};
     size_t address{};
-    size_t stack_offset{};
+    std::int32_t stack_offset{};
     std::string reg_label{};
 
     SYMLOCATION() = default;
-    SYMLOCATION(LOCATION_TYPE, size_t, size_t, const std::string&);
+    SYMLOCATION(LOCATION_TYPE, Offset, std::int32_t, const std::string&);
 };
 
 struct FunctionInfo {
@@ -38,6 +38,8 @@ struct SYMINFO {
     TYPE data_type{};
 
     bool exists{};
+    bool in_function{};
+    int ith_local{};
 
     int scope_level{};
 
@@ -58,6 +60,10 @@ struct SYMINFO {
     bool in_int_table();
     bool in_stack();
     bool in_reg();
+    bool is_in_function();
+    void set_in_function();
+    void set_location_static_memory(Offset, std::size_t);
+    void set_location_type_stack();
 };
 
 struct SYMTABLE {

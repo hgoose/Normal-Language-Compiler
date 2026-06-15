@@ -7,7 +7,7 @@
 #include <string>
 #include <cstddef>
 
-SYMLOCATION::SYMLOCATION(LOCATION_TYPE location_type, size_t int_table_offset, size_t stack_offset, const std::string& reg_label) 
+SYMLOCATION::SYMLOCATION(LOCATION_TYPE location_type, Offset int_table_offset, std::int32_t stack_offset, const std::string& reg_label) 
     : location_type(location_type),
     int_table_offset(int_table_offset),
     stack_offset(stack_offset),
@@ -98,6 +98,24 @@ bool SYMINFO::in_stack() {
 
 bool SYMINFO::in_reg() {
     return location.location_type == LOCATION_TYPE::REG;
+}
+
+bool SYMINFO::is_in_function() {
+    return in_function;
+}
+
+void SYMINFO::set_in_function() {
+    in_function = true;
+}
+
+void SYMINFO::set_location_static_memory(Offset int_table_offset, std::size_t address) {
+    location.int_table_offset = int_table_offset;
+    location.address = address;
+    location.location_type = LOCATION_TYPE::MEMORY;
+}
+
+void SYMINFO::set_location_type_stack() {
+    location.location_type = LOCATION_TYPE::STACK;
 }
 
 SYMINFO* SYMTABLE::get_symbol(const std::string& name, const SYMTYPE& symbol_type, ScopeLevel level) {

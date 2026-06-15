@@ -120,6 +120,7 @@ struct AST_NODE {
     void deep_copy_children(const AST_NODE&);
 
     void set_scope_stack_frame(const SymbolBucket&);
+    SymbolBucket& get_scope_stack_frame();
 
     std::string get_type() const;
 

@@ -7,8 +7,7 @@
 #include <string>
 #include <list>
 #include <utility>
-#include ""
-
+#include <cstdint>
 
 struct BufState;
 struct AST_NODE;
@@ -20,6 +19,8 @@ enum class NODE_TYPE : unsigned int;
 enum class TYPE : unsigned int;
 
 typedef std::uint8_t Byte;
+typedef std::size_t Offset;
+
 typedef std::string Label;
 typedef std::unordered_map<Label, Byte> Labels;
 

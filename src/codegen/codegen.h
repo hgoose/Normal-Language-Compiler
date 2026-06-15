@@ -44,8 +44,8 @@ inline unsigned int gen_rex_r(bool w, REGISTER reg) {
 int pspace_init();
 int pspace_reclaim();
 
-void load_byte(unsigned char byte);
-void load_byte_at(size_t pos, unsigned char byte);
+void load_byte(Byte byte);
+void load_byte_at(Offset pos, Byte byte);
 
 void dump();
 
@@ -57,10 +57,10 @@ int read_int();
 
 void load_imm8(int x);
 void load_imm32(int x);
-void load_imm32_at(size_t pos, long long x);
-void load_imm64(long long x);
+void load_imm32_at(Offset pos, std::int32_t x);
+void load_imm64(std::int64_t x);
 
-void x86_push_imm32(int x);
+void x86_push_imm32(std::int32_t x);
 void x86_pushr32(REGISTER src);
 void x86_pushr64(REGISTER src);
 void x86_pushm32(REGISTER src);
@@ -70,18 +70,18 @@ void x86_popr64(REGISTER dest);
 
 void x86_mov_rr32(REGISTER dest, REGISTER src);
 void x86_mov_rr64(REGISTER dest, REGISTER src);
-void x86_mov_rimm32(REGISTER dest, int src);
-void x86_mov_rimm64(REGISTER dest, long long src);
+void x86_mov_rimm32(REGISTER dest, std::int32_t src);
+void x86_mov_rimm64(REGISTER dest, std::int64_t src);
 void x86_mov_rimm64_sizet(REGISTER dest, size_t src);
 void x86_mov_rimm64_ptr(REGISTER dest, std::uintptr_t src);
 void x86_mov_mr32_nodisp(REGISTER dest, REGISTER src);
 void x86_mov_mr64_nodisp(REGISTER dest, REGISTER src);
-void x86_mov_mr64_disp8(REGISTER dest, REGISTER src, int disp);
-void x86_mov_rm64_disp8(REGISTER dest, REGISTER src, int disp);
+void x86_mov_mr64_disp8(REGISTER dest, REGISTER src, std::int8_t disp);
+void x86_mov_rm64_disp8(REGISTER dest, REGISTER src, std::int8_t disp);
 void x86_movzx_r32_r8_al(REGISTER dest);
 
 void x86_sub_rr32(REGISTER dest, REGISTER src);
-void x86_sub_r64_imm32(REGISTER dest, long long x);
+void x86_sub_r64_imm32(REGISTER dest, std::int32_t x);
 void x86_add_rr32(REGISTER dest, REGISTER src);
 void x86_add_r64_imm32(REGISTER dest, int32_t x);
 void x86_mult_rr32(REGISTER dest, REGISTER src);
@@ -104,10 +104,10 @@ void x86_init_int_var(INT_TABLE_ENTRY*);
 
 void x86_call(REGISTER);
 void x86_call_rel32(int32_t);
-void x86_call_abs_offset(size_t);
+void x86_call_abs_offset(Offset);
 
-void x86_get_int_for_assign(size_t);
-void x86_get_int_for_expr(size_t);
+void x86_get_int_for_assign(Offset);
+void x86_get_int_for_expr(Offset);
 
 void x86_cmp_rr32(REGISTER dest, REGISTER SRC);
 void x86_setl_al();
@@ -120,18 +120,18 @@ void x86_setnz_al();
 
 void x86_al_flip();
 
-void x86_test_al_imm8(int x);
-void x86_test_rm8_imm8(REGISTER_8BIT rm, int x);
+void x86_test_al_imm8(std::int8_t x);
+void x86_test_rm8_imm8(REGISTER_8BIT rm, std::int8_t x);
 
-void x86_jz_rel8(int disp);
-size_t x86_jz_rel32_missing();
-size_t x86_jnz_rel32_missing();
-size_t x86_jmp_rel32_missing();
-void x86_jnz_rel8(int disp);
-void x86_jnz_rel32(int disp);
+void x86_jz_rel8(std::int8_t disp);
+Offset x86_jz_rel32_missing();
+Offset x86_jnz_rel32_missing();
+Offset x86_jmp_rel32_missing();
+void x86_jnz_rel8(std::int8_t disp);
+void x86_jnz_rel32(std::int32_t disp);
 
-size_t move_program_pointer(size_t dx);
-size_t get_current_position();
+Offset move_program_pointer(Offset dx);
+Offset get_current_position();
 
 void emit_function_prologue(const SymbolBucket&);
 void emit_function_epilogue();

@@ -62,4 +62,6 @@ AST_NODE* get_argument_pack();
 
 bool match_packs(AST_NODE*, AST_NODE*);
 
+void stack_locals_layout(const SymbolBucket&, const AST_NODE*);
+
 #endif

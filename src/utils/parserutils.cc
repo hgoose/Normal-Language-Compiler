@@ -8,6 +8,7 @@
 #include "error.h"
 #include "ast_utils.h"
 #include "scope_stack.h"
+#include "ast_structures.h"
 
 #include <algorithm>
 #include <functional>
@@ -392,4 +393,18 @@ bool match_packs(AST_NODE* parameter_pack, AST_NODE* argument_pack) {
     }
 
     return true;
+}
+
+void stack_locals_layout(const SymbolBucket& frame, const AST_NODE* ppack) {
+    if (frame.size() == ppack->children.size()) return;
+
+    auto syminfo = frame.begin();
+    for (auto& parameter : ppack->children) syminfo++;
+
+    int rbp{};
+    for (; syminfo != frame.end(); ++syminfo) {
+        std::size_t type_size = get_type_size((*syminfo)->data_type);
+        (*syminfo)->location.stack_offset = -(rbp + type_size);
+        rbp = (*syminfo)->location.stack_offset;
+    }
 }

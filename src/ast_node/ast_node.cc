@@ -287,6 +287,10 @@ void AST_NODE::set_scope_stack_frame(const SymbolBucket& bucket) {
     scope_stack_frame = bucket;
 }
 
+SymbolBucket& AST_NODE::get_scope_stack_frame() {
+    return scope_stack_frame;
+}
+
 std::string AST_NODE::get_type() const {
     return inv_type_map.at(data_type);
 }

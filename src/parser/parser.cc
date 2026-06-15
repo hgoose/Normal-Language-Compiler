@@ -1076,6 +1076,12 @@ StatementReturns parse_fn() {
     fn_body->add_all_statements(body);
     fn_body->set_scope_stack_frame(Scope::get_top_bucket());
 
+    for (auto& symbol : fn_body->get_scope_stack_frame()) {
+        symbol->set_in_function();
+    }
+
+    stack_locals_layout(fn_body->get_scope_stack_frame(), parameter_pack);
+
     Scope::down_level();
     return {fn_root};
 }

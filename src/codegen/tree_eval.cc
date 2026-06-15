@@ -115,7 +115,7 @@ static void r_evaluate_expr(AST_NODE* p) {
         // mov r11, rbp-offset
         // push r11
         else if (p->syminfo->in_stack()) {
-            size_t offset = p->syminfo->location.stack_offset;
+            std::int32_t offset = p->syminfo->location.stack_offset;
             x86_mov_rm64_disp8(REGISTER::R11, REGISTER::RBP, offset);
             x86_pushr64(REGISTER::R11);
         }
@@ -312,32 +312,32 @@ bool init_var(AST_NODE* root) {
     auto children_end = root->children.end();
 
     AST_NODE* var{}, *value{};
-    if (child != children_end) {
-        var = *child;
-        ++child;
+    if (child != children_end) var = *child++;
+    if (child != children_end) value = *child++;
+
+    if (var->syminfo->is_in_function()) {
+        var->syminfo->set_location_type_stack();
     }
 
-    if (child != children_end) {
-        value = *child;
-        ++child;
-    }
+    else {
+        INT_TABLE_ENTRY entry = INT_TABLE::add_int(0);
 
-    INT_TABLE_ENTRY entry = INT_TABLE::add_int(0);
+        // Could not get space for variable.
+        // add_int will print overflow error.
+        if (!entry.vi) {
+            return false;
+        }
 
-    // Could not get space for variable.
-    // add_int will print overflow error.
-    if (!entry.vi) {
-        return false;
-    }
+        var->syminfo->set_location_static_memory(
+            entry.offset,
+            entry.get_addr()
+        );
 
-    var->syminfo->location.int_table_offset = entry.offset;
-    var->syminfo->location.address = entry.get_addr();
-    var->syminfo->location.location_type = LOCATION_TYPE::MEMORY;
-
-    if (value) {
-        AST_NODE* assignment = create_assign(var, value);
-        update_var(assignment);
-        free_tree(assignment);
+        if (value) {
+            AST_NODE* assignment = create_assign(var, value);
+            update_var(assignment);
+            free_tree(assignment);
+        }
     }
 
     return true;
@@ -535,7 +535,7 @@ bool process_block(AST_NODE* root) {
     }
 
     Scope::tear_down_frame(
-        root->scope_stack_frame, 
+        root->get_scope_stack_frame(), 
         root->statement_scope_level
     );
 
