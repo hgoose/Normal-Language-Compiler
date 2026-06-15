@@ -381,3 +381,15 @@ AST_NODE* get_argument_pack() {
 
     return arg_pack;
 }
+
+bool match_packs(AST_NODE* parameter_pack, AST_NODE* argument_pack) {
+    if (parameter_pack->children.size() != argument_pack->children.size())
+        return false;
+
+    auto argstart = argument_pack->children.begin();
+    for (auto pstart = parameter_pack->children.begin(); pstart != parameter_pack->children.end(); ++pstart, ++argstart) {
+        if ((*pstart)->data_type != (*argstart)->data_type) return false;
+    }
+
+    return true;
+}

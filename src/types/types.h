@@ -18,7 +18,8 @@ enum class NODE_TYPE : unsigned int;
 enum class TYPE : unsigned int;
 
 typedef unsigned char Byte;
-typedef std::unordered_map<std::string, Byte> Labels;
+typedef std::string Label;
+typedef std::unordered_map<Label, Byte> Labels;
 
 typedef int ReturnCode;
 
@@ -66,6 +67,7 @@ typedef std::pair<ScopeLevel, std::list<SYMINFO*>> ScopeLevelPair;
 typedef std::list<ScopeLevelPair> ScopeStack;
 typedef std::list<SYMINFO*> SymbolBucket;
 
+typedef std::unordered_set<TYPE> TypeSet;
 template<typename T> using TypeMap = std::unordered_map<T, TYPE>;
 template<typename T> using InvTypeMap = std::unordered_map<TYPE,T>;
 

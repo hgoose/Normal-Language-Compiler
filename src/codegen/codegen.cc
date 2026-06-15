@@ -8,6 +8,8 @@
 #include "codegen.h"
 #include "codegen_structures.h"
 #include "types.h"
+#include "scope_stack.h"
+#include "tree_eval.h"
 
 // Two meg should suffice
 static constexpr size_t PROG_SIZE{2*1024*1024};
@@ -100,12 +102,16 @@ int pspace_init() {
 
 // FF /6 PUSH r/m32, push a value onto the stack
 void x86_push_imm32(int x) {
+    ++pushed;
+
     load_byte(0x68);
     load_imm32(x); 
 }
 
 // FF /6 PUSH r/m32
 void x86_pushr32(REGISTER src) {
+    ++pushed;
+
     if (src >= REGISTER::R8) {
         load_byte(gen_rex_r(WIDE_OFF, src));
     }
@@ -116,6 +122,8 @@ void x86_pushr32(REGISTER src) {
 
 // FF /6 PUSH r/m64
 void x86_pushr64(REGISTER src) {
+    ++pushed;
+
     load_byte(gen_rex_r(WIDE_ON, src));
     load_byte(0xFF);
     load_byte(gen_modrm_rr(src, (REGISTER)6));
@@ -123,6 +131,8 @@ void x86_pushr64(REGISTER src) {
 
 // FF /6 PUSH r/m32
 void x86_pushm32(REGISTER src) {
+    ++pushed;
+
     if (src >= REGISTER::R8) {
         load_byte(gen_rex_r(WIDE_OFF, src));
     }
@@ -133,6 +143,8 @@ void x86_pushm32(REGISTER src) {
 
 // 8F /0 POP r/m32, pop the top of the stack into dest
 void x86_popr32(REGISTER dest) {
+    --pushed;
+
     if (dest >= REGISTER::R8) {
         load_byte(gen_rex_r(WIDE_OFF, dest));
     }
@@ -143,6 +155,8 @@ void x86_popr32(REGISTER dest) {
 
 // 8F /0 POP r/m64
 void x86_popr64(REGISTER dest) {
+    --pushed;
+
     load_byte(gen_rex_r(WIDE_ON, dest));
     load_byte(0x8F);
     load_byte(gen_modrm_rr(dest, (REGISTER)0));
@@ -247,6 +261,14 @@ void x86_sub_rr32(REGISTER dest, REGISTER src) {
     load_byte(gen_modrm_rr(dest,src));
 }
 
+// REX.W + 81 /5 id SUB r/m64, imm32
+void x86_sub_r64_imm32(REGISTER dest, long long x) {
+    load_byte(gen_rex_r(WIDE_ON, dest));
+    load_byte(0x81);
+    load_byte(gen_modrm_rr(dest, (REGISTER)5));
+    load_imm32(x);
+}
+
 // 01 /r ADD r/m32, r32
 void x86_add_rr32(REGISTER dest, REGISTER src) {
     if (dest >= REGISTER::R8 || src >= REGISTER::R8) {
@@ -343,6 +365,9 @@ void x86_fast_exp() {
     load_byte(0x41); // MOV EAX, R8  // move result (e = a^b) to EAX
     load_byte(0x8b);
     load_byte(0xc0);
+
+    // Account for two pops
+    pushed-=2;
 }
 
 // 31 /r XOR r/m32, r32
@@ -593,6 +618,27 @@ size_t get_current_position() {
     return p_offset;
 }
 
+// push rbp
+// mov rbp, rsp
+// sub rsp, k
+void emit_function_prologue(const SymbolBucket& scope_stack_frame) {
+    x86_pushr64(REGISTER::RBP); 
+    x86_mov_rr64(REGISTER::RBP, REGISTER::RSP);
+    x86_sub_r64_imm32(
+        REGISTER::RSP, 
+        Scope::get_size_of_stack_frame(scope_stack_frame)
+    );
+}
+
+// mov rsp ,rbp
+// pop rbp
+// ret
+void emit_function_epilogue() {
+    x86_mov_rr64(REGISTER::RSP, REGISTER::RBP);
+    x86_popr64(REGISTER::RBP);
+    x86_construct_ret();
+}
+
 // Add a return instruction and execute program, returns value in the accumulator
 int x86_exec() {
     x86_popr64(REGISTER::R15);
@@ -607,3 +653,4 @@ int x86_exec() {
 int pspace_reclaim() {
     return munmap(prog, PROG_SIZE);
 }
+

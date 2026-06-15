@@ -295,3 +295,14 @@ bool AST_NODE::symbol_freed() const {
     if (!SYMTABLE::get_symbol(syminfo->name, syminfo->type, syminfo->scope_level)) return true;
     return false;
 }
+
+bool AST_NODE::is_type_assignable() const {
+    return assignable_types.find(data_type) 
+        != assignable_types.end();
+}
+
+size_t AST_NODE::type_size() const {
+    if (!is_type_assignable()) return 0;
+
+    return get_type_size(data_type);
+}

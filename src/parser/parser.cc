@@ -974,6 +974,19 @@ StatementReturns parse_fn() {
         return {};
     }
 
+    // Throw parameters into symbol table 
+    for (auto& parameter : parameter_pack->children) {
+        SYMINFO* syminfo = SYMTABLE::add_symbol(
+            new SYMINFO(
+                parameter->token.identifier,
+                parameter->data_type,
+                SYMTYPE::VAR, 
+                Scope::level()
+            )
+        );
+        parameter->install_symbol(syminfo);
+    }
+
     fn_root->add_children(parameter_pack);
 
     if (unexpected_token(TOKEN_ARROW, NLC_SYNTAX_ERROR, skip_fn)) {
@@ -999,12 +1012,15 @@ StatementReturns parse_fn() {
         return {};
     }
 
-    fn_root->add_children(new AST_NODE(
+    AST_NODE* return_value = 
+        new AST_NODE(
         next_token, 
         NODE_TYPE::RETURN_VALUE,
         next_token.get_type(),
         Scope::level()
-    ));
+    );
+
+    fn_root->add_children(return_value);
 
     lex_err = munch();
     if (skip_if_lexerr(lex_err, skip_fn)) {
@@ -1052,11 +1068,13 @@ StatementReturns parse_fn() {
     );
 
     fn_root->add_children(fn_body);
+    entry->install_function(fn_name, parameter_pack, return_value, fn_body);
 
     // Otherwise get all statements in body
     Error body_errors{};
     StatementReturns body = get_all_statements_in_block(body_errors);
     fn_body->add_all_statements(body);
+    fn_body->set_scope_stack_frame(Scope::get_top_bucket());
 
     Scope::down_level();
     return {fn_root};
@@ -1131,6 +1149,16 @@ StatementReturns parse_call() {
 
     call_root->add_children(argument_pack);
 
+    if (!match_packs(syminfo->function_info.parameter_pack, argument_pack)) {
+        print_error(
+            Error{NLC_INVALID_ARGPACK,
+            fn_name_node->token.line_no,
+            fn_name_node->token.col_no}
+        );
+        onepast_semi_or_block(LBRACE_COUNT_ZERO);
+        free_trees(call_root);
+        return {};
+    }
 
     return {call_root};
 }

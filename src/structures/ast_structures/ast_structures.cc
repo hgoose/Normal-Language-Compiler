@@ -58,3 +58,19 @@ const InvTypeMap<std::string> inv_type_map {
     {TYPE::STRING, "string"},
     {TYPE::null, "void"}, 
 };
+
+
+const TypeSet assignable_types {
+    TYPE::INT
+};
+
+// Only assignable types
+const InvTypeMap<std::size_t> type_to_size {
+    {TYPE::INT, 4}
+};
+
+size_t get_type_size(TYPE type) {
+    if (assignable_types.find(type) == assignable_types.end()) return 0;
+
+    return type_to_size.at(type);
+}

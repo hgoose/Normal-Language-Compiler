@@ -2,6 +2,7 @@
 #define NLC_CODEGEN_H
 
 #include "codegen_structures.h"
+#include "types.h"
 
 #include <cstdlib>
 #include <cstdint>
@@ -79,6 +80,7 @@ void x86_mov_mr64_disp8(REGISTER dest, REGISTER src, int disp);
 void x86_movzx_r32_r8_al(REGISTER dest);
 
 void x86_sub_rr32(REGISTER dest, REGISTER src);
+void x86_sub_r64_imm32(REGISTER dest, long long x);
 void x86_add_rr32(REGISTER dest, REGISTER src);
 void x86_mult_rr32(REGISTER dest, REGISTER src);
 void x86_div_rr32(REGISTER dest, REGISTER src);
@@ -126,6 +128,9 @@ void x86_jnz_rel32(int disp);
 
 size_t move_program_pointer(size_t dx);
 size_t get_current_position();
+
+void emit_function_prologue(const SymbolBucket&);
+void emit_function_epilogue();
 
 int x86_exec();
 

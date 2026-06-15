@@ -3,6 +3,8 @@
 
 #include <cstddef>
 
+extern int pushed;
+
 struct AST_NODE;
 
 void dispatch_statement(AST_NODE*);
@@ -18,7 +20,10 @@ bool process_if(AST_NODE*);
 bool process_while(AST_NODE*);
 bool process_block(AST_NODE*);
 bool process_fn(AST_NODE*);
+bool process_call(AST_NODE*);
 
 size_t sizeof_print();
+
+void bind_function_parameters(AST_NODE* ppack);
 
 #endif

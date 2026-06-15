@@ -4,6 +4,5 @@
 #include "types.h"
 
 extern const ParseMap parse_map;
-extern const EvalMap eval_map;
 
 #endif

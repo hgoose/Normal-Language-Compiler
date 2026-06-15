@@ -60,4 +60,6 @@ AST_NODE* get_parameter_pack();
 AST_NODE* get_argument();
 AST_NODE* get_argument_pack();
 
+bool match_packs(AST_NODE*, AST_NODE*);
+
 #endif

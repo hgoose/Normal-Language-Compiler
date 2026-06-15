@@ -2,6 +2,8 @@
 #include "utility"
 #include "types.h"
 #include "symtable.h"
+#include "ast_structures.h"
+#include "function_structures.h"
 
 void Scope::down_level() {
     if (current_scope_level == 0) return;
@@ -64,8 +66,20 @@ void Scope::pop_level() {
 void Scope::tear_down_frame(SymbolBucket& bucket, ScopeLevel scope_level) {
     for (auto& symbol : bucket) {
         if (symbol->scope_level != scope_level) continue;
+
+        Label function_label = symbol->function_info.label;
+        label_remove(function_label);
+
         SYMTABLE::remove_symbol(symbol);
     }
 
     pop_level();
+}
+
+size_t Scope::get_size_of_stack_frame(const SymbolBucket& bucket) {
+    size_t size{};
+    for (auto& symbol : bucket) {
+        get_type_size(symbol->data_type);
+    }
+    return size;
 }

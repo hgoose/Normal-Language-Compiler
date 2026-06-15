@@ -11,7 +11,9 @@ extern const NodeToCodegenFnMap node_type_to_codegen {
     {NODE_TYPE::ASSIGN, update_var},
     {NODE_TYPE::IF, process_if},
     {NODE_TYPE::WHILE, process_while},
-    {NODE_TYPE::BLOCK, process_block}
+    {NODE_TYPE::BLOCK, process_block},
+    {NODE_TYPE::FUNCTION, process_fn},
+    {NODE_TYPE::CALL, process_call}
 };
 
 bool node_type_has_codegen_fn(NODE_TYPE node_type) {

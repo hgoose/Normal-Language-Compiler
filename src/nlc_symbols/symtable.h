@@ -14,16 +14,26 @@ struct SYMLOCATION {
     size_t address{};
     size_t stack_offset{};
     std::string reg_label{};
-    Byte label{};
 
     SYMLOCATION() = default;
     SYMLOCATION(LOCATION_TYPE, size_t, size_t, const std::string&);
+};
+
+struct FunctionInfo {
+    Label label{};
+    AST_NODE* parameter_pack{};
+    AST_NODE* return_value{};
+    AST_NODE* block{};
+
+    FunctionInfo() = default;
+    FunctionInfo(Label, AST_NODE*, AST_NODE*, AST_NODE*);
 };
 
 struct SYMINFO {
     std::string name{};
     SYMTYPE type{};
     SYMLOCATION location{};
+    FunctionInfo function_info{};
 
     TYPE data_type{};
 
@@ -44,7 +54,7 @@ struct SYMINFO {
     bool is_same_as(const SYMINFO* other);
     bool is_same_as_no_scope(const SYMINFO* other);
     bool is_same_as_scope_at_most(const SYMINFO* other);
-    void set_label(Byte);
+    void install_function(Label, AST_NODE*, AST_NODE*, AST_NODE*);
 };
 
 struct SYMTABLE {

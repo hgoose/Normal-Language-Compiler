@@ -25,5 +25,9 @@ enum class TYPE : unsigned int {
 extern const StatementNodes statement_nodes;
 extern const NodeTypeMap<std::string> node_type_to_string_map;
 extern const InvTypeMap<std::string> inv_type_map;
+extern const TypeSet assignable_types;
+extern const InvTypeMap<std::size_t> type_to_size;
+
+size_t get_type_size(TYPE);
 
 #endif

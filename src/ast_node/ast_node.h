@@ -124,6 +124,9 @@ struct AST_NODE {
     std::string get_type() const;
 
     bool symbol_freed() const;
+
+    bool is_type_assignable() const;
+    size_t type_size() const;
 };
 
 #endif

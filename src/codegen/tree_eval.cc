@@ -13,7 +13,9 @@
 #include <algorithm>
 #include <iostream>
 
-static void r_evaluate_expr(AST_NODE* p, int& pushed) {
+int pushed{};
+
+static void r_evaluate_expr(AST_NODE* p) {
     if (!p) return;
 
     if (p->token.is(TOKEN_AND)) {
@@ -30,8 +32,8 @@ static void r_evaluate_expr(AST_NODE* p, int& pushed) {
         } else return;
 
         // evaluate lhs
-        r_evaluate_expr(left, pushed);
-        x86_popr32(REGISTER::EAX); --pushed;
+        r_evaluate_expr(left);
+        x86_popr32(REGISTER::EAX); 
 
         // if lhs == 0, result is false; skip rhs
         x86_test_al_imm8(1);
@@ -39,12 +41,12 @@ static void r_evaluate_expr(AST_NODE* p, int& pushed) {
         int jz_start = get_current_position();
 
         // evaluate rhs only if lhs was true
-        r_evaluate_expr(right, pushed);
-        x86_popr32(REGISTER::EAX); --pushed;
+        r_evaluate_expr(right);
+        x86_popr32(REGISTER::EAX); 
 
         int jz_end = get_current_position();
 
-        x86_pushr32(REGISTER::EAX); ++pushed;
+        x86_pushr32(REGISTER::EAX); 
 
         int jz_size = jz_end - jz_start;
         load_imm32_at(jz_false, jz_size);
@@ -66,8 +68,8 @@ static void r_evaluate_expr(AST_NODE* p, int& pushed) {
         } else return;
 
         // evaluate lhs
-        r_evaluate_expr(left, pushed);
-        x86_popr32(REGISTER::EAX); --pushed;
+        r_evaluate_expr(left);
+        x86_popr32(REGISTER::EAX); 
 
         // if lhs != 0, result is true, skip rhs
         x86_test_al_imm8(1);
@@ -76,15 +78,15 @@ static void r_evaluate_expr(AST_NODE* p, int& pushed) {
         int jnz_start = get_current_position();
 
         // evaluate rhs only if lhs was false
-        r_evaluate_expr(right, pushed);
-        x86_popr32(REGISTER::EAX); --pushed;
+        r_evaluate_expr(right);
+        x86_popr32(REGISTER::EAX); 
 
         x86_test_al_imm8(1);
         x86_setnz_al();
         x86_movzx_r32_r8_al(REGISTER::EAX);
         int jnz_end = get_current_position();
 
-        x86_pushr32(REGISTER::EAX); ++pushed;
+        x86_pushr32(REGISTER::EAX); 
 
         int jnz_jump_size = jnz_end - jnz_start;
 
@@ -93,78 +95,78 @@ static void r_evaluate_expr(AST_NODE* p, int& pushed) {
         return;
     }
 
-    std::for_each(p->children.begin(), p->children.end(), [&pushed](auto it) -> void {
-        r_evaluate_expr(it, pushed);
+    std::for_each(p->children.begin(), p->children.end(), [](auto it) -> void {
+        r_evaluate_expr(it);
     });
 
     // PUSH INTEGERS TO THE STACK
     if (p->node_type == NODE_TYPE::INT) {
-        x86_push_imm32(p->token.integer); ++pushed;
+        x86_push_imm32(p->token.integer); 
     } 
 
     else if (p->node_type == NODE_TYPE::VAR) {
         // Get a pointer to the variable in r11, 
         // then push that value to the stack
         x86_get_int_for_expr(p->syminfo->location.int_table_offset);
-        x86_pushm32(REGISTER::R11); ++pushed;
+        x86_pushm32(REGISTER::R11); 
     } 
 
     else if (p->node_type == NODE_TYPE::BOOL) {
-        x86_push_imm32(p->boolean); ++pushed;
+        x86_push_imm32(p->boolean); 
     }
 
     // RUN CODE FOR UNARY NEGATION
     else if (p->token.is(TOKEN_UNEG)) {
-        x86_popr32(REGISTER::EAX); --pushed;
+        x86_popr32(REGISTER::EAX); 
         x86_xor_rr32(REGISTER::ECX, REGISTER::ECX);
         x86_xchg32(REGISTER::EAX, REGISTER::ECX);
         x86_sub_rr32(REGISTER::EAX, REGISTER::ECX);
-        x86_pushr32(REGISTER::EAX); ++pushed;
+        x86_pushr32(REGISTER::EAX); 
     } 
 
     // RUN CODE FOR BINARY ADDITION
     else if (p->token.is(TOKEN_PLUS)) {
-        x86_popr32(REGISTER::EAX); --pushed;
-        x86_popr32(REGISTER::ECX); --pushed;
+        x86_popr32(REGISTER::EAX); 
+        x86_popr32(REGISTER::ECX); 
         // x86_xchg32(REGISTER::EAX, REGISTER::ECX);
         x86_add_rr32(REGISTER::EAX, REGISTER::ECX);
-        x86_pushr32(REGISTER::EAX); ++pushed;
+        x86_pushr32(REGISTER::EAX); 
     }
 
     // RUN CODE FOR BINARY SUBTRACTION
     else if (p->token.is(TOKEN_MINUS)) {
-        x86_popr32(REGISTER::EAX); --pushed;
-        x86_popr32(REGISTER::ECX); --pushed;
+        x86_popr32(REGISTER::EAX); 
+        x86_popr32(REGISTER::ECX); 
         x86_xchg32(REGISTER::EAX, REGISTER::ECX);
         x86_sub_rr32(REGISTER::EAX, REGISTER::ECX);
-        x86_pushr32(REGISTER::EAX); ++pushed;
+        x86_pushr32(REGISTER::EAX); 
     }
 
     // RUN CODE FOR BINARY MULTIPLICATION
     else if (p->token.is(TOKEN_MULT)) {
-        x86_popr32(REGISTER::EAX); --pushed;
-        x86_popr32(REGISTER::ECX); --pushed;
+        x86_popr32(REGISTER::EAX); 
+        x86_popr32(REGISTER::ECX); 
         // x86_xchg32(REGISTER::EAX, REGISTER::ECX);
         x86_mult_rr32(REGISTER::EAX, REGISTER::ECX);
-        x86_pushr32(REGISTER::EAX); ++pushed;
+        x86_pushr32(REGISTER::EAX); 
     }
 
     // RUN CODE FOR BINARY DIVISION
     else if (p->token.is(TOKEN_DIV)) {
-        x86_popr32(REGISTER::EAX); --pushed;
-        x86_popr32(REGISTER::ECX); --pushed;
+        x86_popr32(REGISTER::EAX); 
+        x86_popr32(REGISTER::ECX); 
         x86_xchg32(REGISTER::EAX, REGISTER::ECX);
         x86_div_rr32(REGISTER::EAX, REGISTER::ECX);
-        x86_pushr32(REGISTER::EAX); ++pushed;
+        x86_pushr32(REGISTER::EAX); 
     }
 
     // RUN CODE FOR BINARY MODULUS
     else if (p->token.is(TOKEN_MOD)) {
-        x86_popr32(REGISTER::EAX); --pushed;
-        x86_popr32(REGISTER::ECX); --pushed;
+        x86_popr32(REGISTER::EAX); 
+        x86_popr32(REGISTER::ECX); 
         x86_xchg32(REGISTER::EAX, REGISTER::ECX);
         x86_modulo_rr32(REGISTER::EAX, REGISTER::ECX);
-        x86_pushr32(REGISTER::EAX); ++pushed;
+        x86_pushr32(REGISTER::EAX); 
     }
 
     // RUN CODE FOR SUPER FAST EXPONENTIATION
@@ -174,18 +176,18 @@ static void r_evaluate_expr(AST_NODE* p, int& pushed) {
         // fast_exp makes two pops
         pushed-=2;
 
-        x86_pushr32(REGISTER::EAX); ++pushed;
+        x86_pushr32(REGISTER::EAX); 
     } 
 
     else if (p->token.is(TOKEN_NOT)) {
-        x86_popr32(REGISTER::EAX); --pushed;
+        x86_popr32(REGISTER::EAX); 
         x86_al_flip();
-        x86_pushr32(REGISTER::EAX); ++pushed;
+        x86_pushr32(REGISTER::EAX); 
     }
 
     else if (p->operator_is_relational()) {
-        x86_popr32(REGISTER::EAX); --pushed;
-        x86_popr32(REGISTER::ECX); --pushed;
+        x86_popr32(REGISTER::EAX); 
+        x86_popr32(REGISTER::ECX); 
         x86_cmp_rr32(REGISTER::ECX, REGISTER::EAX);
 
         if (p->token.is(TOKEN_LESS)) {
@@ -214,7 +216,7 @@ static void r_evaluate_expr(AST_NODE* p, int& pushed) {
         }
 
         x86_movzx_r32_r8_al(REGISTER::EAX);
-        x86_pushr32(REGISTER::EAX); ++pushed;
+        x86_pushr32(REGISTER::EAX); 
     }
 
 }
@@ -223,14 +225,13 @@ void evaluate_expr(AST_NODE* root) {
     // Noop on empty tree
     if (!root) return;
 
-    int pushed{};
-
-    r_evaluate_expr(root, pushed);
+    pushed = 0;
+    r_evaluate_expr(root);
 
     if (pushed == 0) return;
 
     if (pushed > 0) {
-        x86_popr32(REGISTER::EAX); --pushed;
+        x86_popr32(REGISTER::EAX); 
     }
 
     for (int i{}; i<pushed; ++i) {
@@ -242,15 +243,14 @@ void evaluate_print_expr(AST_NODE* root) {
     // Noop on empty tree
     if (!root) return;
 
-    int pushed{};
-
     // Evaluate expression
-    r_evaluate_expr(root, pushed);
+    pushed = 0;
+    r_evaluate_expr(root);
 
     if (pushed == 0) return;
 
     // Result in EAX
-    x86_popr32(REGISTER::EAX); --pushed;
+    x86_popr32(REGISTER::EAX); 
 
     if (root->is_type_integral()) {
         // Call print_int with value in accumulator
@@ -524,32 +524,85 @@ bool process_block(AST_NODE* root) {
         dispatch_statement(child); 
     }
 
-    Scope::tear_down_frame(root->scope_stack_frame, root->statement_scope_level);
+    Scope::tear_down_frame(
+        root->scope_stack_frame, 
+        root->statement_scope_level
+    );
 
     return true;
 }
 
 bool process_fn(AST_NODE* root) {
-    AST_NODE* name, *ppack, *rv, *block;
+    AST_NODE* name{}, *ppack{}, *rv{}, *block{};
 
     auto child = root->children.begin();
     auto end = root->children.end();
 
-    if (child++ != end) name = *child;
-    if (child++ != end) ppack = *child;
-    if (child++ != end) rv = *child;
-    if (child++ != end) block = *child;
+    if (child != end) name = *child++;
+    if (child != end) ppack = *child++;
+    if (child != end) rv = *child++;
+    if (child != end) block = *child++;
 
-    std::string function_name = name->token.identifier;
-    Byte label_byte = get_current_position();
-
-    label_create(function_name, label_byte);
-
-    // SYMINFO* syminfo = SYMTABLE::get_symbol(name->syminfo.name, name->syminfo.)
-
-    for (auto& child : block->children) {
-        dispatch_statement(child);
+    if (!block) {
+        block = new AST_NODE(Token{},
+            NODE_TYPE::BLOCK,
+            Scope::level()
+        );
+        root->add_children(block);
     }
 
+    Label label = name->token.identifier;
+    SYMINFO* syminfo = SYMTABLE::get_symbol(name->syminfo);
+    if (!syminfo) {
+        set_print_token_error(Error{}, NLC_INVALID_IDENTIFIER);
+        return false;
+    }
+
+    size_t jmp_start = x86_jmp_rel32_missing();
+    size_t label_byte = get_current_position();
+
+    label_create(syminfo->function_info.label, label_byte);
+
+    bind_function_parameters(ppack);
+
+    emit_function_prologue(block->scope_stack_frame);
+
+    for (auto& statement : block->children) {
+        dispatch_statement(statement);
+    }
+
+    emit_function_epilogue();
+
+    size_t body_end = get_current_position();
+    size_t body_size = body_end - label_byte;
+
+    load_imm32_at(jmp_start, body_size);
+
+    Scope::tear_down_frame(block->scope_stack_frame, root->statement_scope_level);
     return true; 
+}
+
+bool process_call(AST_NODE* root) {
+    AST_NODE* name{}, *argpack{};
+
+    auto child = root->children.begin();
+    auto end = root->children.end();
+
+    if (child != end) name = *child++;
+    if (child != end) argpack = *child++;
+
+    return true;
+}
+
+void bind_function_parameters(AST_NODE* ppack) {
+    if (!ppack) return;
+    
+    int index{};
+    for (auto& parameter : ppack->children) {
+        SYMINFO* syminfo = SYMTABLE::get_symbol(parameter->syminfo);
+        syminfo->location.location_type = LOCATION_TYPE::STACK;
+        syminfo->location.stack_offset = 16 * index + 8;
+
+        ++index;
+    }
 }

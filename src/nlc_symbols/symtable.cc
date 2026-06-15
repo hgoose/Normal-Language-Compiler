@@ -14,6 +14,13 @@ SYMLOCATION::SYMLOCATION(LOCATION_TYPE location_type, size_t int_table_offset, s
     reg_label(reg_label) 
 {}
 
+FunctionInfo::FunctionInfo(Label label, AST_NODE* parameter_pack, AST_NODE* return_value, AST_NODE* block)
+    : label(label),
+    parameter_pack(parameter_pack),
+    return_value(return_value),
+    block(block)
+{}
+
 SYMINFO::SYMINFO(const std::string& name, TYPE data_type, SYMTYPE type) 
     : name(name),
     data_type(data_type),
@@ -77,8 +84,8 @@ bool SYMINFO::is_same_as_scope_at_most(const SYMINFO* other) {
     return name == other->name && type == other->type && scope_level <= other->scope_level; 
 }
 
-void SYMINFO::set_label(Byte byte) {
-    location.label = byte;    
+void SYMINFO::install_function(Label label, AST_NODE* parameter_pack,  AST_NODE* return_value, AST_NODE* block) {
+    function_info = FunctionInfo(label, parameter_pack, return_value, block);
 }
 
 SYMINFO* SYMTABLE::get_symbol(const std::string& name, const SYMTYPE& symbol_type, ScopeLevel level) {
@@ -98,18 +105,8 @@ SYMINFO* SYMTABLE::get_symbol(const std::string& name, const SYMTYPE& symbol_typ
 }
 
 SYMINFO* SYMTABLE::get_symbol(const SYMINFO* other) {
-    // Get bucket number
-    size_t hx = hash(other->name);
-
-    // Search for symbol in bucket
-    for (auto& member : symbol_table[hx]) {
-        if (member->is_same_as_scope_at_most(other)) {
-            return member;
-        }
-    }
-
-    // No symbol found
-    return nullptr;
+    if (!other) return nullptr;
+    return get_symbol(other->name, other->type, other->scope_level);
 }
 
 SYMINFO* SYMTABLE::get_symbol(const std::string& name, const SYMTYPE& symbol_type) {

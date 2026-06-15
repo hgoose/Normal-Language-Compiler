@@ -16,13 +16,3 @@ const ParseMap parse_map = {
     {"procedure", parse_fn},
     {"call", parse_call}
 };
-
-const EvalMap eval_map = {
-    {NODE_TYPE::PRINT, evaluate_print},
-    {NODE_TYPE::DECL, init_var},
-    {NODE_TYPE::ASSIGN, update_var},
-    {NODE_TYPE::READ, process_read},
-    {NODE_TYPE::IF, process_if},
-    {NODE_TYPE::WHILE, process_while},
-    {NODE_TYPE::FUNCTION, process_fn},
-};

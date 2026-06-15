@@ -5,7 +5,8 @@
 
 extern Labels labels;
 
-bool label_exists(std::string label);
-bool label_create(std::string label, Byte byte);
+bool label_exists(Label);
+bool label_create(Label, size_t);
+bool label_remove(Label);
 
 #endif

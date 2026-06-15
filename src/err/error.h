@@ -35,6 +35,7 @@
 #define  NLC_EXPECTED_PARAMETER_TYPE    -29
 #define  NLC_EXPECTED_FN_BODY           -30
 #define  NLC_INVALID_ARGUMENT           -31
+#define  NLC_INVALID_ARGPACK            -32
 
 struct Token;
 
