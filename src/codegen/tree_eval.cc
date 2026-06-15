@@ -112,7 +112,7 @@ static void r_evaluate_expr(AST_NODE* p) {
             x86_pushm32(REGISTER::R11); 
         }
 
-        // mov r11, rbp-offset
+        // mov r11, rbp+offset
         // push r11
         else if (p->syminfo->in_stack()) {
             std::int32_t offset = p->syminfo->location.stack_offset;
@@ -281,8 +281,9 @@ bool evaluate_print(AST_NODE* root) {
     if (!root) return false;
 
     bool exit{};
-    std::for_each(root->children.begin(), root->children.end(), [&exit](AST_NODE* child) -> void {
-        if (!child || exit) return;
+
+    for (auto& child : root->children){
+        if (!child || exit) break;
 
         if (child->is_var() && child->symbol_freed()) {
             print_error(
@@ -300,7 +301,7 @@ bool evaluate_print(AST_NODE* root) {
         else {
             evaluate_print_expr(child);
         }
-    });
+    }
 
     return true;
 }
@@ -316,7 +317,7 @@ bool init_var(AST_NODE* root) {
     if (child != children_end) value = *child++;
 
     if (var->syminfo->is_in_function()) {
-        var->syminfo->set_location_type_stack();
+        x86_mov_mimm32_disp32(REGISTER::RBP, 0x2, var->syminfo->location.stack_offset);
     }
 
     else {
@@ -332,12 +333,12 @@ bool init_var(AST_NODE* root) {
             entry.offset,
             entry.get_addr()
         );
+    }
 
-        if (value) {
-            AST_NODE* assignment = create_assign(var, value);
-            update_var(assignment);
-            free_tree(assignment);
-        }
+    if (value) {
+        AST_NODE* assignment = create_assign(var, value);
+        update_var(assignment);
+        free_tree(assignment);
     }
 
     return true;
@@ -350,16 +351,10 @@ bool update_var(AST_NODE* root) {
     auto children_end = root->children.end();
 
     AST_NODE* var, *ast_expr;
-    if (child != children_end) {
-        var = *child;
-        ++child;
-    }
+    if (child != children_end) var = *child++;
+    if (child != children_end) ast_expr = *child++;
 
-    if (child != children_end) {
-        ast_expr = *child;
-    }
-
-    SYMINFO* symbol = SYMTABLE::get_symbol(var->token.identifier, var->symbol_type, root->statement_scope_level);
+    SYMINFO* symbol = SYMTABLE::get_symbol(var->syminfo);
 
     // No symbol found
     if (!symbol) {
@@ -369,18 +364,24 @@ bool update_var(AST_NODE* root) {
 
     var->syminfo = symbol;
 
-    // Otherwise, the symbol is found in the symbol table, so we update it
-    
-    // After this call, address of symbol is in r10
-    x86_get_int_for_assign(symbol->location.int_table_offset);
-    
-    // Fast exp uses R10, evaluate_expr could clobber it 
-    x86_mov_rr64(REGISTER::R15, REGISTER::R10);
+    if (var->syminfo->in_stack()) {
+        evaluate_expr(ast_expr);
+        x86_mov_mr32_disp32(REGISTER::RBP, REGISTER::EAX, var->syminfo->location.stack_offset);
+    }
 
-    // Result in eax
-    evaluate_expr(ast_expr);
+    else if (var->syminfo->in_int_table()) {
+        // After this call, address of symbol is in r10
+        x86_get_int_for_assign(symbol->location.int_table_offset);
 
-    x86_mov_mr32_nodisp(REGISTER::R15, REGISTER::EAX);
+        // Fast exp uses R10, evaluate_expr could clobber it 
+        x86_mov_rr64(REGISTER::R15, REGISTER::R10);
+
+        // Result in eax
+        evaluate_expr(ast_expr);
+
+        x86_mov_mr32_nodisp(REGISTER::R15, REGISTER::EAX);
+    }
+    
 
     return true;
 }
@@ -396,7 +397,7 @@ bool process_read(AST_NODE* root) {
         var = *child;
     }
 
-    SYMINFO* symbol = SYMTABLE::get_symbol(var->token.identifier, var->symbol_type, root->statement_scope_level);
+    SYMINFO* symbol = SYMTABLE::get_symbol(var->syminfo);
 
     if (!symbol) {
         set_print_token_error(Error{}, var->token, NLC_UNKNOWN_VARIABLE);
@@ -552,14 +553,6 @@ bool process_fn(AST_NODE* root) {
     if (child != end) ppack = *child++;
     if (child != end) rv = *child++;
     if (child != end) block = *child++;
-
-    if (!block) {
-        block = new AST_NODE(Token{},
-            NODE_TYPE::BLOCK,
-            Scope::level()
-        );
-        root->add_children(block);
-    }
 
     Label label = name->token.identifier;
     SYMINFO* syminfo = SYMTABLE::get_symbol(name->syminfo);

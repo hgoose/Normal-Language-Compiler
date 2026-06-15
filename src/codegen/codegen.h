@@ -31,6 +31,10 @@ inline unsigned int gen_modrm_norr_disp8(REGISTER rm, REGISTER r) {
     return ((0b01 << 0x3) | (r & 0x7)) << 0x3 | (rm & 0x7);
 }
 
+inline unsigned int gen_modrm_norr_disp32(REGISTER rm, REGISTER r) {
+    return ((0b10 << 0x3) | (r & 0x7)) << 0x3 | (rm & 0x7);
+}
+
 inline unsigned int gen_rex_rr(bool w, REGISTER rm, REGISTER reg) {
     bool r = reg >= REGISTER::R8, b = rm >= REGISTER::R8;
 
@@ -71,10 +75,12 @@ void x86_popr64(REGISTER dest);
 void x86_mov_rr32(REGISTER dest, REGISTER src);
 void x86_mov_rr64(REGISTER dest, REGISTER src);
 void x86_mov_rimm32(REGISTER dest, std::int32_t src);
+void x86_mov_mimm32_disp32(REGISTER base, std::int32_t src, std::int32_t disp);
 void x86_mov_rimm64(REGISTER dest, std::int64_t src);
 void x86_mov_rimm64_sizet(REGISTER dest, size_t src);
 void x86_mov_rimm64_ptr(REGISTER dest, std::uintptr_t src);
 void x86_mov_mr32_nodisp(REGISTER dest, REGISTER src);
+void x86_mov_mr32_disp32(REGISTER dest, REGISTER src, std::int32_t disp);
 void x86_mov_mr64_nodisp(REGISTER dest, REGISTER src);
 void x86_mov_mr64_disp8(REGISTER dest, REGISTER src, std::int8_t disp);
 void x86_mov_rm64_disp8(REGISTER dest, REGISTER src, std::int8_t disp);

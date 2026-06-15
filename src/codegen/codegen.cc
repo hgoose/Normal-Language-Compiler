@@ -190,6 +190,18 @@ void x86_mov_rimm32(REGISTER dest, std::int32_t src) {
     load_imm32(src);
 }
 
+// C7 /0 id
+void x86_mov_mimm32_disp32(REGISTER base, std::int32_t src, std::int32_t disp) {
+    if (base >= REGISTER::R8) {
+        load_byte(gen_rex_r(WIDE_OFF, base));
+    }
+
+    load_byte(0xC7);
+    load_byte(gen_modrm_norr_disp32(base, (REGISTER)0));
+    load_imm32(src);
+    load_imm32(disp);
+}
+
 // REX.W + B8+ rd io MOV r64, imm64
 // NOTE: If dest is R8-R15, REX.B = 1, zero otherwise. In any case, 
 // REX.R = REX.X = 0, and REX.W = 1
@@ -252,7 +264,17 @@ void x86_mov_mr64_disp8(REGISTER dest, REGISTER src, std::int8_t disp) {
     load_imm8(disp);
 }
 
-// REX.W + 8B /r
+// 89 /r MOV r/m32, r32
+void x86_mov_mr32_disp32(REGISTER dest, REGISTER src, std::int32_t disp) {
+    if (dest >= REGISTER::R8 || src >= REGISTER::R8) {
+        load_byte(gen_rex_rr(WIDE_OFF, dest, src));
+    }
+    load_byte(0x89);
+    load_byte(gen_modrm_norr_disp32(dest, src));
+    load_imm32(disp);
+}
+
+// REX.W + 8B /r MOV r64, r/m64
 void x86_mov_rm64_disp8(REGISTER dest, REGISTER src, std::int8_t disp) {
     load_byte(gen_rex_rr(WIDE_ON, src, dest));
     load_byte(0x8B);
@@ -675,8 +697,8 @@ int x86_exec() {
     x86_popr64(REGISTER::R15);
     x86_popr64(REGISTER::R12);
     load_byte(0xc3);
-    // dump();
-    // return 0;
+    dump();
+    return 0;
     return ((int(*)(void))prog)();
 }
 

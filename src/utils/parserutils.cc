@@ -11,6 +11,7 @@
 #include "ast_structures.h"
 
 #include <algorithm>
+#include <iostream>
 #include <functional>
 
 // Skips to the next semicolon
@@ -404,7 +405,7 @@ void stack_locals_layout(const SymbolBucket& frame, const AST_NODE* ppack) {
     int rbp{};
     for (; syminfo != frame.end(); ++syminfo) {
         std::size_t type_size = get_type_size((*syminfo)->data_type);
-        (*syminfo)->location.stack_offset = -(rbp + type_size);
+        (*syminfo)->location.stack_offset = rbp - type_size;
         rbp = (*syminfo)->location.stack_offset;
     }
 }

@@ -1032,6 +1032,14 @@ StatementReturns parse_fn() {
     
     // Function with no definition. I.e a declaration.
     if (next_token.is_semicolon()) {
+        AST_NODE* block = new AST_NODE(Token{},
+            NODE_TYPE::BLOCK,
+            Scope::level()
+        );
+        block->set_scope_stack_frame(Scope::get_top_bucket());
+        fn_root->add_children(block);
+        entry->install_function(fn_name, parameter_pack, return_value, block);
+
         get_next_token_and_print_error();
 
         Scope::down_level();
@@ -1055,8 +1063,15 @@ StatementReturns parse_fn() {
 
     // Empty function
     if (next_token.is_rbrace()) {
-        get_next_token_and_print_error();
+        AST_NODE* block = new AST_NODE(Token{},
+            NODE_TYPE::BLOCK,
+            Scope::level()
+        );
+        block->set_scope_stack_frame(Scope::get_top_bucket());
+        fn_root->add_children(block);
+        entry->install_function(fn_name, parameter_pack, return_value, block);
 
+        get_next_token_and_print_error();
         Scope::down_level();
         return {fn_root};
     }
@@ -1078,6 +1093,7 @@ StatementReturns parse_fn() {
 
     for (auto& symbol : fn_body->get_scope_stack_frame()) {
         symbol->set_in_function();
+        symbol->set_location_type_stack();
     }
 
     stack_locals_layout(fn_body->get_scope_stack_frame(), parameter_pack);

@@ -79,7 +79,7 @@ void Scope::tear_down_frame(SymbolBucket& bucket, ScopeLevel scope_level) {
 size_t Scope::get_size_of_stack_frame(const SymbolBucket& bucket) {
     size_t size{};
     for (auto& symbol : bucket) {
-        get_type_size(symbol->data_type);
+        size+=get_type_size(symbol->data_type);
     }
     return size;
 }

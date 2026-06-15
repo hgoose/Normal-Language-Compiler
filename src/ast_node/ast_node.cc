@@ -296,7 +296,7 @@ std::string AST_NODE::get_type() const {
 }
 
 bool AST_NODE::symbol_freed() const {
-    if (!SYMTABLE::get_symbol(syminfo->name, syminfo->type, syminfo->scope_level)) return true;
+    if (!SYMTABLE::get_symbol(syminfo)) return true;
     return false;
 }
 
