@@ -77,11 +77,13 @@ void x86_mov_rimm64_ptr(REGISTER dest, std::uintptr_t src);
 void x86_mov_mr32_nodisp(REGISTER dest, REGISTER src);
 void x86_mov_mr64_nodisp(REGISTER dest, REGISTER src);
 void x86_mov_mr64_disp8(REGISTER dest, REGISTER src, int disp);
+void x86_mov_rm64_disp8(REGISTER dest, REGISTER src, int disp);
 void x86_movzx_r32_r8_al(REGISTER dest);
 
 void x86_sub_rr32(REGISTER dest, REGISTER src);
 void x86_sub_r64_imm32(REGISTER dest, long long x);
 void x86_add_rr32(REGISTER dest, REGISTER src);
+void x86_add_r64_imm32(REGISTER dest, int32_t x);
 void x86_mult_rr32(REGISTER dest, REGISTER src);
 void x86_div_rr32(REGISTER dest, REGISTER src);
 void x86_modulo_rr32(REGISTER dest, REGISTER src);
@@ -101,6 +103,8 @@ void x86_call_void_sca(void(*f)(const char*), STR_TABLE_ENTRY&);
 void x86_init_int_var(INT_TABLE_ENTRY*);
 
 void x86_call(REGISTER);
+void x86_call_rel32(int32_t);
+void x86_call_abs_offset(size_t);
 
 void x86_get_int_for_assign(size_t);
 void x86_get_int_for_expr(size_t);

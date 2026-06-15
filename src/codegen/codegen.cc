@@ -251,6 +251,14 @@ void x86_mov_mr64_disp8(REGISTER dest, REGISTER src, int disp) {
     load_imm8(disp);
 }
 
+// REX.W + 8B /r
+void x86_mov_rm64_disp8(REGISTER dest, REGISTER src, int disp) {
+    load_byte(gen_rex_rr(WIDE_ON, src, dest));
+    load_byte(0x8B);
+    load_byte(gen_modrm_norr_disp8(src, dest));
+    load_imm8(disp);
+}
+
 // 29 /r SUB r/m32, r32
 void x86_sub_rr32(REGISTER dest, REGISTER src) {
     if (dest >= REGISTER::R8 || src >= REGISTER::R8) {
@@ -266,6 +274,14 @@ void x86_sub_r64_imm32(REGISTER dest, long long x) {
     load_byte(gen_rex_r(WIDE_ON, dest));
     load_byte(0x81);
     load_byte(gen_modrm_rr(dest, (REGISTER)5));
+    load_imm32(x);
+}
+
+// REX.W + 81 /0 id ADD r/m64, imm32
+void x86_add_r64_imm32(REGISTER dest, int32_t x) {
+    load_byte(gen_rex_r(WIDE_ON, dest));
+    load_byte(0x81);
+    load_byte(gen_modrm_rr(dest, (REGISTER)0));
     load_imm32(x);
 }
 
@@ -404,6 +420,20 @@ void x86_call(REGISTER reg) {
 
     load_byte(0xFF);
     load_byte(gen_modrm_rr(reg, (REGISTER) 2));
+}
+
+// E8 cd CALL rel32
+void x86_call_rel32(int32_t rel32) {
+    load_byte(0xE8);
+    load_imm32(rel32);
+}
+
+void x86_call_abs_offset(size_t offset){
+    int64_t rel32 = 
+        static_cast<int64_t>(offset) - 
+        static_cast<int64_t>(get_current_position() + 5);
+
+    x86_call_rel32(static_cast<int32_t>(rel32));
 }
 
 // Call some C++ function that takes a single integer argument, and returns void

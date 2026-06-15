@@ -55,6 +55,9 @@ struct SYMINFO {
     bool is_same_as_no_scope(const SYMINFO* other);
     bool is_same_as_scope_at_most(const SYMINFO* other);
     void install_function(Label, AST_NODE*, AST_NODE*, AST_NODE*);
+    bool in_int_table();
+    bool in_stack();
+    bool in_reg();
 };
 
 struct SYMTABLE {

@@ -2,6 +2,11 @@
 
 Labels labels{};
 
+size_t label_get_offset(Label label) {
+    if (labels.find(label) == labels.end()) return 0;
+    return labels.at(label);
+}
+
 bool label_exists(Label label) {
     return labels.find(label) != labels.end();
 }

@@ -107,8 +107,18 @@ static void r_evaluate_expr(AST_NODE* p) {
     else if (p->node_type == NODE_TYPE::VAR) {
         // Get a pointer to the variable in r11, 
         // then push that value to the stack
-        x86_get_int_for_expr(p->syminfo->location.int_table_offset);
-        x86_pushm32(REGISTER::R11); 
+        if (p->syminfo->in_int_table()) {
+            x86_get_int_for_expr(p->syminfo->location.int_table_offset);
+            x86_pushm32(REGISTER::R11); 
+        }
+
+        // mov r11, rbp-offset
+        // push r11
+        else if (p->syminfo->in_stack()) {
+            size_t offset = p->syminfo->location.stack_offset;
+            x86_mov_rm64_disp8(REGISTER::R11, REGISTER::RBP, offset);
+            x86_pushr64(REGISTER::R11);
+        }
     } 
 
     else if (p->node_type == NODE_TYPE::BOOL) {
@@ -591,6 +601,17 @@ bool process_call(AST_NODE* root) {
     if (child != end) name = *child++;
     if (child != end) argpack = *child++;
 
+    size_t fn_start = label_get_offset(name->syminfo->function_info.label);
+
+    int32_t k{};
+    for (auto arg = argpack->children.rbegin(); arg != argpack->children.rend(); ++arg, k+=8) {
+        // Result in eax
+        evaluate_expr(*arg);
+        x86_pushr64(REGISTER::EAX);
+    }
+    x86_call_abs_offset(fn_start);
+    x86_add_r64_imm32(REGISTER::RSP, k);
+
     return true;
 }
 
@@ -601,7 +622,7 @@ void bind_function_parameters(AST_NODE* ppack) {
     for (auto& parameter : ppack->children) {
         SYMINFO* syminfo = SYMTABLE::get_symbol(parameter->syminfo);
         syminfo->location.location_type = LOCATION_TYPE::STACK;
-        syminfo->location.stack_offset = 16 * index + 8;
+        syminfo->location.stack_offset = 16 + index * 8;
 
         ++index;
     }

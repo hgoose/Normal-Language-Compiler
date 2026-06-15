@@ -88,6 +88,18 @@ void SYMINFO::install_function(Label label, AST_NODE* parameter_pack,  AST_NODE*
     function_info = FunctionInfo(label, parameter_pack, return_value, block);
 }
 
+bool SYMINFO::in_int_table() {
+    return location.location_type == LOCATION_TYPE::MEMORY;
+}
+
+bool SYMINFO::in_stack() {
+    return location.location_type == LOCATION_TYPE::STACK;
+}
+
+bool SYMINFO::in_reg() {
+    return location.location_type == LOCATION_TYPE::REG;
+}
+
 SYMINFO* SYMTABLE::get_symbol(const std::string& name, const SYMTYPE& symbol_type, ScopeLevel level) {
     // Get bucket number
     size_t hx = hash(name);

@@ -5,6 +5,7 @@
 
 extern Labels labels;
 
+size_t label_get_offset(Label);
 bool label_exists(Label);
 bool label_create(Label, size_t);
 bool label_remove(Label);

@@ -7,6 +7,8 @@
 #include <string>
 #include <list>
 #include <utility>
+#include ""
+
 
 struct BufState;
 struct AST_NODE;
@@ -17,7 +19,7 @@ struct SYMINFO;
 enum class NODE_TYPE : unsigned int;
 enum class TYPE : unsigned int;
 
-typedef unsigned char Byte;
+typedef std::uint8_t Byte;
 typedef std::string Label;
 typedef std::unordered_map<Label, Byte> Labels;
 
