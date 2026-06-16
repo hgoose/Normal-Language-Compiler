@@ -697,8 +697,8 @@ int x86_exec() {
     x86_popr64(REGISTER::R15);
     x86_popr64(REGISTER::R12);
     load_byte(0xc3);
-    dump();
-    return 0;
+    // dump();
+    // return 0;
     return ((int(*)(void))prog)();
 }
 

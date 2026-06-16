@@ -654,26 +654,6 @@ bool process_return(AST_NODE* root) {
     return true;
 }
 
-/*
-    for(a;b;b) ... 
-
-    -----
-    | a |
-    -----
-    ----- <-----
-    | b |      |
-    -----      |
-    test al    | 
-  |- jz        |
-  |  --------  |
-  |  | body |  |
-  |  --------  |
-  |  -----     |
-  |  | c |     |
-  |  -----     |
-  |  jmp -------
-  ->
-*/
 bool process_for(AST_NODE* root) {
     if (!root) return false;
 
@@ -707,8 +687,10 @@ bool process_for(AST_NODE* root) {
 
     Offset condition_position = get_current_position();
 
-    if (cond) evaluate_expr(cond);
-    x86_test_al_imm8(0x1);
+    if (cond) {
+        evaluate_expr(cond);
+        x86_test_al_imm8(0x1);
+    }
 
     Offset jz_after_cond = x86_jz_rel32_missing();
 
@@ -723,7 +705,7 @@ bool process_for(AST_NODE* root) {
     Offset body_size_end = get_current_position();
 
     std::int32_t body_size = body_size_end - body_size_start;
-    std::int32_t jmp_size = -(body_size_end - condition_position + 5);
+    std::int32_t jmp_size = -(body_size_end - condition_position );
 
     load_imm32_at(jz_after_cond, body_size);
     load_imm32_at(jmp_start, jmp_size);
