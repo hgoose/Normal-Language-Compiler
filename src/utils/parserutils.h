@@ -67,4 +67,6 @@ void stack_locals_layout(const SymbolBucket&, const AST_NODE*);
 
 bool verify_init_or_assign(const StatementReturns&);
 
+Token tpeek();
+
 #endif

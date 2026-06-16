@@ -38,6 +38,7 @@
 #define  NLC_INVALID_ARGPACK            -32
 #define  NLC_BAD_INITIALIZATION         -33
 #define  NLC_BAD_CONDITION              -34
+#define  NLC_EXPECTED_RETURN_TYPE       -35
 
 struct Token;
 

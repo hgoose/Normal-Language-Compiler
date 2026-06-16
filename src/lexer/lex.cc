@@ -155,11 +155,12 @@ void lex_cleanup() {
 
 LexState lex_save() {
     BufState bufstate = buffer_save_state(); 
-    return LexState{next_token, bufstate};
+    return LexState{next_token, last_token, bufstate};
 }
 
 void lex_goto_last_save(const LexState& state) {
     next_token = state.next_token;
+    last_token = state.last_token;
     buffer_load_state(state.bufstate);
 }
 

@@ -105,7 +105,9 @@ struct Token
     bool is_comma() const;
     bool is_lparen() const;
     bool is_rparen() const;
+    bool is_not_rparen() const;
     bool is_arrow() const;
+    bool is_assign() const;
 
     bool is_eof() const;
 

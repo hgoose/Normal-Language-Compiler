@@ -11,6 +11,7 @@ extern Token next_token;
 extern Token prev_token;
 
 extern bool SUPPRESS_PARSER_ERRORS;
+extern bool ENFORCE_TERMINATING_SEMICOLON;
 
 // INITIALIZATION
 Error parser_init(const char* src_code);

@@ -204,8 +204,16 @@ bool Token::is_rparen() const {
     return is(TOKEN_RPAREN);
 }
 
+bool Token::is_not_rparen() const {
+    return !is_rparen();
+}
+
 bool Token::is_arrow() const {
     return is(TOKEN_ARROW);
+}
+
+bool Token::is_assign() const {
+    return is(TOKEN_ASSIGN);
 }
 
 bool Token::is_eof() const {

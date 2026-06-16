@@ -32,6 +32,7 @@ const ErrorMap error_map {
     {NLC_INVALID_ARGPACK, "invalid argument pack"},
     {NLC_BAD_INITIALIZATION, "bad initialization"},
     {NLC_BAD_CONDITION, "bad condition"},
+    {NLC_EXPECTED_RETURN_TYPE, "expected return type"},
 };
 
 bool error_unknown(ErrorValue error_value) {

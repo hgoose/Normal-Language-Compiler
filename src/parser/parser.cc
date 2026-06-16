@@ -30,6 +30,7 @@
 #include <unordered_map>
 
 bool SUPPRESS_PARSER_ERRORS{};
+bool ENFORCE_TERMINATING_SEMICOLON{true};
 
 Token next_token;
 Token prev_token;
@@ -56,34 +57,22 @@ StatementReturns get_statement() {
         return parse_map.at(lexeme)();
     }
 
-    // Suppress errors, save state, and try to 
-    // parse as assignment.
-    SUPPRESS_PARSER_ERRORS = true;
+    Token peek = tpeek();
 
-    LexState state = lex_save();
+    if (peek.is_assign()) {
+        return parse_assign();
+    }
+
     AST_NODE* possible_expression = try_expression(DONT_EAT_SEMICLOON);
-
-    SUPPRESS_PARSER_ERRORS = false;
 
     if (possible_expression && possible_expression->is_fn_call()) {
         return {possible_expression};
     }
 
-    // The statement was indeed an expression if after 
-    // we try to parse as expression, we are left at a semicolon.
-    // Note that we are not interested in doing anything
-    // with the expression.
-    if (possible_expression && next_token.is_semicolon()) {
-        return {};
-    }
-
-    // Either the expression had an error
-    // or we have an assignment statement.
-    lex_goto_last_save(state);
-    StatementReturns possible_assign = parse_assign();
-
-    if (possible_assign.size()) {
-        return {possible_assign};
+    if (possible_expression) {
+        if (ENFORCE_TERMINATING_SEMICOLON && next_token.is_not_semicolon()) 
+            return {};
+        return {possible_expression};
     }
 
     return {};
@@ -119,7 +108,6 @@ int parse() {
         else {
             try_expression();
         }
-
     }
 
     x86_pushr64(REGISTER::R12);
@@ -233,15 +221,17 @@ StatementReturns parse_print() {
         return {};
     }
 
-    // Missing semicolon after )
-    if (unexpected_token(prev_token, TOKEN_SEMICOLON, NLC_EXPECTED_SEMICOLON)) {
-        free_tree(print_root);
-        return {};
-    }
+    if (ENFORCE_TERMINATING_SEMICOLON) {
+        // Missing semicolon after )
+        if (unexpected_token(prev_token, TOKEN_SEMICOLON, NLC_EXPECTED_SEMICOLON)) {
+            free_tree(print_root);
+            return {};
+        }
 
-    // At semicolon. Consume it.
-    lex_error = munch();
-    skip_if_lexerr(lex_error);
+        // At semicolon. Consume it.
+        lex_error = munch();
+        skip_if_lexerr(lex_error);
+    }
 
     return {print_root};
 }
@@ -302,14 +292,16 @@ StatementReturns parse_read() {
         return {};
     }
 
-    if (unexpected_token(prev_token, TOKEN_SEMICOLON, NLC_EXPECTED_SEMICOLON)) {
-        free_tree(read_root);
-        return {};
-    }
+    if (ENFORCE_TERMINATING_SEMICOLON) {
+        if (unexpected_token(prev_token, TOKEN_SEMICOLON, NLC_EXPECTED_SEMICOLON)) {
+            free_tree(read_root);
+            return {};
+        }
 
-    // At semicolon. Consume it.
-    lex_err = munch();
-    skip_if_lexerr(lex_err);
+        // At semicolon. Consume it.
+        lex_err = munch();
+        skip_if_lexerr(lex_err);
+    }
 
     return {read_root};
 }
@@ -373,6 +365,8 @@ StatementReturns parse_decl_int() {
     lex_err = munch();
     if (skip_if_lexerr(lex_err)) {
         free_tree(declare_root);
+
+        SYMTABLE::remove_symbol(entry);
         return {};
     }
 
@@ -382,6 +376,8 @@ StatementReturns parse_decl_int() {
         lex_err = munch();
         if (skip_if_lexerr(lex_err)) {
             free_tree(declare_root);
+
+            SYMTABLE::remove_symbol(entry);
             return {};
         }
 
@@ -390,6 +386,8 @@ StatementReturns parse_decl_int() {
 
         else {
             onepast_semi_or_block(LBRACE_COUNT_ZERO);
+
+            SYMTABLE::remove_symbol(entry);
             return {};
         }
     }
@@ -404,6 +402,8 @@ StatementReturns parse_decl_int() {
         // missing identifier.
         if (wrong_next_token(TOKEN_SEMICOLON, NLC_INVALID_IDENTIFIER)) {
             free_statement_return_list(declares);
+
+            SYMTABLE::remove_symbol(entry);
             return {};
         }
 
@@ -413,6 +413,8 @@ StatementReturns parse_decl_int() {
             set_print_token_error(Error{}, NLC_INVALID_IDENTIFIER);
             onepast_semi_or_block(LBRACE_COUNT_ZERO);
             free_statement_return_list(declares);
+
+            SYMTABLE::remove_symbol(entry);
             return {};
         }
 
@@ -423,6 +425,8 @@ StatementReturns parse_decl_int() {
         if (others.empty()) {
             onepast_semi_or_block(LBRACE_COUNT_ZERO);
             free_statement_return_list(declares);
+
+            SYMTABLE::remove_symbol(entry);
             return {};
         }
 
@@ -431,14 +435,18 @@ StatementReturns parse_decl_int() {
 
     if (!top) return declares;
 
-    // Statement does not end with a semicolon
-    if (unexpected_token(prev_token, TOKEN_SEMICOLON, NLC_EXPECTED_SEMICOLON)) {
-        free_statement_return_list(declares);
-        return {};
-    }
+    if (ENFORCE_TERMINATING_SEMICOLON) {
+        // Statement does not end with a semicolon
+        if (unexpected_token(prev_token, TOKEN_SEMICOLON, NLC_EXPECTED_SEMICOLON)) {
+            free_statement_return_list(declares);
 
-    lex_err = munch();
-    skip_if_lexerr(lex_err);
+            SYMTABLE::remove_symbol(entry);
+            return {};
+        }
+
+        lex_err = munch();
+        skip_if_lexerr(lex_err);
+    }
 
     return declares;
 }
@@ -551,15 +559,17 @@ StatementReturns parse_assign() {
         return {};
     }
 
-    // Statement does not end with a semicolon
-    if (unexpected_token(prev_token, TOKEN_SEMICOLON, NLC_EXPECTED_SEMICOLON)) {
-        free_statement_return_list(assigns);
-        return {};
-    }
+    if (ENFORCE_TERMINATING_SEMICOLON) {
+        // Statement does not end with a semicolon
+        if (unexpected_token(prev_token, TOKEN_SEMICOLON, NLC_EXPECTED_SEMICOLON)) {
+            free_statement_return_list(assigns);
+            return {};
+        }
 
-    // At semicolon. Consume it.
-    lex_err = munch();
-    skip_if_lexerr(lex_err);
+        // At semicolon. Consume it.
+        lex_err = munch();
+        skip_if_lexerr(lex_err);
+    }
 
     return assigns;
 }
@@ -978,6 +988,7 @@ StatementReturns parse_fn() {
     if (skip_if_lexerr(lex_err, skip_fn)) {
         free_trees(fn_root);
 
+        SYMTABLE::remove_symbol(entry);
         Scope::down_level();
         return {};
     }
@@ -985,6 +996,7 @@ StatementReturns parse_fn() {
     if (unexpected_token(TOKEN_LPAREN, NLC_SYNTAX_ERROR, skip_fn)) {
         free_trees(fn_root);
 
+        SYMTABLE::remove_symbol(entry);
         Scope::down_level();
         return {};
     }
@@ -993,6 +1005,7 @@ StatementReturns parse_fn() {
     if (skip_if_lexerr(lex_err, skip_fn)) {
         free_trees(fn_root);
 
+        SYMTABLE::remove_symbol(entry);
         Scope::down_level();
         return {};
     }
@@ -1002,6 +1015,7 @@ StatementReturns parse_fn() {
     if (!parameter_pack) {
         free_trees(fn_root);
 
+        SYMTABLE::remove_symbol(entry);
         Scope::down_level();
         return {};
     }
@@ -1024,6 +1038,7 @@ StatementReturns parse_fn() {
     if (unexpected_token(TOKEN_ARROW, NLC_SYNTAX_ERROR, skip_fn)) {
         free_trees(fn_root);
 
+        SYMTABLE::remove_symbol(entry);
         Scope::down_level();
         return {};
     }
@@ -1032,14 +1047,17 @@ StatementReturns parse_fn() {
     if (skip_if_lexerr(lex_err, skip_fn)) {
         free_trees(fn_root);
 
+        SYMTABLE::remove_symbol(entry);
         Scope::down_level();
         return {};
     }
 
     if (next_token.is_not_type()) {
+        set_print_token_error(Error{}, NLC_EXPECTED_RETURN_TYPE);
         skip_fn(LBRACE_COUNT_ZERO);
         free_trees(fn_root);
 
+        SYMTABLE::remove_symbol(entry);
         Scope::down_level();
         return {};
     }
@@ -1058,6 +1076,7 @@ StatementReturns parse_fn() {
     if (skip_if_lexerr(lex_err, skip_fn)) {
         free_trees(fn_root);
 
+        SYMTABLE::remove_symbol(entry);
         Scope::down_level();
         return {};
     }
@@ -1074,6 +1093,7 @@ StatementReturns parse_fn() {
 
         get_next_token_and_print_error();
 
+        SYMTABLE::remove_symbol(entry);
         Scope::down_level();
         return {fn_root};
     }
@@ -1081,6 +1101,7 @@ StatementReturns parse_fn() {
     if (unexpected_token(TOKEN_LBRACE, NLC_EXPECTED_FN_BODY, skip_fn)) {
         free_trees(fn_root);
 
+        SYMTABLE::remove_symbol(entry);
         Scope::down_level();
         return {};
     }
@@ -1089,6 +1110,7 @@ StatementReturns parse_fn() {
     if (skip_if_lexerr(lex_err, skip_fn)) {
         free_trees(fn_root);
 
+        SYMTABLE::remove_symbol(entry);
         Scope::down_level();
         return {};
     }
@@ -1290,6 +1312,14 @@ StatementReturns parse_for() {
         return {};
     }
 
+    lex_err = munch();
+    if (skip_if_lexerr(lex_err, skip_for)) {
+        free_trees(for_root);
+
+        Scope::down_level();
+        return {};
+    }
+
     AST_NODE* init = new AST_NODE(NODE_TYPE::FOR_INIT, Scope::level()),
             * cond = new AST_NODE(NODE_TYPE::FOR_COND, Scope::level()),
             * update = new AST_NODE(NODE_TYPE::FOR_UPDATE, Scope::level()),
@@ -1309,6 +1339,7 @@ StatementReturns parse_for() {
     }
 
     else {
+        // Get statement will eat the semicolon after the statement.
         StatementReturns init_statements = get_statement();
 
         if (init_statements.empty() || !verify_init_or_assign(init_statements)) {
@@ -1328,33 +1359,9 @@ StatementReturns parse_for() {
         init->add_all_statements(init_statements);
     }
 
-    if (unexpected_token(TOKEN_SEMICOLON, NLC_EXPECTED_SEMICOLON, skip_for)) {
-        free_trees(for_root);
-
-        Scope::down_level();
-        return {};
-    }
-
-    lex_err = munch();
-    if (skip_if_lexerr(lex_err, skip_for)) {
-        free_trees(for_root);
-
-        Scope::down_level();
-        return {};
-    }
-
-    if (next_token.is_semicolon()) {
-        lex_err = munch();
-        if (skip_if_lexerr(lex_err, skip_for)) {
-            free_trees(for_root);
-
-            Scope::down_level();
-            return {};
-        }
-    }
-
-    // Condition
-    else {
+    // Condition. Note that valid expressions will leave us at the 
+    // semicolon after the expression.
+    if (next_token.is_not_semicolon()) {
         AST_NODE* expr = A(expr_err);
         AST_NODE* ast_expr = pttoast(expr);
         free_trees(expr);
@@ -1386,18 +1393,10 @@ StatementReturns parse_for() {
         return {};
     }
 
+    ENFORCE_TERMINATING_SEMICOLON = false;
+
     // Update
-    if (next_token.is_semicolon()) {
-        lex_err = munch();
-        if (skip_if_lexerr(lex_err, skip_for)) {
-            free_trees(for_root);
-
-            Scope::down_level();
-            return {};
-        }
-    }
-
-    else {
+    if (next_token.is_not_rparen()) {
         StatementReturns update_statement = get_statement();
 
         // Error handled by get_statement
@@ -1412,7 +1411,9 @@ StatementReturns parse_for() {
         update->add_all_statements(update_statement);
     }
 
-    if (unexpected_token(TOKEN_LPAREN, NLC_SYNTAX_ERROR, skip_for)) {
+    ENFORCE_TERMINATING_SEMICOLON = true;
+
+    if (unexpected_token(TOKEN_RPAREN, NLC_SYNTAX_ERROR, skip_for)) {
         free_trees(for_root);
 
         Scope::down_level();
@@ -1433,7 +1434,6 @@ StatementReturns parse_for() {
         Scope::down_level();
         return {};
     }
-
 
     return {for_root};
 }

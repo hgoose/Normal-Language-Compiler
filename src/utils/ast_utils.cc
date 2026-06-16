@@ -316,6 +316,18 @@ void r_ast_out(AST_NODE* node, int depth) {
         std::cout << "Return value: " << node->get_type() << '\n';
     }
 
+    else if (node->is_for_init()) {
+        std::cout << "Init: " << '\n'; 
+    }
+
+    else if (node->is_for_cond()) {
+        std::cout << "Condition: " << '\n';
+    }
+
+    else if (node->is_for_update()) {
+        std::cout << "Update: " << '\n';
+    }
+
     else if (node->is_var()) {
         std::cout << "Var: " << node->token.identifier << ": " << node->get_type() << '\n';
     }

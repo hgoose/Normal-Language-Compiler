@@ -9,6 +9,7 @@
 #include "ast_utils.h"
 #include "scope_stack.h"
 #include "ast_structures.h"
+#include "lexstate.h"
 
 #include <algorithm>
 #include <iostream>
@@ -202,12 +203,20 @@ AST_NODE* try_expression(bool eat_semicolon) {
         return nullptr;
     }
 
-    if (next_token.is_comma() || unexpected_token(prev_token, TOKEN_SEMICOLON, NLC_EXPECTED_SEMICOLON)) {
+    if (next_token.is_comma()) {
         get_next_token_and_print_error();
         return nullptr;
     }
 
-    get_next_token_and_print_error();
+    if (ENFORCE_TERMINATING_SEMICOLON) {
+        if (unexpected_token(prev_token, TOKEN_SEMICOLON, NLC_EXPECTED_SEMICOLON)) {
+            get_next_token_and_print_error();
+            return nullptr;
+        }
+
+        // Eat semicolon
+        get_next_token_and_print_error();
+    }
 
     return ast;
 }
@@ -429,10 +438,19 @@ void stack_locals_layout(const SymbolBucket& frame, const AST_NODE* ppack) {
 
 bool verify_init_or_assign(const StatementReturns& statements) {
     if (statements.front()->node_type != NODE_TYPE::DECL 
-        || statements.front()->node_type != NODE_TYPE::ASSIGN
+        && statements.front()->node_type != NODE_TYPE::ASSIGN
     ) {
         return false;
     }
 
     return true;
+}
+
+Token tpeek() {
+    Token token;
+    LexState state = lex_save();
+    get_token(token);
+    lex_goto_last_save(state);
+
+    return token;
 }

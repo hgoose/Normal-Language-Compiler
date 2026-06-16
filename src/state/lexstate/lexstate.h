@@ -6,10 +6,11 @@
 
 struct LexState {
     Token next_token{};
+    Token last_token{};
     BufState bufstate{};
 
     LexState() = default;
-    LexState(Token, BufState);
+    LexState(Token, Token, BufState);
 };
 
 #endif

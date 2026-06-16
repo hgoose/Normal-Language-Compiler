@@ -109,6 +109,9 @@ struct AST_NODE {
     bool is_return_value() const;
     bool is_fn_call() const;
     bool is_return_statement() const;
+    bool is_for_init() const;
+    bool is_for_cond() const;
+    bool is_for_update() const;
 
     bool is_type_integral() const; 
     bool is_type_logical() const;

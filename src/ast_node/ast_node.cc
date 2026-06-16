@@ -245,6 +245,18 @@ bool AST_NODE::is_fn_call() const {
     return node_type == NODE_TYPE::CALL;
 }
 
+bool AST_NODE::is_for_init() const {
+    return node_type == NODE_TYPE::FOR_INIT;
+}
+
+bool AST_NODE::is_for_cond() const {
+    return node_type == NODE_TYPE::FOR_COND;
+}
+
+bool AST_NODE::is_for_update() const {
+    return node_type == NODE_TYPE::FOR_UPDATE;
+}
+
 bool AST_NODE::is_bool() const {
     return is_boolean;
 }
