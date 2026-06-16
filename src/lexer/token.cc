@@ -172,6 +172,10 @@ bool Token::is_semicolon() const {
     return is(TOKEN_SEMICOLON); 
 }
 
+bool Token::is_not_semicolon() const { 
+    return !is_semicolon(); 
+}
+
 bool Token::is_lbrace() const { 
     return is(TOKEN_LBRACE); 
 }

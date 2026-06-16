@@ -54,6 +54,9 @@ const NodeTypeMap<std::string> node_type_to_string_map {
     {NODE_TYPE::ARGUMENT_PACK, "argument pack"},
     {NODE_TYPE::RETURN, "return"},
     {NODE_TYPE::FOR, "for"},
+    {NODE_TYPE::FOR_INIT, "for initializer"},
+    {NODE_TYPE::FOR_COND, "for condition"},
+    {NODE_TYPE::FOR_UPDATE, "for update"},
 };
 
 const InvTypeMap<std::string> inv_type_map {

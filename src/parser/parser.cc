@@ -146,10 +146,12 @@ int parse() {
 }
 
 StatementReturns parse_print() {
+    AST_NODE* print_root = new AST_NODE(
+        NODE_TYPE::PRINT,
+        Scope::level()
+    );
+
     Error lex_error{}, expr_error{};
-
-    AST_NODE* print_root = new AST_NODE(next_token, NODE_TYPE::PRINT, Scope::level());
-
     lex_error = munch();
     if (skip_if_lexerr(lex_error)) {
         free_tree(print_root);
@@ -245,7 +247,10 @@ StatementReturns parse_print() {
 }
 
 StatementReturns parse_read() {
-    AST_NODE* read_root = new AST_NODE(next_token, NODE_TYPE::READ, Scope::level());
+    AST_NODE* read_root = new AST_NODE(
+        NODE_TYPE::READ,
+        Scope::level()
+    );
 
     Error lex_err{};
 
@@ -310,13 +315,14 @@ StatementReturns parse_read() {
 }
 
 StatementReturns parse_decl_int() {
+    AST_NODE* declare_root = new AST_NODE(
+        NODE_TYPE::DECL,
+        Scope::level()
+    );
+
     bool top = next_token.is_type();
-
     StatementReturns declares{};
-
     Error lex_err{};
-
-    AST_NODE* declare_root = new AST_NODE(next_token, NODE_TYPE::DECL, Scope::level());
 
     if (next_token.is_type()) {
         lex_err = munch();
@@ -475,12 +481,19 @@ static bool continue_assign_parse(StatementReturns& assigns) {
 
 // Handles one assign in a comma separated list of assignments.
 static StatementReturns sub_parse_assign() {
+    AST_NODE* assign_root = new AST_NODE(
+        NODE_TYPE::ASSIGN,
+        Scope::level()
+    );
+
+    AST_NODE* var_node = new AST_NODE(
+        next_token,
+        NODE_TYPE::VAR,
+        SYMTYPE::VAR, Scope::level()
+    );
+
     StatementReturns assigns{};
-
     Error lex_err{}, expr_err{};
-
-    AST_NODE* assign_root = new AST_NODE(NODE_TYPE::ASSIGN, Scope::level());
-    AST_NODE* var_node = new AST_NODE(next_token, NODE_TYPE::VAR, SYMTYPE::VAR, Scope::level());
 
     assign_root->add_children(var_node);
 
@@ -556,7 +569,10 @@ StatementReturns parse_assign() {
 StatementReturns parse_else() {
     if (!next_token.is_ident_else()) return {};
 
-    AST_NODE* else_root = new AST_NODE(next_token, NODE_TYPE::ELSE, Scope::level());
+    AST_NODE* else_root = new AST_NODE(
+        NODE_TYPE::ELSE,
+        Scope::level()
+    );
 
     Error lex_err = munch();
     if (skip_if_lexerr(lex_err, skip_else, LBRACE_COUNT_ZERO)) {
@@ -604,7 +620,10 @@ StatementReturns parse_else() {
 }
 
 StatementReturns parse_if() {
-    AST_NODE* if_root = new AST_NODE(next_token, NODE_TYPE::IF, Scope::level()); 
+    AST_NODE* if_root = new AST_NODE(
+        NODE_TYPE::IF,
+        Scope::level()
+    ); 
 
     Error lex_err{}, expr_err{};
 
@@ -724,7 +743,10 @@ StatementReturns parse_while() {
     int lbrace_count{};
     Error lex_err{}, expr_err{};
 
-    AST_NODE* while_root = new AST_NODE(next_token, NODE_TYPE::WHILE, Scope::level());
+    AST_NODE* while_root = new AST_NODE(
+        NODE_TYPE::WHILE,
+        Scope::level()
+    );
 
     lex_err = munch();
     if (skip_if_lexerr(lex_err, skip_while, lbrace_count)) {
@@ -876,7 +898,10 @@ StatementReturns parse_while() {
 
 StatementReturns parse_block() {
     Scope::enter_level();
-    AST_NODE* block_root = new AST_NODE(next_token, NODE_TYPE::BLOCK, Scope::level());
+    AST_NODE* block_root = new AST_NODE(
+        NODE_TYPE::BLOCK,
+        Scope::level()
+    );
 
     Error lex_err = munch();
     if (skip_if_lexerr(lex_err, skip_block, LBRACE_COUNT_ONE)) {
@@ -914,7 +939,10 @@ StatementReturns parse_block() {
 }
 
 StatementReturns parse_fn() {
-    AST_NODE* fn_root = new AST_NODE(next_token, NODE_TYPE::FUNCTION, Scope::level());
+    AST_NODE* fn_root = new AST_NODE(
+        NODE_TYPE::FUNCTION,
+        Scope::level()
+    );
 
     Error lex_err = munch();
     if (skip_if_lexerr(lex_err, skip_fn)) {
@@ -1115,7 +1143,6 @@ StatementReturns parse_fn() {
 
 StatementReturns parse_call() {
     AST_NODE* call_root = new AST_NODE(
-        Token{},
         NODE_TYPE::CALL,
         Scope::level()
     );
@@ -1201,7 +1228,6 @@ StatementReturns parse_call() {
 
 StatementReturns parse_return() {
     AST_NODE* return_root = new AST_NODE(
-        next_token,
         NODE_TYPE::RETURN,
         Scope::level()
     );
@@ -1225,7 +1251,7 @@ StatementReturns parse_return() {
 
     return_root->add_children(ast_expr);
 
-    if (unexpected_token(TOKEN_SEMICOLON, NLC_EXPECTED_SEMICOLON)) {
+    if (unexpected_token(prev_token, TOKEN_SEMICOLON, NLC_EXPECTED_SEMICOLON)) {
         free_trees(return_root);
         return {};
     }
@@ -1240,7 +1266,176 @@ StatementReturns parse_return() {
 }
 
 StatementReturns parse_for() {
-    return {};
+    Scope::enter_level();
+
+    AST_NODE* for_root = new AST_NODE(
+        NODE_TYPE::FOR,
+        Scope::level()
+    );
+
+    Error lex_err{}, expr_err{};
+
+    lex_err = munch();
+    if (skip_if_lexerr(lex_err, skip_for)) {
+        free_trees(for_root);
+
+        Scope::down_level();
+        return {};
+    }
+
+    if (unexpected_token(TOKEN_LPAREN, NLC_SYNTAX_ERROR, skip_for)) {
+        free_trees(for_root);
+
+        Scope::down_level();
+        return {};
+    }
+
+    AST_NODE* init = new AST_NODE(NODE_TYPE::FOR_INIT, Scope::level()),
+            * cond = new AST_NODE(NODE_TYPE::FOR_COND, Scope::level()),
+            * update = new AST_NODE(NODE_TYPE::FOR_UPDATE, Scope::level()),
+            * block = new AST_NODE(NODE_TYPE::BLOCK, Scope::level());
+
+    for_root->add_children(init, cond, update, block);
+
+    // Initializer
+    if (next_token.is_semicolon()) {
+        lex_err = munch();
+        if (skip_if_lexerr(lex_err, skip_for)) {
+            free_trees(for_root);
+
+            Scope::down_level();
+            return {};
+        }
+    }
+
+    else {
+        StatementReturns init_statements = get_statement();
+
+        if (init_statements.empty() || !verify_init_or_assign(init_statements)) {
+            // If init_statements is empty, error was handled by 
+            // get_statement.
+            if (init_statements.size()) {
+                set_print_token_error(Error{}, NLC_BAD_INITIALIZATION);
+            }
+
+            skip_for(LBRACE_COUNT_ZERO);
+            free_trees(for_root);
+
+            Scope::down_level();
+            return {};
+        }
+
+        init->add_all_statements(init_statements);
+    }
+
+    if (unexpected_token(TOKEN_SEMICOLON, NLC_EXPECTED_SEMICOLON, skip_for)) {
+        free_trees(for_root);
+
+        Scope::down_level();
+        return {};
+    }
+
+    lex_err = munch();
+    if (skip_if_lexerr(lex_err, skip_for)) {
+        free_trees(for_root);
+
+        Scope::down_level();
+        return {};
+    }
+
+    if (next_token.is_semicolon()) {
+        lex_err = munch();
+        if (skip_if_lexerr(lex_err, skip_for)) {
+            free_trees(for_root);
+
+            Scope::down_level();
+            return {};
+        }
+    }
+
+    // Condition
+    else {
+        AST_NODE* expr = A(expr_err);
+        AST_NODE* ast_expr = pttoast(expr);
+        free_trees(expr);
+
+        if (!ast_expr || !ast_expr->is_type_logical()) {
+            set_print_token_error(Error{}, NLC_BAD_CONDITION);
+            skip_for(LBRACE_COUNT_ZERO);
+            free_trees(for_root, ast_expr);
+
+            Scope::down_level();
+            return {};
+        }
+
+        cond->add_children(ast_expr);
+    }
+
+    if (unexpected_token(TOKEN_SEMICOLON, NLC_EXPECTED_SEMICOLON, skip_for)) {
+        free_trees(for_root);
+
+        Scope::down_level();
+        return {};
+    }
+
+    lex_err = munch();
+    if (skip_if_lexerr(lex_err, skip_for)) {
+        free_trees(for_root);
+
+        Scope::down_level();
+        return {};
+    }
+
+    // Update
+    if (next_token.is_semicolon()) {
+        lex_err = munch();
+        if (skip_if_lexerr(lex_err, skip_for)) {
+            free_trees(for_root);
+
+            Scope::down_level();
+            return {};
+        }
+    }
+
+    else {
+        StatementReturns update_statement = get_statement();
+
+        // Error handled by get_statement
+        if (update_statement.empty()) {
+            skip_for(LBRACE_COUNT_ZERO);
+            free_trees(for_root);
+
+            Scope::down_level();
+            return {};
+        }
+
+        update->add_all_statements(update_statement);
+    }
+
+    if (unexpected_token(TOKEN_LPAREN, NLC_SYNTAX_ERROR, skip_for)) {
+        free_trees(for_root);
+
+        Scope::down_level();
+        return {};
+    }
+
+    lex_err = munch();
+    if (skip_if_lexerr(lex_err, skip_for)) {
+        free_trees(for_root);
+
+        Scope::down_level();
+        return {};
+    }
+
+    if (unexpected_token(prev_token, TOKEN_SEMICOLON, NLC_EXPECTED_SEMICOLON, skip_for)) {
+        free_trees(for_root);
+
+        Scope::down_level();
+        return {};
+    }
+
+
+    return {for_root};
 }
 
 // A -> BA'

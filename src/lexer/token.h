@@ -97,6 +97,7 @@ struct Token
     bool is_type_int() const;
 
     bool is_semicolon() const;
+    bool is_not_semicolon() const;
     bool is_lbrace() const;
     bool is_block_begin() const;
     bool is_block_end() const;

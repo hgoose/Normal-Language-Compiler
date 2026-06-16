@@ -648,8 +648,9 @@ bool process_return(AST_NODE* root) {
     return true;
 }
 
-bool process_for(AST_NODE*) {
+bool process_for(AST_NODE* root) {
 
+    return true;
 }
 
 void bind_function_parameters(AST_NODE* ppack) {

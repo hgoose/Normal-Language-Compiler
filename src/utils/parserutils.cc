@@ -97,6 +97,10 @@ void skip_fn(int lbrace_count) {
     onepast_semi_or_block(lbrace_count);
 }
 
+void skip_for(int lbrace_count) {
+    onepast_semi_or_block(lbrace_count);
+}
+
 // If the next token is invalid or a lexer error occurred,
 // skip to start of next statement or eof.
 bool skip_if_lexerr(const Error& err, MoveProcedure mv_proc, int lbrace_count){
@@ -421,4 +425,14 @@ void stack_locals_layout(const SymbolBucket& frame, const AST_NODE* ppack) {
         (*syminfo)->location.stack_offset = rbp - type_size;
         rbp = (*syminfo)->location.stack_offset;
     }
+}
+
+bool verify_init_or_assign(const StatementReturns& statements) {
+    if (statements.front()->node_type != NODE_TYPE::DECL 
+        || statements.front()->node_type != NODE_TYPE::ASSIGN
+    ) {
+        return false;
+    }
+
+    return true;
 }

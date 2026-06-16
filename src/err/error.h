@@ -36,6 +36,8 @@
 #define  NLC_EXPECTED_FN_BODY           -30
 #define  NLC_INVALID_ARGUMENT           -31
 #define  NLC_INVALID_ARGPACK            -32
+#define  NLC_BAD_INITIALIZATION         -33
+#define  NLC_BAD_CONDITION              -34
 
 struct Token;
 

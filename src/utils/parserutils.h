@@ -21,6 +21,7 @@ void skip_if(int);
 void skip_while(int);
 void skip_else(int);
 void skip_fn(int);
+void skip_for(int);
 
 void onepast_semi_or_block(int);
 void onepast_next_token(int);
@@ -63,5 +64,7 @@ AST_NODE* get_argument_pack();
 bool match_packs(AST_NODE*, AST_NODE*);
 
 void stack_locals_layout(const SymbolBucket&, const AST_NODE*);
+
+bool verify_init_or_assign(const StatementReturns&);
 
 #endif
