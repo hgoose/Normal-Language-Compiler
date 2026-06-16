@@ -34,7 +34,7 @@ static void r_evaluate_expr(AST_NODE* p) {
         x86_popr32(REGISTER::EAX); 
 
         // if lhs == 0, result is false; skip rhs
-        x86_test_al_imm8(1);
+        x86_test_al_imm8(0x1);
         size_t jz_false = x86_jz_rel32_missing();
         int jz_start = get_current_position();
 
@@ -70,7 +70,7 @@ static void r_evaluate_expr(AST_NODE* p) {
         x86_popr32(REGISTER::EAX); 
 
         // if lhs != 0, result is true, skip rhs
-        x86_test_al_imm8(1);
+        x86_test_al_imm8(0x1);
         size_t jnz_true = x86_jnz_rel32_missing();
 
         int jnz_start = get_current_position();
@@ -79,7 +79,7 @@ static void r_evaluate_expr(AST_NODE* p) {
         r_evaluate_expr(right);
         x86_popr32(REGISTER::EAX); 
 
-        x86_test_al_imm8(1);
+        x86_test_al_imm8(0x1);
         x86_setnz_al();
         x86_movzx_r32_r8_al(REGISTER::EAX);
         int jnz_end = get_current_position();
@@ -567,6 +567,8 @@ bool process_block(AST_NODE* root) {
 }
 
 bool process_fn(AST_NODE* root) {
+    if (!root) return false;
+
     AST_NODE* name{}, *ppack{}, *rv{}, *block{};
 
     auto child = root->children.begin();
@@ -609,6 +611,8 @@ bool process_fn(AST_NODE* root) {
 }
 
 bool process_call(AST_NODE* root) {
+    if (!root) return false;
+
     AST_NODE* name{}, *argpack{};
 
     auto child = root->children.begin();
@@ -634,6 +638,8 @@ bool process_call(AST_NODE* root) {
 // Put the result of expr in accumulator 
 // and return control to caller.
 bool process_return(AST_NODE* root) {
+    if (!root) return false;
+
     AST_NODE* expr{};
 
     auto child = root->children.begin();
@@ -648,7 +654,79 @@ bool process_return(AST_NODE* root) {
     return true;
 }
 
+/*
+    for(a;b;b) ... 
+
+    -----
+    | a |
+    -----
+    ----- <-----
+    | b |      |
+    -----      |
+    test al    | 
+  |- jz        |
+  |  --------  |
+  |  | body |  |
+  |  --------  |
+  |  -----     |
+  |  | c |     |
+  |  -----     |
+  |  jmp -------
+  ->
+*/
 bool process_for(AST_NODE* root) {
+    if (!root) return false;
+
+    AST_NODE* init{},
+            * cond_root{},
+            * cond{},
+            * update_root{},
+            * update{},
+            * body{};
+
+    auto child = root->children.begin();
+    auto end = root->children.end();
+
+    if (child != end) init = *child++;
+    if (child != end) cond_root = *child++;
+    if (child != end) update_root = *child++;
+    if (child != end) body = *child++;
+
+    if (cond_root->children.size()) {
+        cond = cond_root->children.front();
+    } 
+
+    if (update_root->children.size()) {
+        update = update_root->children.front();
+    }
+
+    // Dispatch initializations
+    for (auto& child : init->children) {
+        dispatch_statement(child);
+    }
+
+    Offset condition_position = get_current_position();
+
+    if (cond) evaluate_expr(cond);
+    x86_test_al_imm8(0x1);
+
+    Offset jz_after_cond = x86_jz_rel32_missing();
+
+    Offset body_size_start = get_current_position();
+    for (auto& statement : body->children) {
+        dispatch_statement(statement);
+    }
+
+    if (update) dispatch_statement(update);
+
+    Offset jmp_start = x86_jmp_rel32_missing();
+    Offset body_size_end = get_current_position();
+
+    std::int32_t body_size = body_size_end - body_size_start;
+    std::int32_t jmp_size = -(body_size_end - condition_position + 5);
+
+    load_imm32_at(jz_after_cond, body_size);
+    load_imm32_at(jmp_start, jmp_size);
 
     return true;
 }
