@@ -198,8 +198,8 @@ void x86_mov_mimm32_disp32(REGISTER base, std::int32_t src, std::int32_t disp) {
 
     load_byte(0xC7);
     load_byte(gen_modrm_norr_disp32(base, (REGISTER)0));
-    load_imm32(src);
     load_imm32(disp);
+    load_imm32(src);
 }
 
 // REX.W + B8+ rd io MOV r64, imm64
@@ -674,12 +674,12 @@ Offset get_current_position() {
 // push rbp
 // mov rbp, rsp
 // sub rsp, k
-void emit_function_prologue(const SymbolBucket& scope_stack_frame) {
+void emit_function_prologue(const SymbolBucket& scope_stack_frame, AST_NODE* ppack) {
     x86_pushr64(REGISTER::RBP); 
     x86_mov_rr64(REGISTER::RBP, REGISTER::RSP);
     x86_sub_r64_imm32(
         REGISTER::RSP, 
-        static_cast<std::int32_t>(Scope::get_size_of_stack_frame(scope_stack_frame))
+        static_cast<std::int32_t>(Scope::get_size_of_stack_frame(scope_stack_frame, ppack))
     );
 }
 
@@ -697,8 +697,8 @@ int x86_exec() {
     x86_popr64(REGISTER::R15);
     x86_popr64(REGISTER::R12);
     load_byte(0xc3);
-    dump();
-    return 0;
+    // dump();
+    // return 0;
     return ((int(*)(void))prog)();
 }
 

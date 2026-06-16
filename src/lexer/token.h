@@ -83,6 +83,7 @@ struct Token
     bool is_ident_if() const;
     bool is_ident_else() const;
     bool is_ident_while() const;
+    bool is_ident_call() const;
 
     bool is_ident_true() const;
     bool is_ident_false() const;

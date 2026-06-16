@@ -30,6 +30,8 @@ StatementReturns parse_while();
 StatementReturns parse_block();
 StatementReturns parse_fn();
 StatementReturns parse_call();
+StatementReturns parse_return();
+StatementReturns parse_for();
 
 // PRODUCTION RULES
 AST_NODE* A(Error&);

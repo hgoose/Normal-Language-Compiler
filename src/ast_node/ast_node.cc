@@ -237,6 +237,14 @@ bool AST_NODE::is_return_value() const {
     return node_type == NODE_TYPE::RETURN_VALUE;
 }
 
+bool AST_NODE::is_return_statement() const {
+    return node_type == NODE_TYPE::RETURN;
+}
+
+bool AST_NODE::is_fn_call() const {
+    return node_type == NODE_TYPE::CALL;
+}
+
 bool AST_NODE::is_bool() const {
     return is_boolean;
 }
@@ -264,6 +272,14 @@ void AST_NODE::set_boolean() {
     is_boolean = true;
 }
 
+bool AST_NODE::is_fn_arg() const {
+    return is_function_arg;
+}
+
+void AST_NODE::set_is_fn_arg() {
+    is_function_arg = true;
+}
+
 void AST_NODE::set_token(Token t) {
     token = t;
 }
@@ -279,7 +295,7 @@ void AST_NODE::deep_copy_children(const AST_NODE& other) {
         AST_NODE* front = children_copy.front(); 
         children_copy.pop_front();
 
-        children.push_back(new AST_NODE(*front));
+        children.push_back(new AST_NODE(*front, COPY_CHILDREN));
     }
 }
 

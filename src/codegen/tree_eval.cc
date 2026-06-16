@@ -16,8 +16,6 @@
 int pushed{};
 
 static void r_evaluate_expr(AST_NODE* p) {
-    if (!p) return;
-
     if (p->token.is(TOKEN_AND)) {
         AST_NODE* left{}, *right{};
 
@@ -99,12 +97,32 @@ static void r_evaluate_expr(AST_NODE* p) {
         r_evaluate_expr(it);
     });
 
+    if (p->is_fn_call()) {
+        process_call(p);
+        x86_pushr32(REGISTER::EAX);
+        return;
+    }
+
     // PUSH INTEGERS TO THE STACK
     if (p->node_type == NODE_TYPE::INT) {
         x86_push_imm32(p->token.integer); 
     } 
 
     else if (p->node_type == NODE_TYPE::VAR) {
+        // We can't trust the syminfo in p for some reason.
+        // fn main(int a) -> int {return a;}
+        // int a = main(10);
+        // yields dirt instead of 10. I'll figure this out later.
+        SYMINFO* symbol = SYMTABLE::get_symbol(
+            p->token.identifier,
+            SYMTYPE::VAR,
+            p->statement_scope_level
+        );
+
+        if (!symbol) return;
+
+        p->syminfo = symbol;
+
         // Get a pointer to the variable in r11, 
         // then push that value to the stack
         if (p->syminfo->in_int_table()) {
@@ -354,7 +372,12 @@ bool update_var(AST_NODE* root) {
     if (child != children_end) var = *child++;
     if (child != children_end) ast_expr = *child++;
 
-    SYMINFO* symbol = SYMTABLE::get_symbol(var->syminfo);
+    // Var has no syminfo until below
+    SYMINFO* symbol = SYMTABLE::get_symbol(
+            var->token.identifier,
+            SYMTYPE::VAR, 
+            root->statement_scope_level
+    );
 
     // No symbol found
     if (!symbol) {
@@ -568,7 +591,7 @@ bool process_fn(AST_NODE* root) {
 
     bind_function_parameters(ppack);
 
-    emit_function_prologue(block->scope_stack_frame);
+    emit_function_prologue(block->scope_stack_frame, ppack);
 
     for (auto& statement : block->children) {
         dispatch_statement(statement);
@@ -581,7 +604,7 @@ bool process_fn(AST_NODE* root) {
 
     load_imm32_at(jmp_start, body_size);
 
-    Scope::tear_down_frame(block->scope_stack_frame, root->statement_scope_level);
+    Scope::tear_down_frame(block->scope_stack_frame, block->statement_scope_level);
     return true; 
 }
 
@@ -606,6 +629,27 @@ bool process_call(AST_NODE* root) {
     x86_add_r64_imm32(REGISTER::RSP, k);
 
     return true;
+}
+
+// Put the result of expr in accumulator 
+// and return control to caller.
+bool process_return(AST_NODE* root) {
+    AST_NODE* expr{};
+
+    auto child = root->children.begin();
+    auto end = root->children.end();
+
+    if (child != end) expr = *child++;
+
+    // Result in eax
+    evaluate_expr(expr);
+    emit_function_epilogue();
+
+    return true;
+}
+
+bool process_for(AST_NODE*) {
+
 }
 
 void bind_function_parameters(AST_NODE* ppack) {

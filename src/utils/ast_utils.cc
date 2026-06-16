@@ -79,7 +79,19 @@ void gen_queue(AST_NODE* p, std::queue<AST_NODE*>& terminals) {
         gen_queue(it, terminals);
     });
 
-    if (p->is_terminal()) {
+    // Function name node is a terminal but
+    // we do not wish to add it to the queue, since
+    // its parent (CALL) will have it as a child.
+    //
+    // Function args will be expressions, don't want 
+    // to add those either.
+    if (p->is_fn_name() || p->is_fn_arg()) return;
+
+    if (p->is_fn_call()) {
+        terminals.push(new AST_NODE(*p, COPY_CHILDREN));
+    }
+
+    else if (p->is_terminal()) {
         terminals.push(new AST_NODE(*p));
     }
 }
@@ -249,6 +261,16 @@ void ast_postorder(AST_NODE* root) {
     });
     std::cout << (root->token.id != -1 ? root->token.lexeme : "Empty") << ", ";
 
+}
+
+void set_all_as_fn_arg(AST_NODE* root) {
+    if (!root) return; 
+
+    for (auto& child : root->children) {
+        set_all_as_fn_arg(child);
+    }
+
+    root->set_is_fn_arg();
 }
 
 const char* op_name(int id) {

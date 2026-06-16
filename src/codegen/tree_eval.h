@@ -21,6 +21,8 @@ bool process_while(AST_NODE*);
 bool process_block(AST_NODE*);
 bool process_fn(AST_NODE*);
 bool process_call(AST_NODE*);
+bool process_return(AST_NODE*);
+bool process_for(AST_NODE*);
 
 size_t sizeof_print();
 

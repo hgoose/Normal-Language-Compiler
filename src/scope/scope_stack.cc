@@ -4,6 +4,7 @@
 #include "symtable.h"
 #include "ast_structures.h"
 #include "function_structures.h"
+#include "ast_node.h"
 
 void Scope::down_level() {
     if (current_scope_level == 0) return;
@@ -76,10 +77,14 @@ void Scope::tear_down_frame(SymbolBucket& bucket, ScopeLevel scope_level) {
     pop_level();
 }
 
-size_t Scope::get_size_of_stack_frame(const SymbolBucket& bucket) {
+size_t Scope::get_size_of_stack_frame(const SymbolBucket& bucket, AST_NODE* ppack) {
+    // Advance past parameters in bucket, just targeting the locals.
+    auto syminfo = bucket.begin();
+    for (auto& parameter : ppack->children) ++syminfo;
+
     size_t size{};
-    for (auto& symbol : bucket) {
-        size+=get_type_size(symbol->data_type);
+    for (; syminfo != bucket.end(); ++syminfo) {
+        size+=get_type_size((*syminfo)->data_type);
     }
     return size;
 }

@@ -47,6 +47,8 @@ struct AST_NODE {
 
     bool boolean{};
     bool is_boolean{};
+    
+    bool is_function_arg{};
 
     ScopeLevel statement_scope_level{};
 
@@ -105,6 +107,8 @@ struct AST_NODE {
     bool is_parameter_pack() const;
     bool is_argument_pack() const;
     bool is_return_value() const;
+    bool is_fn_call() const;
+    bool is_return_statement() const;
 
     bool is_type_integral() const; 
     bool is_type_logical() const;
@@ -113,6 +117,8 @@ struct AST_NODE {
     bool is_nop() const;
 
     void set_boolean();
+    bool is_fn_arg() const;
+    void set_is_fn_arg();
     void set_token(Token);
 
     void install_symbol(SYMINFO*);

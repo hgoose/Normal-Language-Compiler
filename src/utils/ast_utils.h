@@ -17,6 +17,7 @@ TYPE assign_types(AST_NODE*);
 void ast_preorder(AST_NODE* root);
 void ast_inorder(AST_NODE* root);
 void ast_postorder(AST_NODE* root);
+void set_all_as_fn_arg(AST_NODE* root);
 
 void ast_out(AST_NODE* node);
 void clean_tree(AST_NODE*& root);

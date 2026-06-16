@@ -72,15 +72,15 @@ void SYMINFO::set_scope_level(int level) {
     scope_level = level;
 }
 
-bool SYMINFO::is_same_as(const SYMINFO* other) {
+bool SYMINFO::is_same_as(const SYMINFO* other) const {
     return name == other->name && type == other->type && scope_level == other->scope_level;
 }
 
-bool SYMINFO::is_same_as_no_scope(const SYMINFO* other) {
+bool SYMINFO::is_same_as_no_scope(const SYMINFO* other) const {
     return name == other->name && type == other->type; 
 }
 
-bool SYMINFO::is_same_as_scope_at_most(const SYMINFO* other) {
+bool SYMINFO::is_same_as_scope_at_most(const SYMINFO* other) const {
     return name == other->name && type == other->type && scope_level <= other->scope_level; 
 }
 
@@ -88,19 +88,23 @@ void SYMINFO::install_function(Label label, AST_NODE* parameter_pack,  AST_NODE*
     function_info = FunctionInfo(label, parameter_pack, return_value, block);
 }
 
-bool SYMINFO::in_int_table() {
+bool SYMINFO::in_int_table() const {
     return location.location_type == LOCATION_TYPE::MEMORY;
 }
 
-bool SYMINFO::in_stack() {
+bool SYMINFO::in_stack() const {
     return location.location_type == LOCATION_TYPE::STACK;
 }
 
-bool SYMINFO::in_reg() {
+bool SYMINFO::in_reg() const {
     return location.location_type == LOCATION_TYPE::REG;
 }
 
-bool SYMINFO::is_in_function() {
+bool SYMINFO::is_function() const {
+    return type == SYMTYPE::FN;
+}
+
+bool SYMINFO::is_in_function() const {
     return in_function;
 }
 
@@ -116,6 +120,14 @@ void SYMINFO::set_location_static_memory(Offset int_table_offset, std::size_t ad
 
 void SYMINFO::set_location_type_stack() {
     location.location_type = LOCATION_TYPE::STACK;
+}
+
+void SYMINFO::set_fn_return_type(TYPE return_type) {
+    function_info.return_type = return_type;
+}
+
+TYPE SYMINFO::get_fn_return_type() {
+    return function_info.return_type;
 }
 
 SYMINFO* SYMTABLE::get_symbol(const std::string& name, const SYMTYPE& symbol_type, ScopeLevel level) {
@@ -232,4 +244,3 @@ void SYMTABLE::free_symbol_table() {
         }
     }
 }
-

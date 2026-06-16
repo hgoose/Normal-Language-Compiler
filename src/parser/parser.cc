@@ -65,6 +65,10 @@ StatementReturns get_statement() {
 
     SUPPRESS_PARSER_ERRORS = false;
 
+    if (possible_expression && possible_expression->is_fn_call()) {
+        return {possible_expression};
+    }
+
     // The statement was indeed an expression if after 
     // we try to parse as expression, we are left at a semicolon.
     // Note that we are not interested in doing anything
@@ -1091,6 +1095,13 @@ StatementReturns parse_fn() {
     fn_body->add_all_statements(body);
     fn_body->set_scope_stack_frame(Scope::get_top_bucket());
 
+    // Get the type of the return statement
+    for (auto& statement : fn_body->children) {
+        if (statement->is_return_statement()) {
+            entry->set_fn_return_type(statement->children.front()->data_type);
+        }
+    }
+
     for (auto& symbol : fn_body->get_scope_stack_frame()) {
         symbol->set_in_function();
         symbol->set_location_type_stack();
@@ -1104,16 +1115,19 @@ StatementReturns parse_fn() {
 
 StatementReturns parse_call() {
     AST_NODE* call_root = new AST_NODE(
-        next_token,
+        Token{},
         NODE_TYPE::CALL,
         Scope::level()
     );
 
-    Error lex_err = munch();
-    if (skip_if_lexerr(lex_err)) {
-        free_trees(call_root);
-        return {};
-    }
+    Error lex_err{};
+    if (next_token.is_ident_call()) {
+        lex_err = munch();
+        if (skip_if_lexerr(lex_err)) {
+            free_trees(call_root);
+            return {};
+        }
+    } 
 
     if (next_token.is_not_ident() || next_token.is_ident_reserved()) {
         set_print_token_error(Error{}, NLC_INVALID_IDENTIFIER);
@@ -1183,6 +1197,50 @@ StatementReturns parse_call() {
     }
 
     return {call_root};
+}
+
+StatementReturns parse_return() {
+    AST_NODE* return_root = new AST_NODE(
+        next_token,
+        NODE_TYPE::RETURN,
+        Scope::level()
+    );
+
+    Error lex_err = munch();
+    if (skip_if_lexerr(lex_err)) {
+        free_trees(return_root);
+        return{};
+    }
+
+    Error expr_err{};
+    AST_NODE* expr = A(expr_err);
+    AST_NODE* ast_expr = pttoast(expr);
+    free_trees(expr);
+
+    if (!ast_expr) {
+        onepast_semi_or_block(LBRACE_COUNT_ZERO);
+        free_tree(return_root);
+        return {};
+    }
+
+    return_root->add_children(ast_expr);
+
+    if (unexpected_token(TOKEN_SEMICOLON, NLC_EXPECTED_SEMICOLON)) {
+        free_trees(return_root);
+        return {};
+    }
+
+    lex_err = munch();
+    if (skip_if_lexerr(lex_err)) {
+        free_trees(return_root);
+        return{};
+    }
+
+    return {return_root};
+}
+
+StatementReturns parse_for() {
+    return {};
 }
 
 // A -> BA'
@@ -1629,9 +1687,15 @@ AST_NODE* boolean_terminal(Error& err) {
 AST_NODE* variable_terminal(Error& err) {
     AST_NODE* here = new AST_NODE(next_token, NODE_TYPE::VAR, TYPE::null, Scope::level());
 
-    // Search the symbol table
+    // Search the symbol table, targeting variables.
     SYMINFO* syminfo = SYMTABLE::get_symbol(next_token.identifier, SYMTYPE::VAR, Scope::level());
 
+    // Try again but this time search for function
+    if (!syminfo) {
+        syminfo = SYMTABLE::get_symbol(next_token.identifier, SYMTYPE::FN, Scope::level());
+    }
+
+    // Still nothing
     if (!syminfo) {
         set_print_token_error(Error{}, NLC_UNKNOWN_VARIABLE);
         free_tree(here);
@@ -1640,11 +1704,24 @@ AST_NODE* variable_terminal(Error& err) {
 
     here->install_symbol(syminfo);
 
-    Error tmp_error = munch();
-    if (handle_lex_error(tmp_error)){
-        err = tmp_error;
-        free_tree(here);
-        return nullptr;
+    if (syminfo->is_function()) {
+        StatementReturns call_root = parse_call();
+        if (call_root.empty()) 
+            return nullptr;
+
+        delete here;
+        here = call_root.front();
+        here->data_type = syminfo->get_fn_return_type();
+        return here;
+    }
+
+    else {
+        Error tmp_error = munch();
+        if (handle_lex_error(tmp_error)){
+            err = tmp_error;
+            free_tree(here);
+            return nullptr;
+        }
     }
 
     return here;

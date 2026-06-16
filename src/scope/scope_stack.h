@@ -21,7 +21,7 @@ public:
     static void enter_function();
     static void tear_down_frame(SymbolBucket&, ScopeLevel scope_level);
     static void add_to_top_level(SYMINFO*);
-    static size_t get_size_of_stack_frame(const SymbolBucket&);
+    static size_t get_size_of_stack_frame(const SymbolBucket&, AST_NODE*);
 };
 
 #endif

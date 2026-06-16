@@ -191,6 +191,7 @@ AST_NODE* try_expression(bool eat_semicolon) {
     Error err{};
     AST_NODE* unknown = A(err);
     AST_NODE* ast = pttoast(unknown);
+    free_trees(unknown);
 
     if (!ast) {
         onepast_semi_or_block(LBRACE_COUNT_ZERO);
@@ -209,7 +210,11 @@ AST_NODE* try_expression(bool eat_semicolon) {
 
 AST_NODE* get_initial_value() {
     Error err{};
-    return pttoast(A(err));
+    AST_NODE* expr = A(err);
+    AST_NODE* ast_expr = pttoast(expr);
+    free_trees(expr);
+
+    return ast_expr;
 }
 
 // Creates an AST for an assignment. We copy the nodes here
@@ -335,8 +340,12 @@ AST_NODE* get_parameter_pack() {
 }
 
 AST_NODE* get_argument() {
-    Error ast_err{};
-    return pttoast(A(ast_err));
+    Error expr_err{};
+    AST_NODE* expr = A(expr_err);
+    AST_NODE* ast_expr = pttoast(expr);
+    free_trees(expr);
+
+    return ast_expr;
 }
 
 AST_NODE* get_argument_pack() {
@@ -361,6 +370,10 @@ AST_NODE* get_argument_pack() {
             free_trees(arg_pack);
             return nullptr;
         }
+
+        // Sets all nodes in this argument expression
+        // as function arg nodes.
+        set_all_as_fn_arg(arg);
 
         arg_pack->add_children(arg);
 

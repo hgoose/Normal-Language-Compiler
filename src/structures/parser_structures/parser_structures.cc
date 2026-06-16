@@ -14,5 +14,7 @@ const ParseMap parse_map = {
     {"fn", parse_fn},
     {"proc", parse_fn},
     {"procedure", parse_fn},
-    {"call", parse_call}
+    {"call", parse_call},
+    {"return", parse_return},
+    {"for", parse_for}
 };

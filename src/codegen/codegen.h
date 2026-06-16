@@ -139,7 +139,7 @@ void x86_jnz_rel32(std::int32_t disp);
 Offset move_program_pointer(Offset dx);
 Offset get_current_position();
 
-void emit_function_prologue(const SymbolBucket&);
+void emit_function_prologue(const SymbolBucket&, AST_NODE*);
 void emit_function_epilogue();
 
 int x86_exec();

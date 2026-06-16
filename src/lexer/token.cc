@@ -127,6 +127,10 @@ bool Token::is_ident_while() const {
     return is_ident() && identifier == "while";
 }
 
+bool Token::is_ident_call() const {
+    return is_ident() && identifier == "call";
+}
+
 bool Token::is_ident_true() const {
     return is_ident() && identifier == "true"; 
 }

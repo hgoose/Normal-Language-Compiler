@@ -24,6 +24,7 @@ struct FunctionInfo {
     AST_NODE* parameter_pack{};
     AST_NODE* return_value{};
     AST_NODE* block{};
+    TYPE return_type{TYPE::null};
 
     FunctionInfo() = default;
     FunctionInfo(Label, AST_NODE*, AST_NODE*, AST_NODE*);
@@ -39,7 +40,6 @@ struct SYMINFO {
 
     bool exists{};
     bool in_function{};
-    int ith_local{};
 
     int scope_level{};
 
@@ -53,17 +53,20 @@ struct SYMINFO {
     SYMINFO(const std::string& name, SYMTYPE type, const SYMLOCATION& location, ScopeLevel scope_level);
 
     void set_scope_level(int);
-    bool is_same_as(const SYMINFO* other);
-    bool is_same_as_no_scope(const SYMINFO* other);
-    bool is_same_as_scope_at_most(const SYMINFO* other);
+    bool is_same_as(const SYMINFO* other) const;
+    bool is_same_as_no_scope(const SYMINFO* other) const;
+    bool is_same_as_scope_at_most(const SYMINFO* other) const;
     void install_function(Label, AST_NODE*, AST_NODE*, AST_NODE*);
-    bool in_int_table();
-    bool in_stack();
-    bool in_reg();
-    bool is_in_function();
+    bool in_int_table() const;
+    bool in_stack() const;
+    bool in_reg() const;
+    bool is_function() const;
+    bool is_in_function() const;
     void set_in_function();
     void set_location_static_memory(Offset, std::size_t);
     void set_location_type_stack();
+    void set_fn_return_type(TYPE return_type);
+    TYPE get_fn_return_type();
 };
 
 struct SYMTABLE {
