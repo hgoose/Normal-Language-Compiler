@@ -820,11 +820,7 @@ StatementReturns parse_while() {
 
     // Explicitly empty while 
     if (next_token.is_semicolon()) {
-        lex_err = munch();
-        if (skip_if_lexerr(lex_err, skip_while, lbrace_count)) {
-            free_trees(while_root);
-            return {};
-        }
+        get_next_token_and_print_error();
 
         // Useless stack frame attachment.
         while_root->set_scope_stack_frame(Scope::get_top_bucket());
@@ -832,73 +828,16 @@ StatementReturns parse_while() {
     }
 
     // Check if we have a block ({...})
-    bool block = next_token.is_lbrace();
     Scope::enter_level();
 
-    // If we have no block, we have a single statement
-    if (!block) {
-        StatementReturns statements = get_statement();
-        while_root->add_all_statements(statements);
-        while_root->set_scope_stack_frame(Scope::get_top_bucket());
+    Error body_err{};
+    StatementReturns body_statements = process_loop_statements(body_err);
+    while_root->add_all_statements(body_statements);
 
-        Scope::down_level();
-        return {while_root};
-    }
-
-    // Otherwise, we have a statement block
-    ++lbrace_count;
-
-    lex_err = munch();
-    if (skip_if_lexerr(lex_err, skip_while, lbrace_count)) {
+    if (body_err.is_not_ok()) {
         free_trees(while_root);
-
         Scope::down_level();
         return {};
-    }
-
-    // Empty block ({})
-    if (next_token.is_rbrace()) {
-        get_next_token_and_print_error();
-
-        // Another useless stack frame assignment
-        while_root->set_scope_stack_frame(Scope::get_top_bucket());
-        Scope::down_level();
-        return {while_root};
-    }
-
-    // Process all statements in block. Note that the block is 
-    // strictly non-empty thanks to the check above
-    for(;;) {
-        StatementReturns statements = get_statement();
-        if (statements.size()) while_root->add_all_statements(statements);
-
-        // Bad statements inside a while loop could be detrimental. 
-        // For example, it could cause an infinite loop.
-        // Therefore, if a bad statement is encountered inside a loop,
-        // we eat the remainder of the structure.
-        else {
-            skip_while(lbrace_count);
-            free_trees(while_root);
-
-            Scope::down_level();
-            return {};
-        }
-
-        // At the rbrace that terminates the while loop.
-        // Move one past it.
-        if (next_token.is_rbrace()) {
-            get_next_token_and_print_error();
-            break;
-        } 
-
-        // Structure was never terminated
-        else if (next_token.is_eof()) {
-            set_print_token_error(Error{}, NLC_UNEXPECTED_EOF);
-            free_trees(while_root);
-
-            Scope::down_level();
-            return {};
-        }
     }
 
     while_root->set_scope_stack_frame(Scope::get_top_bucket());
@@ -1428,13 +1367,28 @@ StatementReturns parse_for() {
         return {};
     }
 
-    if (unexpected_token(prev_token, TOKEN_SEMICOLON, NLC_EXPECTED_SEMICOLON, skip_for)) {
-        free_trees(for_root);
+    // Immediately terminated
+    if (next_token.is_semicolon()) {
+        block->set_scope_stack_frame(Scope::get_top_bucket());
+        get_next_token_and_print_error();
 
         Scope::down_level();
-        return {};
+        return {for_root};
     }
 
+    Error body_err{};
+    StatementReturns body_statements = process_loop_statements(body_err);
+    block->add_all_statements(body_statements);
+
+    if (body_err.is_not_ok()) {
+        Scope::down_level();
+        free_trees(for_root);
+        return {}; 
+    }
+
+    for_root->set_scope_stack_frame(Scope::get_top_bucket());
+
+    Scope::down_level();
     return {for_root};
 }
 

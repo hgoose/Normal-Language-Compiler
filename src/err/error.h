@@ -39,6 +39,7 @@
 #define  NLC_BAD_INITIALIZATION         -33
 #define  NLC_BAD_CONDITION              -34
 #define  NLC_EXPECTED_RETURN_TYPE       -35
+#define  NLC_BAD                        -36
 
 struct Token;
 

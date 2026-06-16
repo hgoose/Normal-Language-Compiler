@@ -28,6 +28,7 @@ void onepast_next_token(int);
 
 void free_statement_return_list(StatementReturns& returns);
 
+StatementReturns process_loop_statements(Error&);
 StatementReturns get_all_statements_in_block(Error&);
 
 void free_tree(AST_NODE*&);
@@ -68,5 +69,6 @@ void stack_locals_layout(const SymbolBucket&, const AST_NODE*);
 bool verify_init_or_assign(const StatementReturns&);
 
 Token tpeek();
+void free_statement_list(const StatementReturns&);
 
 #endif

@@ -164,6 +164,58 @@ void free_statement_return_list(StatementReturns& returns) {
     }
 }
 
+StatementReturns process_loop_statements(Error& err) {
+    StatementReturns all_statements{};
+    if (!next_token.is_lbrace()) {
+        return get_statement();
+    }
+
+    Error lex_err = munch();
+    if (skip_if_lexerr(lex_err, skip_for, LBRACE_COUNT_ONE)) {
+        return {};
+    }
+
+    // Empty block ({})
+    if (next_token.is_rbrace()) {
+        get_next_token_and_print_error();
+        return {};
+    }
+
+    // Process all statements in block. Note that the block is 
+    // strictly non-empty thanks to the check above
+    for(;;) {
+        StatementReturns statements = get_statement();
+        if (statements.size()) merge_statement_returns(all_statements, statements);
+
+        // Bad statements inside a while loop could be detrimental. 
+        // For example, it could cause an infinite loop.
+        // Therefore, if a bad statement is encountered inside a loop,
+        // we eat the remainder of the structure.
+        else {
+            skip_for(LBRACE_COUNT_ONE);
+            err = Error{NLC_BAD};
+            free_statement_list(all_statements);
+            return {};
+        }
+
+        // At the rbrace that terminates the while loop.
+        // Move one past it.
+        if (next_token.is_rbrace()) {
+            get_next_token_and_print_error();
+            break;
+        } 
+
+        // Structure was never terminated
+        else if (next_token.is_eof()) {
+            set_print_token_error(err, NLC_UNEXPECTED_EOF);
+            free_statement_list(all_statements);
+            return {};
+        }
+    }
+
+    return {all_statements};
+}
+
 StatementReturns get_all_statements_in_block(Error& err) {
     StatementReturns all_statements{};
     for (;;) {
@@ -180,6 +232,7 @@ StatementReturns get_all_statements_in_block(Error& err) {
         // Structure was never terminated
         else if (next_token.is_eof()) {
             set_print_token_error(err, NLC_UNEXPECTED_EOF);
+            free_statement_list(all_statements);
             return {};
         }
     }
@@ -453,4 +506,10 @@ Token tpeek() {
     lex_goto_last_save(state);
 
     return token;
+}
+
+void free_statement_list(const StatementReturns& statements) {
+    for (auto& statement : statements) {
+        free_trees(statement);
+    }
 }
