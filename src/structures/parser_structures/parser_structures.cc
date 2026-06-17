@@ -15,6 +15,7 @@ const ParseMap parse_map = {
     {"proc", parse_fn},
     {"procedure", parse_fn},
     {"call", parse_call},
+    {"invoke", parse_call},
     {"return", parse_return},
     {"for", parse_for}
 };

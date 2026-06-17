@@ -590,6 +590,14 @@ StatementReturns parse_else() {
         return {};
     }
 
+    if (next_token.is_semicolon()) {
+        get_next_token_and_print_error();
+        // Parse else if it exists
+        else_root->set_scope_stack_frame(Scope::get_top_bucket());
+        return {else_root};
+    }
+
+
     bool block = next_token.is_lbrace(); 
     Scope::enter_level();
 
@@ -611,6 +619,13 @@ StatementReturns parse_else() {
 
         Scope::down_level();
         return {};
+    }
+
+    if (next_token.is_rbrace()) {
+        get_next_token_and_print_error();
+        // Parse else if it exists
+        else_root->set_scope_stack_frame(Scope::get_top_bucket());
+        return {else_root};
     }
 
     Error err{};
@@ -725,6 +740,18 @@ StatementReturns parse_if() {
 
             Scope::down_level();
             return {};
+        }
+
+        // Empty if body
+        if (next_token.is_rbrace()) {
+            get_next_token_and_print_error();
+
+            // Parse else if it exists
+            StatementReturns else_root = parse_else();
+            if_root->add_all_statements(else_root);
+            if_root->set_scope_stack_frame(Scope::get_top_bucket());
+
+            return {if_root};
         }
 
         Error err{};

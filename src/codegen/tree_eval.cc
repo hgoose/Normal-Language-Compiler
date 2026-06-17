@@ -420,7 +420,7 @@ bool process_read(AST_NODE* root) {
         var = *child;
     }
 
-    SYMINFO* symbol = SYMTABLE::get_symbol(var->syminfo);
+    SYMINFO* symbol = SYMTABLE::get_symbol(var->token.identifier, SYMTYPE::VAR, root->statement_scope_level);
 
     if (!symbol) {
         set_print_token_error(Error{}, var->token, NLC_UNKNOWN_VARIABLE);

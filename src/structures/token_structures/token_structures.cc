@@ -18,7 +18,7 @@ namespace TOKEN_STRUCTURES {
     const ReservedWords reserved_words {
         "print", "read", "int", "while", "if", "else", "true", "false",
         "string", "void", "bool", "call", "fn", "proc", "procedure", "return",
-        "for"
+        "for", "invoke"
     };
 
     const TokenMap<std::string> operator_names {
