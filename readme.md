@@ -6,6 +6,12 @@
 
 > This project is an exercise in Compiler Theory and demonstrates buffering source text, lexing, parsing, semantic analysis, and code generation.
 
+#### Vim syntax highlighting
+
+If your interested in getting syntax highlighting for Vim / Neovim. Simply move `ftdetect/`, `ftplugin/`, and `syntax/` to `$HOME/.config/vim` or `$HOME/.config/nvim`. All three directories can be found in `syntax/`. 
+
+If you already manage these three directories on your machine, simply move the files that they contain.
+
 #### Comments
 
 Normal defines both line comments and block comments:
