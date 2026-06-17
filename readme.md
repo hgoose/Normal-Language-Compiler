@@ -294,6 +294,8 @@ The following features are under implementation.
 4. Break, continue
 5. Reserved word aliasing
 6. More involved function signatures
+7. The += operator and its siblings
+8. Pre/post increment/decrement
 
 #### Foreword
 
