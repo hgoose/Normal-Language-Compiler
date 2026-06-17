@@ -2,9 +2,9 @@
 
 <h3 style="text-align: center;"> Elegant compilation to x86-64 written in cpp20</h3>
 
-> nlc is a compiler written in C++ which targets Intel x86-64 architecture. The language, which I call `normal` is equipped with the following features:
-
 > This project is an exercise in Compiler Theory and demonstrates buffering source text, lexing, parsing, semantic analysis, and code generation.
+
+> nlc is a compiler written in C++ which targets Intel x86-64 architecture. The language, which I call `normal` is equipped with the following features:
 
 #### Vim syntax highlighting
 
