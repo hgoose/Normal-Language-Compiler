@@ -60,11 +60,11 @@ void Scope::add_to_top_level(SYMINFO* syminfo) {
 
 void Scope::pop_level() {
     if (scope_stack.empty()) return;
-
+    --current_scope_level;
     scope_stack.pop_back();
 }
 
-void Scope::tear_down_frame(SymbolBucket& bucket, ScopeLevel scope_level) {
+void Scope::tear_down_frame(const SymbolBucket& bucket, ScopeLevel scope_level) {
     for (auto& symbol : bucket) {
         if (symbol->scope_level != scope_level) continue;
 

@@ -296,6 +296,12 @@ void AST_NODE::set_token(Token t) {
     token = t;
 }
 
+bool AST_NODE::owns_scope_stack_frame() const {
+    return node_type == NODE_TYPE::FUNCTION ||
+           node_type == NODE_TYPE::FOR      ||
+           node_type == NODE_TYPE::BLOCK;
+}
+
 void AST_NODE::install_symbol(SYMINFO* info) {
     syminfo = info; 
     data_type = info->data_type;

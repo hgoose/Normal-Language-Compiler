@@ -188,7 +188,6 @@ void SYMTABLE::remove_symbol(SYMINFO* syminfo) {
     SymbolBucket& bucket = symbol_table[hx];
     for (auto start = bucket.begin(); start != bucket.end();) {
         if ((*start)->is_same_as(syminfo)) {
-            delete *start;
             start = bucket.erase(start);
         } else ++start;
     }

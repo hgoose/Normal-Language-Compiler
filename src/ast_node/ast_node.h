@@ -124,6 +124,8 @@ struct AST_NODE {
     void set_is_fn_arg();
     void set_token(Token);
 
+    bool owns_scope_stack_frame() const;
+
     void install_symbol(SYMINFO*);
 
     void deep_copy_children(const AST_NODE&);

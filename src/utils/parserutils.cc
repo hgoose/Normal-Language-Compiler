@@ -147,9 +147,20 @@ bool wrong_next_token(TokenValue wrong_token, ErrorValue error_to_submit, MovePr
 void free_tree(AST_NODE*& p) {
     if (!p) return;
 
-    std::for_each(p->children.begin(), p->children.end(), [](auto it) -> void {
-        free_tree(it);
-    });
+    for (AST_NODE*& child : p->children) {
+        free_tree(child);
+    }
+
+    // if (p->owns_scope_stack_frame()) {
+    //     for (SYMINFO*& symbol : p->scope_stack_frame) {
+    //         if (!symbol) continue;
+    //
+    //         delete symbol;
+    //         symbol = nullptr;
+    //     }
+    //
+    //     p->scope_stack_frame.clear();
+    // }
 
     delete p;
     p=nullptr;

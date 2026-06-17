@@ -109,20 +109,6 @@ static void r_evaluate_expr(AST_NODE* p) {
     } 
 
     else if (p->node_type == NODE_TYPE::VAR) {
-        // We can't trust the syminfo in p for some reason.
-        // fn main(int a) -> int {return a;}
-        // int a = main(10);
-        // yields dirt instead of 10. I'll figure this out later.
-        SYMINFO* symbol = SYMTABLE::get_symbol(
-            p->token.identifier,
-            SYMTYPE::VAR,
-            p->statement_scope_level
-        );
-
-        if (!symbol) return;
-
-        p->syminfo = symbol;
-
         // Get a pointer to the variable in r11, 
         // then push that value to the stack
         if (p->syminfo->in_int_table()) {
@@ -303,15 +289,6 @@ bool evaluate_print(AST_NODE* root) {
     for (auto& child : root->children){
         if (!child || exit) break;
 
-        if (child->is_var() && child->symbol_freed()) {
-            print_error(
-                Error{NLC_INVALID_IDENTIFIER,
-                child->token.line_no,
-                child->token.col_no}
-            ); 
-            exit = true;
-        }
-
         else if (child->entry.vi) {
             x86_call_void_sca(print_string, child->entry);             
         } 
@@ -372,21 +349,6 @@ bool update_var(AST_NODE* root) {
     if (child != children_end) var = *child++;
     if (child != children_end) ast_expr = *child++;
 
-    // Var has no syminfo until below
-    SYMINFO* symbol = SYMTABLE::get_symbol(
-            var->token.identifier,
-            SYMTYPE::VAR, 
-            root->statement_scope_level
-    );
-
-    // No symbol found
-    if (!symbol) {
-        set_print_token_error(Error{}, var->token, NLC_UNKNOWN_VARIABLE);
-        return false;
-    }
-
-    var->syminfo = symbol;
-
     if (var->syminfo->in_stack()) {
         evaluate_expr(ast_expr);
         x86_mov_mr32_disp32(REGISTER::RBP, REGISTER::EAX, var->syminfo->location.stack_offset);
@@ -394,7 +356,7 @@ bool update_var(AST_NODE* root) {
 
     else if (var->syminfo->in_int_table()) {
         // After this call, address of symbol is in r10
-        x86_get_int_for_assign(symbol->location.int_table_offset);
+        x86_get_int_for_assign(var->syminfo->location.int_table_offset);
 
         // Fast exp uses R10, evaluate_expr could clobber it 
         x86_mov_rr64(REGISTER::R15, REGISTER::R10);
@@ -420,15 +382,6 @@ bool process_read(AST_NODE* root) {
         var = *child;
     }
 
-    SYMINFO* symbol = SYMTABLE::get_symbol(var->token.identifier, SYMTYPE::VAR, root->statement_scope_level);
-
-    if (!symbol) {
-        set_print_token_error(Error{}, var->token, NLC_UNKNOWN_VARIABLE);
-        return false;
-    }
-
-    var->syminfo = symbol;
-
     // Return value in EAX
     x86_call_int_zia(read_int);
 
@@ -437,7 +390,7 @@ bool process_read(AST_NODE* root) {
 
     // Call x86_get_int to get the location of the variable. 
     // Pointer to this location in r10 after call
-    x86_get_int_for_assign(symbol->location.int_table_offset);
+    x86_get_int_for_assign(var->syminfo->location.int_table_offset);
 
     // Now, mov [r10], r12
     x86_mov_mr32_nodisp(REGISTER::R10, REGISTER::R12);
@@ -459,17 +412,14 @@ void dispatch_statement(AST_NODE* root) {
 bool process_if(AST_NODE* root) {
     if (!root) return false;
 
-    AST_NODE* condition{};
+    AST_NODE* condition{}, *body{}, *else_node{};
 
     auto if_child = root->children.begin();
     auto children_end = root->children.end();
 
-    if (if_child != children_end) {
-        condition = *if_child;
-        ++if_child;
-    } 
-
-    else return false;
+    if (if_child != children_end) condition = *if_child++;
+    if (if_child != children_end) body = *if_child++;
+    if (if_child != children_end) else_node = *if_child++;
 
     evaluate_expr(condition);
     x86_test_al_imm8(0x1);
@@ -477,18 +427,8 @@ bool process_if(AST_NODE* root) {
 
     int start = get_current_position();
 
-    bool has_else{};
-    AST_NODE* else_node{};
-    while (if_child != children_end) {
-        dispatch_statement(*if_child);
-
-        if ((*if_child)->node_type == NODE_TYPE::ELSE) {
-            has_else = true;
-            else_node = *if_child;
-            break;
-        }
-
-        ++if_child;
+    for (auto& statement : body->children) {
+        dispatch_statement(statement);
     }
     size_t jmp_rel32_start = x86_jmp_rel32_missing();
 
@@ -497,12 +437,11 @@ bool process_if(AST_NODE* root) {
 
     load_imm32_at(jz_rel32_start, jz_jump_size);
 
-    if (has_else) {
+    if (else_node) {
         int else_start = get_current_position();
         auto else_child = else_node->children.begin(); 
-        while (else_child != else_node->children.end()) {
-            dispatch_statement(*else_child);
-            ++else_child;
+        for (auto& statement : else_node->children) {
+            dispatch_statement(statement);
         }
 
         int else_end = get_current_position();
@@ -517,20 +456,21 @@ bool process_if(AST_NODE* root) {
 bool process_while(AST_NODE* root) {
     if (!root) return false;
 
-    AST_NODE* condition{};
+    AST_NODE* condition{}, *body{};
 
-    auto while_child = root->children.begin();
-    if (while_child != root->children.end()) {
-        condition = *(while_child++);
-    } else return false;
+    auto child = root->children.begin();
+    auto end = root->children.end();
+
+    if (child != end) condition = *child++;
+    if (child != end) body = *child++;
 
     size_t jmp_start = x86_jmp_rel32_missing();
-
     int body_start = get_current_position();
-    while (while_child != root->children.end()) {
-        dispatch_statement(*while_child);
-        ++while_child;
+
+    for (auto& statement : body->children) {
+        dispatch_statement(statement);
     }
+
     int body_end = get_current_position();
     int body_size = body_end - body_start;
 
@@ -558,11 +498,6 @@ bool process_block(AST_NODE* root) {
         dispatch_statement(child); 
     }
 
-    Scope::tear_down_frame(
-        root->get_scope_stack_frame(), 
-        root->statement_scope_level
-    );
-
     return true;
 }
 
@@ -580,16 +515,11 @@ bool process_fn(AST_NODE* root) {
     if (child != end) block = *child++;
 
     Label label = name->token.identifier;
-    SYMINFO* syminfo = SYMTABLE::get_symbol(name->syminfo);
-    if (!syminfo) {
-        set_print_token_error(Error{}, NLC_INVALID_IDENTIFIER);
-        return false;
-    }
 
     size_t jmp_start = x86_jmp_rel32_missing();
     size_t label_byte = get_current_position();
 
-    label_create(syminfo->function_info.label, label_byte);
+    label_create(name->syminfo->function_info.label, label_byte);
 
     bind_function_parameters(ppack);
 
@@ -606,7 +536,6 @@ bool process_fn(AST_NODE* root) {
 
     load_imm32_at(jmp_start, body_size);
 
-    Scope::tear_down_frame(block->scope_stack_frame, block->statement_scope_level);
     return true; 
 }
 
@@ -718,9 +647,8 @@ void bind_function_parameters(AST_NODE* ppack) {
     
     int index{};
     for (auto& parameter : ppack->children) {
-        SYMINFO* syminfo = SYMTABLE::get_symbol(parameter->syminfo);
-        syminfo->location.location_type = LOCATION_TYPE::STACK;
-        syminfo->location.stack_offset = 16 + index * 8;
+        parameter->syminfo->location.location_type = LOCATION_TYPE::STACK;
+        parameter->syminfo->location.stack_offset = 16 + index * 8;
 
         ++index;
     }

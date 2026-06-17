@@ -33,6 +33,7 @@ StatementReturns parse_fn();
 StatementReturns parse_call();
 StatementReturns parse_return();
 StatementReturns parse_for();
+AST_NODE* parse_implicit_block_for_one_statement();
 
 // PRODUCTION RULES
 AST_NODE* A(Error&);

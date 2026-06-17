@@ -500,6 +500,21 @@ static StatementReturns sub_parse_assign() {
         SYMTYPE::VAR, Scope::level()
     );
 
+    SYMINFO* symbol = SYMTABLE::get_symbol(
+        var_node->token.identifier,
+        SYMTYPE::VAR,
+        Scope::level()
+    );
+
+    if (!symbol) {
+        set_print_token_error(Error{}, var_node->token, NLC_UNKNOWN_VARIABLE);
+        onepast_semi_or_block(LBRACE_COUNT_ZERO);
+        free_tree(assign_root);
+        return {};
+    }
+
+    var_node->install_symbol(symbol);
+
     StatementReturns assigns{};
     Error lex_err{}, expr_err{};
 
@@ -592,55 +607,28 @@ StatementReturns parse_else() {
 
     if (next_token.is_semicolon()) {
         get_next_token_and_print_error();
-        // Parse else if it exists
-        else_root->set_scope_stack_frame(Scope::get_top_bucket());
         return {else_root};
     }
-
-
-    bool block = next_token.is_lbrace(); 
-    Scope::enter_level();
 
     // Grab the single statement and return
-    if (!block) {
-        StatementReturns statements = get_statement();
-        else_root->add_all_statements(statements);
-        else_root->set_scope_stack_frame(Scope::get_top_bucket());
-
-        Scope::down_level();
+    if (!next_token.is_lbrace()) {
+        AST_NODE* body = parse_implicit_block_for_one_statement();
+        if (!body) {
+            free_trees(else_root);
+            return {};
+        }
+        else_root->add_children(body);
         return {else_root};
     }
 
-    // From this point on we are inside a block
-
-    lex_err = munch();
-    if (skip_if_lexerr(lex_err, skip_else, LBRACE_COUNT_ONE)) {
+    StatementReturns body = parse_block();
+    if (body.empty()) {
         free_trees(else_root);
-
-        Scope::down_level();
         return {};
     }
 
-    if (next_token.is_rbrace()) {
-        get_next_token_and_print_error();
-        // Parse else if it exists
-        else_root->set_scope_stack_frame(Scope::get_top_bucket());
-        return {else_root};
-    }
+    else_root->add_all_statements(body);
 
-    Error err{};
-    StatementReturns statements = get_all_statements_in_block(err);
-    if (err.is_not_ok()) {
-        free_trees(else_root);
-
-        Scope::down_level();
-        return {};
-    }
-
-    else_root->add_all_statements(statements);
-    else_root->set_scope_stack_frame(Scope::get_top_bucket());
-
-    Scope::down_level();
     return {else_root};
 }
 
@@ -691,7 +679,6 @@ StatementReturns parse_if() {
         set_print_token_error(Error{}, ast_expr->token, NLC_NON_LOGICAL_CONDITION);
         skip_if(LBRACE_COUNT_ZERO);
         free_trees(ast_expr, if_root);
-
         return {};
     }
 
@@ -717,57 +704,26 @@ StatementReturns parse_if() {
         // Parse else if it exists
         StatementReturns else_root = parse_else();
         if_root->add_all_statements(else_root);
-        if_root->set_scope_stack_frame(Scope::get_top_bucket());
 
         return {if_root};
     }
 
     // Otherwise we have at least one statement or a block. 
     // In that case, we first check if we have block.
-    bool block = next_token.is_lbrace(); 
-    Scope::enter_level();
-
-    if (!block) {
-        StatementReturns statements = get_statement();
-        if_root->add_all_statements(statements);
-        if_root->set_scope_stack_frame(Scope::get_top_bucket());
+    if (!next_token.is_lbrace()) {
+        AST_NODE* body = parse_implicit_block_for_one_statement();
+        if_root->add_child(body);
     } 
 
     else {
-        lex_err = munch();
-        if (skip_if_lexerr(lex_err, skip_if, LBRACE_COUNT_ONE)) {
+        StatementReturns body = parse_block();
+        if (body.empty()) {
             free_trees(if_root);
-
-            Scope::down_level();
             return {};
         }
 
-        // Empty if body
-        if (next_token.is_rbrace()) {
-            get_next_token_and_print_error();
-
-            // Parse else if it exists
-            StatementReturns else_root = parse_else();
-            if_root->add_all_statements(else_root);
-            if_root->set_scope_stack_frame(Scope::get_top_bucket());
-
-            return {if_root};
-        }
-
-        Error err{};
-        StatementReturns statements = get_all_statements_in_block(err);
-        if (err.is_not_ok()) {
-            free_trees(if_root);
-
-            Scope::down_level();
-            return {};
-        }
-
-        if_root->add_all_statements(statements);
-        if_root->set_scope_stack_frame(Scope::get_top_bucket());
+        if_root->add_all_statements(body);
     }
-
-    Scope::down_level();
 
     // If there exists an else, parse it.
     StatementReturns else_root = parse_else();
@@ -850,25 +806,24 @@ StatementReturns parse_while() {
         get_next_token_and_print_error();
 
         // Useless stack frame attachment.
-        while_root->set_scope_stack_frame(Scope::get_top_bucket());
         return {while_root};
     }
 
     // Check if we have a block ({...})
-    Scope::enter_level();
+    if (!next_token.is_lbrace()) {
+        AST_NODE* body = parse_implicit_block_for_one_statement();
+        while_root->add_children(body);
+        return {while_root};
+    }
 
-    Error body_err{};
-    StatementReturns body_statements = process_loop_statements(body_err);
+    StatementReturns body_statements = parse_block();
     while_root->add_all_statements(body_statements);
 
-    if (body_err.is_not_ok()) {
+    if (body_statements.empty()) {
         free_trees(while_root);
-        Scope::down_level();
         return {};
     }
 
-    while_root->set_scope_stack_frame(Scope::get_top_bucket());
-    Scope::down_level();
     return {while_root};
 }
 
@@ -883,7 +838,7 @@ StatementReturns parse_block() {
     if (skip_if_lexerr(lex_err, skip_block, LBRACE_COUNT_ONE)) {
         free_trees(block_root);
 
-        Scope::down_level();
+        Scope::tear_down_frame(Scope::get_top_bucket(), Scope::level());
         return {};
     }
 
@@ -891,7 +846,7 @@ StatementReturns parse_block() {
     if (next_token.is_block_end()) {
         get_next_token_and_print_error();
 
-        Scope::down_level();
+        Scope::tear_down_frame(Scope::get_top_bucket(), Scope::level());
         return {}; 
     }
     
@@ -901,7 +856,7 @@ StatementReturns parse_block() {
         skip_block(LBRACE_COUNT_ONE);
         free_trees(block_root);
 
-        Scope::down_level();
+        Scope::tear_down_frame(Scope::get_top_bucket(), Scope::level());
         return {};
     }
 
@@ -910,8 +865,25 @@ StatementReturns parse_block() {
 
     // Only block_root is attached to program_tree. All statements
     // encountered here are attached to block_root.
-    Scope::down_level();
+    Scope::tear_down_frame(Scope::get_top_bucket(), Scope::level());
     return {block_root};
+}
+
+AST_NODE* parse_implicit_block_for_one_statement() {
+    Scope::enter_level();
+
+    AST_NODE* block = new AST_NODE(NODE_TYPE::BLOCK, Scope::level());
+
+    StatementReturns statement = get_statement();
+
+    SymbolBucket frame = Scope::get_top_bucket();
+
+    block->set_scope_stack_frame(frame);
+    block->add_all_statements(statement);
+
+    Scope::tear_down_frame(frame, Scope::level());
+
+    return block;
 }
 
 StatementReturns parse_fn() {
