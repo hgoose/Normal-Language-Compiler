@@ -927,7 +927,7 @@ StatementReturns parse_fn() {
         free_trees(fn_root);
 
         SYMTABLE::remove_symbol(entry);
-        Scope::down_level();
+        Scope::tear_down_frame(Scope::get_top_bucket(), Scope::level());
         return {};
     }
 
@@ -935,7 +935,7 @@ StatementReturns parse_fn() {
         free_trees(fn_root);
 
         SYMTABLE::remove_symbol(entry);
-        Scope::down_level();
+        Scope::tear_down_frame(Scope::get_top_bucket(), Scope::level());
         return {};
     }
 
@@ -944,7 +944,7 @@ StatementReturns parse_fn() {
         free_trees(fn_root);
 
         SYMTABLE::remove_symbol(entry);
-        Scope::down_level();
+        Scope::tear_down_frame(Scope::get_top_bucket(), Scope::level());
         return {};
     }
 
@@ -954,7 +954,7 @@ StatementReturns parse_fn() {
         free_trees(fn_root);
 
         SYMTABLE::remove_symbol(entry);
-        Scope::down_level();
+        Scope::tear_down_frame(Scope::get_top_bucket(), Scope::level());
         return {};
     }
 
@@ -977,6 +977,7 @@ StatementReturns parse_fn() {
 
             Scope::down_level();
             SYMTABLE::remove_symbol(entry);
+            Scope::tear_down_frame(Scope::get_top_bucket(), Scope::level());
             return {};
         }
         parameter->install_symbol(syminfo);
@@ -989,7 +990,7 @@ StatementReturns parse_fn() {
 
         SYMTABLE::remove_symbol(entry);
         free_parameter_pack_symbols(parameter_pack);
-        Scope::down_level();
+        Scope::tear_down_frame(Scope::get_top_bucket(), Scope::level());
         return {};
     }
 
@@ -999,7 +1000,7 @@ StatementReturns parse_fn() {
 
         SYMTABLE::remove_symbol(entry);
         free_parameter_pack_symbols(parameter_pack);
-        Scope::down_level();
+        Scope::tear_down_frame(Scope::get_top_bucket(), Scope::level());
         return {};
     }
 
@@ -1010,7 +1011,7 @@ StatementReturns parse_fn() {
 
         SYMTABLE::remove_symbol(entry);
         free_parameter_pack_symbols(parameter_pack);
-        Scope::down_level();
+        Scope::tear_down_frame(Scope::get_top_bucket(), Scope::level());
         return {};
     }
 
