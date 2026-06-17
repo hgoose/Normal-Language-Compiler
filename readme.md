@@ -12,6 +12,8 @@ If your interested in getting syntax highlighting for Vim / Neovim. Simply move 
 
 If you already manage these three directories on your machine, simply move the files that they contain.
 
+Note that Normal programs must contain the file extension `.nl`
+
 #### Comments
 
 Normal defines both line comments and block comments:
