@@ -968,6 +968,17 @@ StatementReturns parse_fn() {
                 Scope::level()
             )
         );
+
+        // Duplicate parameter name
+        if (!syminfo) {
+            set_print_token_error(Error{}, NLC_SYMBOL_ALREADY_EXISTS);
+            free_parameter_pack_symbols(parameter_pack);
+            free_trees(fn_root);
+
+            Scope::down_level();
+            SYMTABLE::remove_symbol(entry);
+            return {};
+        }
         parameter->install_symbol(syminfo);
     }
 
@@ -977,6 +988,7 @@ StatementReturns parse_fn() {
         free_trees(fn_root);
 
         SYMTABLE::remove_symbol(entry);
+        free_parameter_pack_symbols(parameter_pack);
         Scope::down_level();
         return {};
     }
@@ -986,6 +998,7 @@ StatementReturns parse_fn() {
         free_trees(fn_root);
 
         SYMTABLE::remove_symbol(entry);
+        free_parameter_pack_symbols(parameter_pack);
         Scope::down_level();
         return {};
     }
@@ -996,6 +1009,7 @@ StatementReturns parse_fn() {
         free_trees(fn_root);
 
         SYMTABLE::remove_symbol(entry);
+        free_parameter_pack_symbols(parameter_pack);
         Scope::down_level();
         return {};
     }
@@ -1015,6 +1029,7 @@ StatementReturns parse_fn() {
         free_trees(fn_root);
 
         SYMTABLE::remove_symbol(entry);
+        free_parameter_pack_symbols(parameter_pack);
         Scope::down_level();
         return {};
     }
@@ -1030,9 +1045,6 @@ StatementReturns parse_fn() {
         entry->install_function(fn_name, parameter_pack, return_value, block);
 
         get_next_token_and_print_error();
-
-        SYMTABLE::remove_symbol(entry);
-        Scope::down_level();
         return {fn_root};
     }
 

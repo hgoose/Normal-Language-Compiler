@@ -273,12 +273,9 @@ A function can also be empty
 fn main() -> void;
 ```
 
-A function name will not clash with a variable name in the internal symbol table. Furthermore, a function can be declared  prior to its definiton.
+A function name will not clash with a variable name in the internal symbol table. 
 
 ```
-fn main() -> void;
-fn main() -> void {}
-
 int f = 20;
 fn f() -> void {}
 ```

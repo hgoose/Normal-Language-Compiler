@@ -71,4 +71,6 @@ bool verify_init_or_assign(const StatementReturns&);
 Token tpeek();
 void free_statement_list(const StatementReturns&);
 
+void free_parameter_pack_symbols(AST_NODE*);
+
 #endif

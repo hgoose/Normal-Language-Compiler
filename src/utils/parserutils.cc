@@ -524,3 +524,13 @@ void free_statement_list(const StatementReturns& statements) {
         free_trees(statement);
     }
 }
+
+void free_parameter_pack_symbols(AST_NODE* ppack) {
+    for (AST_NODE*& parameter : ppack->children) {
+        if (parameter->syminfo) {
+            SYMTABLE::remove_symbol(parameter->syminfo); 
+            delete parameter->syminfo;
+            parameter->syminfo = nullptr;
+        }
+    }
+}
