@@ -127,7 +127,6 @@ int parse() {
         return -1;
     }
 
-    SYMTABLE::free_symbol_table();
     free_tree(program_tree);
 
     return 0;
@@ -918,67 +917,62 @@ StatementReturns parse_fn() {
         return {};
     }
 
-    fn_name_node->install_symbol(fn_symbol);
+    fn_name_node->install_symbol(entry);
     fn_root->add_children(fn_name_node);
 
+    // NOTE: entry is not in this new bucket, must remove it on errors
+    // manually
     Scope::enter_function();
-    lex_err = munch();
-    if (skip_if_lexerr(lex_err, skip_fn)) {
-        free_trees(fn_root);
+
+    auto fail_in_function_scope = [&]() -> StatementReturns {
+        SymbolBucket frame = Scope::get_top_bucket();
+
+        Scope::tear_down_frame(frame, Scope::level());
+        free_frame_symbols(frame);
 
         SYMTABLE::remove_symbol(entry);
-        Scope::tear_down_frame(Scope::get_top_bucket(), Scope::level());
+        delete entry;
+
+        free_trees(fn_root);
         return {};
+    };
+
+    lex_err = munch();
+    if (skip_if_lexerr(lex_err, skip_fn)) {
+        return fail_in_function_scope();
     }
 
     if (unexpected_token(TOKEN_LPAREN, NLC_SYNTAX_ERROR, skip_fn)) {
-        free_trees(fn_root);
-
-        SYMTABLE::remove_symbol(entry);
-        Scope::tear_down_frame(Scope::get_top_bucket(), Scope::level());
-        return {};
+        return fail_in_function_scope();
     }
 
     lex_err = munch();
     if (skip_if_lexerr(lex_err, skip_fn)) {
-        free_trees(fn_root);
-
-        SYMTABLE::remove_symbol(entry);
-        Scope::tear_down_frame(Scope::get_top_bucket(), Scope::level());
-        return {};
+        return fail_in_function_scope();
     }
 
     AST_NODE* parameter_pack = get_parameter_pack();
 
     if (!parameter_pack) {
-        free_trees(fn_root);
-
-        SYMTABLE::remove_symbol(entry);
-        Scope::tear_down_frame(Scope::get_top_bucket(), Scope::level());
-        return {};
+        return fail_in_function_scope();
     }
 
     // Throw parameters into symbol table 
     for (auto& parameter : parameter_pack->children) {
-        SYMINFO* syminfo = SYMTABLE::add_symbol(
-            new SYMINFO(
-                parameter->token.identifier,
-                parameter->data_type,
-                SYMTYPE::VAR, 
-                Scope::level()
-            )
+        SYMINFO* symbol = new SYMINFO(
+            parameter->token.identifier,
+            parameter->data_type,
+            SYMTYPE::VAR, 
+            Scope::level()
         );
+        SYMINFO* syminfo = SYMTABLE::add_symbol(symbol);
 
         // Duplicate parameter name
         if (!syminfo) {
+            delete symbol;
             set_print_token_error(Error{}, NLC_SYMBOL_ALREADY_EXISTS);
-            free_parameter_pack_symbols(parameter_pack);
-            free_trees(fn_root);
 
-            Scope::down_level();
-            SYMTABLE::remove_symbol(entry);
-            Scope::tear_down_frame(Scope::get_top_bucket(), Scope::level());
-            return {};
+            return fail_in_function_scope();
         }
         parameter->install_symbol(syminfo);
     }
@@ -986,33 +980,19 @@ StatementReturns parse_fn() {
     fn_root->add_children(parameter_pack);
 
     if (unexpected_token(TOKEN_ARROW, NLC_SYNTAX_ERROR, skip_fn)) {
-        free_trees(fn_root);
-
-        SYMTABLE::remove_symbol(entry);
-        free_parameter_pack_symbols(parameter_pack);
-        Scope::tear_down_frame(Scope::get_top_bucket(), Scope::level());
-        return {};
+        return fail_in_function_scope();
     }
 
     lex_err = munch();
     if (skip_if_lexerr(lex_err, skip_fn)) {
-        free_trees(fn_root);
-
-        SYMTABLE::remove_symbol(entry);
-        free_parameter_pack_symbols(parameter_pack);
-        Scope::tear_down_frame(Scope::get_top_bucket(), Scope::level());
-        return {};
+        return fail_in_function_scope();
     }
 
     if (next_token.is_not_type()) {
         set_print_token_error(Error{}, NLC_EXPECTED_RETURN_TYPE);
         skip_fn(LBRACE_COUNT_ZERO);
-        free_trees(fn_root);
 
-        SYMTABLE::remove_symbol(entry);
-        free_parameter_pack_symbols(parameter_pack);
-        Scope::tear_down_frame(Scope::get_top_bucket(), Scope::level());
-        return {};
+        return fail_in_function_scope();
     }
 
     AST_NODE* return_value = 
@@ -1027,12 +1007,7 @@ StatementReturns parse_fn() {
 
     lex_err = munch();
     if (skip_if_lexerr(lex_err, skip_fn)) {
-        free_trees(fn_root);
-
-        SYMTABLE::remove_symbol(entry);
-        free_parameter_pack_symbols(parameter_pack);
-        Scope::down_level();
-        return {};
+        return fail_in_function_scope();
     }
     
     // Function with no definition. I.e a declaration.
@@ -1046,24 +1021,17 @@ StatementReturns parse_fn() {
         entry->install_function(fn_name, parameter_pack, return_value, block);
 
         get_next_token_and_print_error();
+        Scope::tear_down_frame(Scope::get_top_bucket(), Scope::level());
         return {fn_root};
     }
 
     if (unexpected_token(TOKEN_LBRACE, NLC_EXPECTED_FN_BODY, skip_fn)) {
-        free_trees(fn_root);
-
-        SYMTABLE::remove_symbol(entry);
-        Scope::down_level();
-        return {};
+        return fail_in_function_scope();
     }
 
     lex_err = munch();
     if (skip_if_lexerr(lex_err, skip_fn)) {
-        free_trees(fn_root);
-
-        SYMTABLE::remove_symbol(entry);
-        Scope::down_level();
-        return {};
+        return fail_in_function_scope();
     }
 
     // Empty function
@@ -1077,9 +1045,12 @@ StatementReturns parse_fn() {
         entry->install_function(fn_name, parameter_pack, return_value, block);
 
         get_next_token_and_print_error();
-        Scope::down_level();
+        Scope::tear_down_frame(Scope::get_top_bucket(), Scope::level());
         return {fn_root};
     }
+
+    // Note: Once a function body is attached and given the scope frame,
+    // parameter symbols are managed by that block node.
 
     AST_NODE* fn_body = new AST_NODE(
         Token{}, 
@@ -1093,6 +1064,11 @@ StatementReturns parse_fn() {
     // Otherwise get all statements in body
     Error body_errors{};
     StatementReturns body = get_all_statements_in_block(body_errors);
+
+    if (body_errors.is_not_ok()) {
+        return fail_in_function_scope();
+    }
+
     fn_body->add_all_statements(body);
     fn_body->set_scope_stack_frame(Scope::get_top_bucket());
 
@@ -1110,7 +1086,7 @@ StatementReturns parse_fn() {
 
     stack_locals_layout(fn_body->get_scope_stack_frame(), parameter_pack);
 
-    Scope::down_level();
+    Scope::tear_down_frame(Scope::get_top_bucket(), Scope::level());
     return {fn_root};
 }
 
@@ -1252,14 +1228,14 @@ StatementReturns parse_for() {
     if (skip_if_lexerr(lex_err, skip_for)) {
         free_trees(for_root);
 
-        Scope::down_level();
+        Scope::tear_down_frame(Scope::get_top_bucket(), Scope::level());
         return {};
     }
 
     if (unexpected_token(TOKEN_LPAREN, NLC_SYNTAX_ERROR, skip_for)) {
         free_trees(for_root);
 
-        Scope::down_level();
+        Scope::tear_down_frame(Scope::get_top_bucket(), Scope::level());
         return {};
     }
 
@@ -1267,7 +1243,7 @@ StatementReturns parse_for() {
     if (skip_if_lexerr(lex_err, skip_for)) {
         free_trees(for_root);
 
-        Scope::down_level();
+        Scope::tear_down_frame(Scope::get_top_bucket(), Scope::level());
         return {};
     }
 
@@ -1284,7 +1260,8 @@ StatementReturns parse_for() {
         if (skip_if_lexerr(lex_err, skip_for)) {
             free_trees(for_root);
 
-            Scope::down_level();
+            SymbolBucket frame = Scope::get_top_bucket();
+            Scope::tear_down_frame(frame, Scope::level());
             return {};
         }
     }
@@ -1303,7 +1280,8 @@ StatementReturns parse_for() {
             skip_for(LBRACE_COUNT_ZERO);
             free_trees(for_root);
 
-            Scope::down_level();
+            SymbolBucket frame = Scope::get_top_bucket();
+            Scope::tear_down_frame(frame, Scope::level());
             return {};
         }
 
@@ -1322,7 +1300,8 @@ StatementReturns parse_for() {
             skip_for(LBRACE_COUNT_ZERO);
             free_trees(for_root, ast_expr);
 
-            Scope::down_level();
+            SymbolBucket frame = Scope::get_top_bucket();
+            Scope::tear_down_frame(frame, Scope::level());
             return {};
         }
 
@@ -1332,7 +1311,8 @@ StatementReturns parse_for() {
     if (unexpected_token(TOKEN_SEMICOLON, NLC_EXPECTED_SEMICOLON, skip_for)) {
         free_trees(for_root);
 
-        Scope::down_level();
+        SymbolBucket frame = Scope::get_top_bucket();
+        Scope::tear_down_frame(frame, Scope::level());
         return {};
     }
 
@@ -1340,34 +1320,40 @@ StatementReturns parse_for() {
     if (skip_if_lexerr(lex_err, skip_for)) {
         free_trees(for_root);
 
-        Scope::down_level();
+        SymbolBucket frame = Scope::get_top_bucket();
+        Scope::tear_down_frame(frame, Scope::level());
         return {};
     }
 
+    bool old_enforce = ENFORCE_TERMINATING_SEMICOLON;
     ENFORCE_TERMINATING_SEMICOLON = false;
 
     // Update
     if (next_token.is_not_rparen()) {
         StatementReturns update_statement = get_statement();
 
+        ENFORCE_TERMINATING_SEMICOLON = old_enforce;
+
         // Error handled by get_statement
         if (update_statement.empty()) {
             skip_for(LBRACE_COUNT_ZERO);
             free_trees(for_root);
 
-            Scope::down_level();
+            SymbolBucket frame = Scope::get_top_bucket();
+            Scope::tear_down_frame(frame, Scope::level());
             return {};
         }
 
         update->add_all_statements(update_statement);
     }
 
-    ENFORCE_TERMINATING_SEMICOLON = true;
+    ENFORCE_TERMINATING_SEMICOLON = old_enforce;
 
     if (unexpected_token(TOKEN_RPAREN, NLC_SYNTAX_ERROR, skip_for)) {
         free_trees(for_root);
 
-        Scope::down_level();
+        SymbolBucket frame = Scope::get_top_bucket();
+        Scope::tear_down_frame(frame, Scope::level());
         return {};
     }
 
@@ -1375,16 +1361,17 @@ StatementReturns parse_for() {
     if (skip_if_lexerr(lex_err, skip_for)) {
         free_trees(for_root);
 
-        Scope::down_level();
+        SymbolBucket frame = Scope::get_top_bucket();
+        Scope::tear_down_frame(frame, Scope::level());
         return {};
     }
 
     // Immediately terminated
     if (next_token.is_semicolon()) {
-        block->set_scope_stack_frame(Scope::get_top_bucket());
+        for_root->set_scope_stack_frame(Scope::get_top_bucket());
         get_next_token_and_print_error();
 
-        Scope::down_level();
+        Scope::tear_down_frame(Scope::get_top_bucket(), Scope::level());
         return {for_root};
     }
 
@@ -1393,14 +1380,14 @@ StatementReturns parse_for() {
     block->add_all_statements(body_statements);
 
     if (body_err.is_not_ok()) {
-        Scope::down_level();
+        Scope::tear_down_frame(Scope::get_top_bucket(), Scope::level());
         free_trees(for_root);
         return {}; 
     }
 
     for_root->set_scope_stack_frame(Scope::get_top_bucket());
 
-    Scope::down_level();
+    Scope::tear_down_frame(Scope::get_top_bucket(), Scope::level());
     return {for_root};
 }
 

@@ -534,3 +534,10 @@ void free_parameter_pack_symbols(AST_NODE* ppack) {
         }
     }
 }
+
+void free_frame_symbols(const SymbolBucket& frame) {
+    for (SYMINFO* symbol : frame) {
+        if (!symbol) continue;
+        delete symbol;
+    }
+}

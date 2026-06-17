@@ -605,10 +605,6 @@ bool process_for(AST_NODE* root) {
         cond = cond_root->children.front();
     } 
 
-    if (update_root->children.size()) {
-        update = update_root->children.front();
-    }
-
     // Dispatch initializations
     for (auto& child : init->children) {
         dispatch_statement(child);
@@ -628,7 +624,9 @@ bool process_for(AST_NODE* root) {
         dispatch_statement(statement);
     }
 
-    if (update) dispatch_statement(update);
+    for (auto& update : update_root->children) {
+        dispatch_statement(update);
+    }
 
     Offset jmp_start = x86_jmp_rel32_missing();
     Offset body_size_end = get_current_position();

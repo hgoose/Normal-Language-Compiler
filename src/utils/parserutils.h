@@ -72,5 +72,6 @@ Token tpeek();
 void free_statement_list(const StatementReturns&);
 
 void free_parameter_pack_symbols(AST_NODE*);
+void free_frame_symbols(const SymbolBucket&);
 
 #endif
