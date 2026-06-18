@@ -716,11 +716,6 @@ StatementReturns parse_if() {
 
     else {
         StatementReturns body = parse_block();
-        if (body.empty()) {
-            free_trees(if_root);
-            return {};
-        }
-
         if_root->add_all_statements(body);
     }
 
@@ -846,7 +841,7 @@ StatementReturns parse_block() {
         get_next_token_and_print_error();
 
         Scope::tear_down_frame(Scope::get_top_bucket(), Scope::level());
-        return {}; 
+        return {block_root}; 
     }
     
     Error err{};
